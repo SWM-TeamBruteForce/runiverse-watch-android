@@ -21,10 +21,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        phoneLink.start()
         lifecycle.addObserver(LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> phoneLink.onScreenVisibilityChanged(true)
-                Lifecycle.Event.ON_STOP -> phoneLink.onScreenVisibilityChanged(false)
+                Lifecycle.Event.ON_START -> phoneLink.onScreenStarted()
+                Lifecycle.Event.ON_STOP -> phoneLink.onScreenStopped()
                 else -> Unit
             }
         })

@@ -44,21 +44,32 @@ class PhoneLink(
     private val _state = MutableStateFlow(PhoneLinkState())
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
-    // 받는 쪽이 없으면 버린다 — 화면이 꺼져도 울려야 하는 진동은 화면이 아니라 앱·서비스에서 구독한다
+    // TODO: 콤보 진동 — exercise 서비스를 만들 때 앱·서비스에서 구독한다. 받는 쪽이 없으면 버린다
     private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
     private val awaitedSyncIds = ArrayDeque<String>()
     private val seenComboEventIds = ArrayDeque<String>()
     private var isScreenVisible = false
+    private var startedScreens = 0
     private var syncJob: Job? = null
     private var silenceJob: Job? = null
     private var commandJob: Job? = null
     private var visibilityJob: Job? = null
 
+    /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
 
-    fun onScreenVisibilityChanged(isVisible: Boolean) {
+    // 화면 둘이 잠깐 겹쳐도 먼저 멈춘 쪽이 꺼짐을 보내지 않게 켜진 화면 수를 센다
+    fun onScreenStarted() {
+        if (startedScreens++ == 0) onScreenVisibilityChanged(true)
+    }
+
+    fun onScreenStopped() {
+        if (--startedScreens == 0) onScreenVisibilityChanged(false)
+    }
+
+    private fun onScreenVisibilityChanged(isVisible: Boolean) {
         if (isScreenVisible == isVisible) return
         isScreenVisible = isVisible
         visibilityJob?.cancel()

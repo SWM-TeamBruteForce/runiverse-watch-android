@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-// 화면이 꺼지거나 닫혀도 콤보 진동을 받아야 해서, 폰 연결은 화면이 아니라 앱에 하나 둔다
+// 화면이 닫혀도 연결을 이어 가려고 폰 연결은 화면이 아니라 앱에 하나 둔다
 class RuniverseApp : Application() {
 
     private val scope = MainScope()
@@ -30,7 +30,6 @@ class RuniverseApp : Application() {
                 }
                 .collect(phoneLink::onReceived)
         }
-        phoneLink.start()
     }
 
     private companion object {
