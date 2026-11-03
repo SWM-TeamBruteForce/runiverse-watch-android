@@ -160,6 +160,75 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `화면이 꺼져 있으면 SYNC를 한 번만 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+
+        // when
+        fixture.link.start()
+        advanceTimeBy(6_001)
+
+        // then
+        assertEquals(1, fixture.sent.count { it is WatchSync })
+        assertTrue(fixture.link.state.value.isSyncing)
+        assertFalse(fixture.link.state.value.isPhoneReachable)
+    }
+
+    @Test
+    fun `SYNC 중에 화면이 켜지면 SYNC를 다시 보내고 3초마다 되풀이한다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.link.start()
+        advanceTimeBy(3_001)
+        fixture.sent.clear()
+
+        // when
+        fixture.link.onScreenStarted()
+        advanceTimeBy(3_001)
+
+        // then
+        assertEquals(2, fixture.sent.count { it is WatchSync })
+    }
+
+    @Test
+    fun `SYNC 중에 온 상태는 버린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, phoneInstanceId = "p2")))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 3)))
+
+        // then
+        assertTrue(fixture.link.state.value.isSyncing)
+        assertEquals(1L, fixture.link.state.value.phoneState?.stateSequence)
+    }
+
+    @Test
+    fun `화면이 켜져 있는 동안 10초마다 켜짐 신호를 보내고 꺼지면 꺼짐 신호를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+
+        // when
+        fixture.link.onScreenStarted()
+        advanceTimeBy(20_001)
+
+        // then
+        assertEquals(3, fixture.delivered.count { it is WatchVisibilityUpdate && it.isVisible })
+
+        // when -> 화면이 꺼진다
+        fixture.link.onScreenStopped()
+        advanceTimeBy(20_001)
+
+        // then
+        val visibilities = fixture.delivered.filterIsInstance<WatchVisibilityUpdate>()
+        assertFalse(visibilities.last().isVisible)
+        assertEquals(3, visibilities.count { it.isVisible })
+    }
+
+    @Test
     fun `지난 번호의 상태는 버린다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -257,6 +326,56 @@ class PhoneLinkTest {
         assertTrue(fixture.link.state.value.isCommandOverdue)
         assertEquals(1, fixture.sent.count { it is WatchFinish })
         assertTrue(fixture.sent.last() is WatchSync)
+    }
+
+    @Test
+    fun `명령에 답이 없어 SYNC를 보낸 뒤 늦게 SYNCED가 오면 잠금을 푼다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.finish(forced = false)
+        runCurrent()
+        advanceTimeBy(3_001)
+        val sync = fixture.sent.last() as WatchSync
+
+        // when
+        fixture.link.onReceived(synced(sync.syncId, state(sequence = 2)))
+
+        // then
+        assertFalse(fixture.link.state.value.isLocked)
+        assertFalse(fixture.link.state.value.isCommandOverdue)
+    }
+
+    @Test
+    fun `폰 상태를 받기 전이거나 러닝이 없으면 명령을 보내지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+
+        // when & then -> 폰 상태를 받기 전
+        assertFalse(fixture.link.pause())
+
+        // given
+        fixture.connect(state(sequence = 1).copy(run = null))
+
+        // when & then -> 러닝이 없다
+        assertFalse(fixture.link.finish(forced = false))
+        runCurrent()
+        assertTrue(fixture.sent.none { it is WatchPause || it is WatchFinish })
+    }
+
+    @Test
+    fun `요청 번호가 없거나 다른 ERROR로는 잠금을 풀지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.pause()
+
+        // when
+        fixture.link.onReceived(PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = null))
+        fixture.link.onReceived(PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = "다른-명령"))
+
+        // then
+        assertTrue(fixture.link.state.value.isLocked)
     }
 
     @Test
