@@ -9,6 +9,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // 화면이 닫혀도 연결을 이어 가려고 폰 연결은 화면이 아니라 앱에 하나 둔다
@@ -22,10 +23,12 @@ class RuniverseApp : Application() {
         super.onCreate()
         scope.launch {
             phoneChannel.messages
-                .retryWhen { cause, _ ->
+                .retryWhen { cause, attempt ->
                     if (cause !is ApiException) return@retryWhen false
-                    Log.w(TAG, "폰 메시지 받기 등록 실패 — 3초 뒤 다시 등록", cause)
-                    delay(RETRY_DELAY)
+                    // 구글 서비스가 계속 안 되면 배터리를 덜 쓰게 3초에서 1분까지 간격을 늘린다
+                    val wait = (RETRY_DELAY * (1 shl attempt.coerceAtMost(5).toInt())).coerceAtMost(MAX_RETRY_DELAY)
+                    Log.w(TAG, "폰 메시지 받기 등록 실패 — $wait 뒤 다시 등록", cause)
+                    delay(wait)
                     true
                 }
                 .collect(phoneLink::onReceived)
@@ -35,5 +38,6 @@ class RuniverseApp : Application() {
     private companion object {
         const val TAG = "RuniverseApp"
         val RETRY_DELAY = 3.seconds
+        val MAX_RETRY_DELAY = 1.minutes
     }
 }
