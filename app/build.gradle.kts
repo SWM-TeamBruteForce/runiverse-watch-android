@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.runiverse.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.runiverse.app"

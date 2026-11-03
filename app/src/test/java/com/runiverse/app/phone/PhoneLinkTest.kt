@@ -58,7 +58,7 @@ class PhoneLinkTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1))
-        fixture.link.onScreenVisibilityChanged(isVisible = true)
+        fixture.link.onScreenStarted()
         runCurrent()
         fixture.sent.clear()
 
@@ -77,7 +77,7 @@ class PhoneLinkTest {
     fun `보내기가 끝나지 않아도 3초마다 SYNC를 다시 보낸다`() = runTest {
         // given
         val fixture = Fixture(this, isSendHanging = true)
-        fixture.link.onScreenVisibilityChanged(isVisible = true)
+        fixture.link.onScreenStarted()
         fixture.link.start()
 
         // when
@@ -107,7 +107,7 @@ class PhoneLinkTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1))
-        fixture.link.onScreenVisibilityChanged(isVisible = true)
+        fixture.link.onScreenStarted()
 
         // when
         for (sequence in 2L..5L) {
@@ -259,6 +259,30 @@ class PhoneLinkTest {
         // then
         assertFalse(isSent)
         assertEquals(1, fixture.sent.size)
+    }
+
+    @Test
+    fun `화면 둘이 겹쳐도 하나가 멈추면 꺼짐을 보내지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.link.onScreenStarted()
+        fixture.link.onScreenStarted()
+        runCurrent()
+        fixture.sent.clear()
+
+        // when
+        fixture.link.onScreenStopped()
+        runCurrent()
+
+        // then
+        assertTrue(fixture.sent.none { it is WatchVisibilityUpdate && !it.isVisible })
+
+        // when -> 남은 화면도 멈춘다
+        fixture.link.onScreenStopped()
+        runCurrent()
+
+        // then
+        assertTrue(fixture.sent.any { it is WatchVisibilityUpdate && !it.isVisible })
     }
 
     @Test

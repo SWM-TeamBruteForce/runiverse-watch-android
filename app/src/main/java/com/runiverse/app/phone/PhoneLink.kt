@@ -15,17 +15,17 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 data class PhoneLinkState(
-    /** 마지막으로 받은 폰 상태. 연결이 끊겨도 지우지 않는다 — 화면은 이 값에서 멈춘다. */
+    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 지우지 않는다 — 화면은 이 값에서 멈춘다. */
     val phoneState: PhoneState? = null,
     val birthday: String? = null,
     val photos: List<PlayerPhoto> = emptyList(),
-    /** false면 `폰 연결 확인 중`. */
+    /** false면 `폰 연결 확인 중`을 띄운다. */
     val isPhoneReachable: Boolean = true,
-    /** SYNC를 보내고 SYNCED를 기다리는 중. */
+    /** SYNC를 보내고 SYNCED를 기다리는 중이다. */
     val isSyncing: Boolean = false,
-    /** 보내고 아직 결과를 못 받은 명령. */
+    /** 보내고 아직 결과를 못 받은 명령이다. */
     val pendingRequestId: String? = null,
-    /** 명령을 보낸 지 3초가 넘었다 — 종료면 `종료 확인 중`. */
+    /** 명령을 보낸 지 3초가 넘었다 — 종료면 `종료 확인 중`을 띄운다. */
     val isCommandOverdue: Boolean = false,
 ) {
     val isLocked: Boolean get() = isSyncing || pendingRequestId != null
@@ -44,20 +44,32 @@ class PhoneLink(
     private val _state = MutableStateFlow(PhoneLinkState())
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
+    // TODO: 콤보 진동 — exercise 서비스를 만들 때 앱·서비스에서 구독한다. 받는 쪽이 없으면 버린다
     private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
     private val awaitedSyncIds = ArrayDeque<String>()
     private val seenComboEventIds = ArrayDeque<String>()
     private var isScreenVisible = false
+    private var startedScreens = 0
     private var syncJob: Job? = null
     private var silenceJob: Job? = null
     private var commandJob: Job? = null
     private var visibilityJob: Job? = null
 
+    /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
 
-    fun onScreenVisibilityChanged(isVisible: Boolean) {
+    // 화면 둘이 잠깐 겹쳐도 먼저 멈춘 쪽이 꺼짐을 보내지 않게 켜진 화면 수를 센다
+    fun onScreenStarted() {
+        if (startedScreens++ == 0) onScreenVisibilityChanged(true)
+    }
+
+    fun onScreenStopped() {
+        if (--startedScreens == 0) onScreenVisibilityChanged(false)
+    }
+
+    private fun onScreenVisibilityChanged(isVisible: Boolean) {
         if (isScreenVisible == isVisible) return
         isScreenVisible = isVisible
         visibilityJob?.cancel()
@@ -84,7 +96,7 @@ class PhoneLink(
         }
     }
 
-    /** 잠겨 있거나 러닝이 없으면 보내지 않고 false. 아래 셋 모두 같다. */
+    /** 잠겨 있거나 러닝이 없으면 보내지 않고 false를 돌려준다. 아래 셋 모두 같다. */
     fun pause(): Boolean = sendCommand(::WatchPause)
 
     fun resume(): Boolean = sendCommand(::WatchResume)
@@ -118,7 +130,7 @@ class PhoneLink(
         _state.update { it.copy(isSyncing = true) }
         silenceJob?.cancel()
         syncJob?.cancel()
-        // 화면이 꺼져 있으면 한 번만 보내고, 켜질 때 다시 시작한다.
+        // 화면이 꺼져 있으면 한 번만 보내고, 켜질 때 다시 시작한다
         // 보내기가 늦어져도 3초는 그대로 센다 — 보내기를 기다리지 않는다
         syncJob = scope.launch {
             do {
@@ -204,7 +216,7 @@ class PhoneLink(
     private companion object {
         val REPLY_TIMEOUT = 3.seconds
         val VISIBILITY_INTERVAL = 10.seconds
-        // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라졌을 때 끝없이 쌓이지 않게
+        // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
         const val SYNC_ID_MEMORY = 5
         const val COMBO_ID_MEMORY = 64
         const val COMBO_BUFFER = 8

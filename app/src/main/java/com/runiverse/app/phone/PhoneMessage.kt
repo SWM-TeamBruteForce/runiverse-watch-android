@@ -2,10 +2,10 @@ package com.runiverse.app.phone
 
 import kotlinx.serialization.Serializable
 
-/** 워치가 폰으로 보내는 메시지. */
+/** 워치가 폰으로 보내는 메시지다. */
 sealed interface WatchMessage
 
-/** 폰이 워치로 보내는 메시지. */
+/** 폰이 워치로 보내는 메시지다. */
 sealed interface PhoneMessage
 
 @Serializable
