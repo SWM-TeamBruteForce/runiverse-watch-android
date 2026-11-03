@@ -104,6 +104,21 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `화면 멈춤이 시작보다 먼저 와도 다음 시작에서 켜짐 신호를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.onScreenStopped()
+
+        // when
+        fixture.link.onScreenStarted()
+        runCurrent()
+
+        // then
+        assertTrue(fixture.delivered.any { it is WatchVisibilityUpdate && it.isVisible })
+    }
+
+    @Test
     fun `화면이 꺼져 있으면 오래 못 받아도 연결 상태를 바꾸지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)

@@ -77,6 +77,7 @@ class PhoneLink(
     }
 
     fun onScreenStopped() {
+        if (startedScreens == 0) return
         if (--startedScreens == 0) onScreenVisibilityChanged(false)
     }
 
