@@ -31,7 +31,7 @@ object PhoneMessageCodec {
         return json.encodeToString(JsonElement.serializer(), envelope).encodeToByteArray()
     }
 
-    /** 모르는 event면 null — 폰 앱이 먼저 업데이트돼 새 메시지를 보내는 경우다. */
+    /** 모르는 event면 null을 돌려준다 — 폰 앱이 먼저 업데이트돼 새 메시지를 보내는 경우다. */
     fun decode(bytes: ByteArray): PhoneMessage? {
         val envelope = json.parseToJsonElement(bytes.decodeToString()).jsonObject
         val event = requireNotNull(envelope["event"]) { "event 없음" }.jsonPrimitive.content

@@ -24,7 +24,7 @@ class PhoneChannel(context: Context) {
                 trySend(it)
             }
         }
-        // 등록이 실패하면 아무것도 못 받은 채 조용히 남지 않게, 받는 쪽에 예외로 넘긴다.
+        // 등록이 실패하면 아무것도 못 받은 채 조용히 남지 않게, 받는 쪽에 예외로 넘긴다
         // 등록을 기다리는 중에 취소돼도 등록 자체는 끝까지 진행된다 — 등록이 끝난 뒤에 해제해야 남지 않는다
         val registration = messageClient.addListener(listener)
         try {
@@ -49,7 +49,7 @@ class PhoneChannel(context: Context) {
         }
     }
 
-    // 깨진 메시지 하나로 받기를 멈추지 않는다 — 다음 상태가 곧 다시 온다.
+    // 깨진 메시지 하나로 받기를 멈추지 않는다 — 다음 상태가 곧 다시 온다
     // SerializationException도 IllegalArgumentException이다
     private fun decodeOrNull(bytes: ByteArray): PhoneMessage? = try {
         PhoneMessageCodec.decode(bytes)
