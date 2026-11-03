@@ -52,8 +52,8 @@ class PhoneLink(
 
     private val awaitedSyncIds = ArrayDeque<String>()
     private val seenComboEventIds = ArrayDeque<String>()
-    private var isScreenVisible = false
     private var startedScreens = 0
+    private val isScreenVisible get() = startedScreens > 0
     private var syncJob: Job? = null
     private var silenceJob: Job? = null
     private var commandJob: Job? = null
@@ -84,8 +84,6 @@ class PhoneLink(
     }
 
     private fun onScreenVisibilityChanged(isVisible: Boolean) {
-        if (isScreenVisible == isVisible) return
-        isScreenVisible = isVisible
         visibilityJob?.cancel()
         if (isVisible) {
             visibilityJob = scope.launch {
