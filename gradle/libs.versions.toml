@@ -1,8 +1,8 @@
 [versions]
-agp = "9.3.3"
+agp = "9.0.1"
 kotlin = "2.4.21"
 activityCompose = "1.13.0"
-wearCompose = "1.7.1"
+wearCompose = "1.6.2"
 playServicesWearable = "20.0.1"
 kotlinxCoroutines = "1.11.0"
 kotlinxSerialization = "1.12.0"
