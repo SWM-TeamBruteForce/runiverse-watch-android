@@ -64,10 +64,7 @@ class PhoneLink(
 
     init {
         scope.launch {
-            for (isVisible in visibilitySends) {
-                // 보내기가 멈춰도 다음 신호를 막지 않는다
-                withTimeoutOrNull(REPLY_TIMEOUT) { send(WatchVisibilityUpdate(isVisible = isVisible)) }
-            }
+            for (isVisible in visibilitySends) sendWithLimit(WatchVisibilityUpdate(isVisible = isVisible))
         }
     }
 
@@ -126,7 +123,7 @@ class PhoneLink(
         val requestId = newId()
         _state.update { it.copy(pendingRequestId = requestId, isCommandOverdue = false) }
         scope.launch {
-            send(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
+            sendWithLimit(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
         }
         commandJob?.cancel()
         // 명령은 다시 보내지 않는다 — 폰이 이미 처리했을 수 있어, 최신 상태부터 받아 본다
@@ -148,7 +145,7 @@ class PhoneLink(
             do {
                 val syncId = newId()
                 awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY)
-                scope.launch { send(WatchSync(syncId)) }
+                scope.launch { sendWithLimit(WatchSync(syncId)) }
                 delay(REPLY_TIMEOUT)
                 _state.update { it.copy(isPhoneReachable = false) }
             } while (isScreenVisible)
@@ -228,6 +225,11 @@ class PhoneLink(
             _state.update { it.copy(isPhoneReachable = false) }
             requestSync()
         }
+    }
+
+    // 구글 서비스가 답을 안 줘도 보내기가 쌓이거나 다음 보내기를 막지 않게 3초에서 끊는다
+    private suspend fun sendWithLimit(message: WatchMessage) {
+        withTimeoutOrNull(REPLY_TIMEOUT) { send(message) }
     }
 
     private fun ArrayDeque<String>.addCapped(id: String, limit: Int) {

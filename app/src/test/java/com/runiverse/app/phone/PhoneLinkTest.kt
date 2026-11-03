@@ -90,6 +90,20 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `보내기가 끝나지 않으면 3초 뒤 포기해서 보내기가 쌓이지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this, isSendHanging = true)
+        fixture.link.onScreenStarted()
+        fixture.link.start()
+
+        // when
+        advanceTimeBy(30_001)
+
+        // then
+        assertTrue(fixture.hangingSends <= 2)
+    }
+
+    @Test
     fun `화면이 꺼져 있으면 오래 못 받아도 연결 상태를 바꾸지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -484,12 +498,20 @@ class PhoneLinkTest {
     ) {
         val sent = mutableListOf<WatchMessage>()
         val delivered = mutableListOf<WatchMessage>()
+        var hangingSends = 0
         private var nextId = 0
         val link = PhoneLink(
             scope = testScope.backgroundScope,
             send = {
                 sent += it
-                if (isSendHanging) awaitCancellation()
+                if (isSendHanging) {
+                    hangingSends++
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        hangingSends--
+                    }
+                }
                 delay(sendDelayMs(it))
                 delivered += it
             },
