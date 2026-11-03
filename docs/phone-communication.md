@@ -6,7 +6,7 @@
 ## 통로
 
 - Wear OS `MessageClient`, 경로 `/running` 하나. 본문은 UTF-8 JSON `{"event": ..., "data": {...}}` — 서버 WebSocket과 같은 봉투다.
-- 받는 기기는 `NodeClient.connectedNodes` 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
+- 받는 기기는 capability `runiverse_running`을 선언한 워치 앱이 있는 기기 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
 - 연결돼 있을 때만 보낸다. 끊긴 동안 쌓아 두지 않고, 다시 연결되면 `WATCH_SYNC`로 맞춘다.
 - 모르는 `event`·필드는 무시한다. enum 값을 늘릴 땐 양쪽을 함께 바꾼다 — 모르는 값이 든 메시지는 통째로 버려진다.
 
@@ -26,7 +26,7 @@
 | `WATCH_VISIBILITY_UPDATE` | 워치 → 폰 | `isVisible` | 화면이 켜지거나 꺼질 때, 켜진 동안 10초마다 |
 | `ERROR` | 폰 → 워치 | `code`·`message`·`sourceType`·`requestId` | 명령을 거절할 때만 |
 
-명령 공통 data는 `requestId`·`phoneInstanceId`·`runningRoomId`·`statusVersion`(누를 때 워치가 본 값)이다.
+명령 공통 data는 `requestId`·`phoneInstanceId`·`runningRoomId`·`statusVersion`(누를 때 워치가 본 값)이다. `runningRoomId`가 `null`인 상태에서 누르면 `null` 그대로 보낸다.
 
 ## 번호
 
@@ -74,10 +74,10 @@
         "status": "RUNNING",
         "gapMeters": 120,
         "comboCount": 12,
-        "maxComboCount": 20
+        "maxComboCount": 20,
+        "isStale": false
       }
     ],
-    "playersAgeSeconds": 3,
     "finish": null,
     "result": null
   }
@@ -87,19 +87,20 @@
 | 필드 | 뜻 |
 |---|---|
 | `run` | 진행 중인 러닝. 없으면 `null` |
+| `runningRoomId` | 방 번호. 폰이 방을 아직 못 열었으면 `null` |
 | `type` | `MATCH`·`SOLO`·`INVITE` |
 | `status` | 내 상태 `RUNNING`·`PAUSED`·`DISCONNECTED`·`FINISHED` |
 | `targetDistanceMeters` | 목표 거리. 목표 없는 솔로는 `null` |
 | `isServerConnected` | 폰↔서버 연결. `false`면 워치는 파티원만 흐리게 하고 `서버 연결 확인 중` |
 | `isPenaltyApplicable` | 못 채우면 매칭 제한이 걸리는 방 |
 | `me` | 폰 화면의 내 값. `currentPaceSecondsPerKm`은 폰처럼 30초 기준, 위치가 안 잡히면 `null`. `caloriesKcal`·`cadenceSpm`은 아직 없으면 `null` |
-| `players` | **나를 뺀** 참가자. 서버 `players`는 나를 포함하지만, 워치는 내 값을 `me`에서만 읽게 하려고 뺐다 |
+| `players` | **나를 뺀** 참가자. 서버 `players`는 나를 포함하지만, 워치는 내 값을 `me`에서만 읽게 하려고 뺐다. 폰 파티원 화면처럼 통지가 아직 없으면 `distanceMeters` 0·`status` `RUNNING`, 이름을 모르면 `nickname`은 `함께 달리는 사람`이다 |
 | `colorSlot` | 파티원 색 번호 1~3(0은 나). 폰 `PartyBoard.colorSlotOf` 값이고 러닝 중엔 바뀌지 않는다 |
 | `gapMeters` | 상대 − 나. 양수면 상대가 앞. 모르면 `null` |
 | `comboCount`·`maxComboCount` | 그 사람과 나 사이의 지금 콤보·최고 콤보. 콤보가 아니면 `comboCount` 0 |
-| `playersAgeSeconds` | 파티원 값이 서버에서 온 지 몇 초 |
+| `isStale` | 그 사람 통지가 19초 넘게 안 왔다. 폰 파티원 화면이 카드를 흐리게 그리는 기준과 같다(통지가 한 번도 없으면 `false`) |
 | `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null` |
-| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — `elapsedSeconds`는 멈춘 시간을 포함한 화면 시간이라 서버 `totalDurationSeconds`와 다르다 |
+| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(종료 확인을 못 받았거나 조회가 실패함). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
 
 `WATCH_SYNCED`에만 있는 것:
 
