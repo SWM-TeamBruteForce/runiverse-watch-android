@@ -44,6 +44,7 @@ class PhoneLink(
     private val _state = MutableStateFlow(PhoneLinkState())
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
+    // 받는 쪽이 없으면 버린다 — 화면이 꺼져도 울려야 하는 진동은 화면이 아니라 앱·서비스에서 구독한다
     private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
