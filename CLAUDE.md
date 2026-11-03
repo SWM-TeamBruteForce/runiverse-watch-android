@@ -10,11 +10,9 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 ./gradlew :app:installDevDebug     # 연결된 워치에 설치
 ```
 
-- Gradle 데몬은 JDK 21로 돈다(`gradle/gradle-daemon-jvm.properties`).
-
 ## 문서 인덱스 — 구현 전 해당 문서를 읽을 것
 
-- `docs/code-convention.md` — 네이밍·주석·테스트 규칙
+- `docs/code-convention.md` — 네이밍·화면·주석·테스트 규칙
 - `docs/git-convention.md` — 커밋·브랜치·PR 규칙
 - `docs/phone-communication.md` — 폰↔워치 메시지·번호·상태 모양·보내고 받는 규칙
 
@@ -29,13 +27,6 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   ui/component/  두 기능 이상이 쓰는 부품
   ```
 - 화면은 폰 상태로 `when` 분기한다. 폰 상태는 맨 위 화면 한 곳에서만 읽고, 아래로는 값과 동작 함수만 넘긴다.
-- 화면·페이지는 파일 하나씩 둔다. 그 화면만 쓰는 부품은 같은 파일에 `private`로 둔다.
-- 부품 파일 이름은 컴포저블 이름과 같다. `Components.kt`·`Utils.kt`는 만들지 않는다.
-- 메시지와 화면 부품 이름을 겹치지 않는다 — `PlayerPhoto`는 메시지, 사진 부품은 `PlayerAvatar`.
-- 보이는 문구는 `strings.xml`에, 표기 규칙(거리·격차·심박 구간)은 Composable 밖 함수로 두고 단위 테스트한다.
-- 목업 px는 애플은 pt×2, 갤럭시는 화면 실제 px(워치8 44mm에서 dp×2.125)다. px를 그대로 dp로 옮기지 않는다.
-- 화면이 꺼진 동안 받아야 하는 것(콤보 진동)은 화면이 아니라 앱·서비스에서 구독한다 — `combos`는 받는 쪽이 없으면 버린다.
-- 화면은 손목 실물로 확인한다. `@Preview`는 쓰지 않는다.
 - 라이브러리·플러그인 버전은 `gradle/libs.versions.toml`에만 적는다.
 - flavor는 폰 앱과 같다 — `dev`(`com.runiverse.app.dev`)·`prod`(`com.runiverse.app`). 폰 dev 빌드와 붙여 볼 땐 워치도 `dev`.
 
@@ -49,7 +40,6 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 
 - 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play에서 받은 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
 - 러닝 중엔 `exercise` 포그라운드 서비스가 앱을 살려 둔다. Application만으론 화면이 꺼진 뒤 메시지를 받는다고 보장하지 않는다.
-- `versionCode`는 폰 앱이 쓴 값과 겹치면 안 된다. 첫 업로드 전에 규칙을 README에 정한다.
 - 키스토어·`key.properties`는 커밋하지 않는다.
 - 요청 없이 라이브러리를 추가하지 않는다.
 - 문제를 우회하는 해결 금지 — 테스트 약화·빈 catch·기능 삭제로 오류를 없애지 않는다.
