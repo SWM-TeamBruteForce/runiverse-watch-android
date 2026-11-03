@@ -25,10 +25,16 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   RuniverseApp   앱에 하나뿐인 것(폰 연결)을 직접 만든다
   MainActivity   화면 켜짐을 알린다
   phone/         폰과 메시지 주고받기·연결 상태
-  ui/            여러 기능이 같이 쓰는 부품·색·글자
+  ui/theme/      색·글자. 화면은 MaterialTheme으로 읽는다
+  ui/component/  두 기능 이상이 쓰는 부품
   ```
 - 화면은 폰 상태로 `when` 분기한다. 폰 상태는 맨 위 화면 한 곳에서만 읽고, 아래로는 값과 동작 함수만 넘긴다.
-- 표기 규칙(거리·격차·심박 구간)은 Composable 밖 함수로 두고 단위 테스트한다.
+- 화면·페이지는 파일 하나씩 둔다. 그 화면만 쓰는 부품은 같은 파일에 `private`로 둔다.
+- 부품 파일 이름은 컴포저블 이름과 같다. `Components.kt`·`Utils.kt`는 만들지 않는다.
+- 메시지와 화면 부품 이름을 겹치지 않는다 — `PlayerPhoto`는 메시지, 사진 부품은 `PlayerAvatar`.
+- 보이는 문구는 `strings.xml`에, 표기 규칙(거리·격차·심박 구간)은 Composable 밖 함수로 두고 단위 테스트한다.
+- 목업 px는 애플은 pt×2, 갤럭시는 화면 실제 px(워치8 44mm에서 dp×2.125)다. px를 그대로 dp로 옮기지 않는다.
+- 화면이 꺼진 동안 받아야 하는 것(콤보 진동)은 화면이 아니라 앱·서비스에서 구독한다 — `combos`는 받는 쪽이 없으면 버린다.
 - 화면은 손목 실물로 확인한다. `@Preview`는 쓰지 않는다.
 - 라이브러리·플러그인 버전은 `gradle/libs.versions.toml`에만 적는다.
 - flavor는 폰 앱과 같다 — `dev`(`com.runiverse.app.dev`)·`prod`(`com.runiverse.app`). 폰 dev 빌드와 붙여 볼 땐 워치도 `dev`.
@@ -36,10 +42,13 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 ## 범위
 
 - 1차는 폰 경유 러닝 화면과 끝난 직후 결과 요약뿐이다. 워치가 서버를 직접 부르는 기능(매칭·기록 보기)은 넣지 않는다.
+- 심박은 워치가 재서 워치에만 보여 준다. 폰에 보내지도 저장하지도 않는다.
+- 러닝 중 화면은 스와이프로 닫히지 않는다. 종료는 종료 버튼으로만 한다.
 
 ## 주의사항
 
 - 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play에서 받은 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
+- 러닝 중엔 `exercise` 포그라운드 서비스가 앱을 살려 둔다. Application만으론 화면이 꺼진 뒤 메시지를 받는다고 보장하지 않는다.
 - `versionCode`는 폰 앱이 쓴 값과 겹치면 안 된다. 첫 업로드 전에 규칙을 README에 정한다.
 - 키스토어·`key.properties`는 커밋하지 않는다.
 - 요청 없이 라이브러리를 추가하지 않는다.
