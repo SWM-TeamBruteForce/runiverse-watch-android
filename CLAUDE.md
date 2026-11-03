@@ -18,12 +18,12 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 
 ## 구조
 
-- 모듈은 `app` 하나, 코드는 `app/src/main/java/com/runiverse/app/`. 기능마다 패키지 하나, 만들면 여기에 적는다.
+- 모듈은 `app` 하나, 코드는 `app/src/main/java/com/runiverse/app/`. 패키지는 아래 자리에 두고, 기능 패키지를 새로 만들면 여기에 적는다.
   ```
   RuniverseApp   앱에 하나뿐인 것(폰 연결)을 직접 만든다
-  MainActivity   화면 켜짐을 알린다
+  MainActivity   화면을 열 때 SYNC, 켜짐·꺼짐을 알린다
   phone/         폰과 메시지 주고받기·연결 상태
-  ui/theme/      색·글자. 화면은 MaterialTheme으로 읽는다
+  ui/theme/      여러 기능이 같이 쓰는 색·글자. 화면은 MaterialTheme으로 읽는다
   ui/component/  두 기능 이상이 쓰는 부품
   ```
 - 화면은 폰 상태로 `when` 분기한다. 폰 상태는 맨 위 화면 한 곳에서만 읽고, 아래로는 값과 동작 함수만 넘긴다.
@@ -39,7 +39,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 ## 주의사항
 
 - 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play에서 받은 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
-- 러닝 중엔 `exercise` 포그라운드 서비스가 앱을 살려 둔다. Application만으론 화면이 꺼진 뒤 메시지를 받는다고 보장하지 않는다.
+- 러닝 중 앱을 살려 둘 `exercise` 포그라운드 서비스를 둔다. 그전엔 화면이 꺼진 뒤 메시지를 받는다고 보장하지 않는다.
 - 키스토어·`key.properties`는 커밋하지 않는다.
 - 요청 없이 라이브러리를 추가하지 않는다.
 - 문제를 우회하는 해결 금지 — 테스트 약화·빈 catch·기능 삭제로 오류를 없애지 않는다.
