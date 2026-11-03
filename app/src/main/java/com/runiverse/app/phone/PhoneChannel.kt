@@ -19,7 +19,10 @@ class PhoneChannel(context: Context) {
     val messages: Flow<PhoneMessage> = callbackFlow {
         val listener = MessageClient.OnMessageReceivedListener { event ->
             if (event.path != PATH) return@OnMessageReceivedListener
-            decodeOrNull(event.data)?.let { trySend(it) }
+            decodeOrNull(event.data)?.let {
+                Log.d(TAG, "받음 — ${it::class.simpleName}")
+                trySend(it)
+            }
         }
         // 등록이 실패하면 아무것도 못 받은 채 조용히 남지 않게, 받는 쪽에 예외로 넘긴다.
         // 등록을 기다리는 중에 취소돼도 등록 자체는 끝까지 진행된다 — 등록이 끝난 뒤에 해제해야 남지 않는다
