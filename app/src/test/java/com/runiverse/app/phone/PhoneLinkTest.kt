@@ -2,6 +2,7 @@ package com.runiverse.app.phone
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -323,6 +324,23 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `꺼짐 신호 보내기가 늦어져도 마지막으로 닿는 신호는 지금 화면 상태다`() = runTest {
+        // given
+        val fixture = Fixture(this, sendDelayMs = { if (it is WatchVisibilityUpdate && !it.isVisible) 500 else 0 })
+        fixture.link.onScreenStarted()
+        runCurrent()
+
+        // when -> 꺼졌다 바로 다시 켜진다
+        fixture.link.onScreenStopped()
+        fixture.link.onScreenStarted()
+        advanceTimeBy(1_000)
+
+        // then
+        val last = fixture.delivered.filterIsInstance<WatchVisibilityUpdate>().last()
+        assertTrue(last.isVisible)
+    }
+
+    @Test
     fun `같은 eventId의 콤보는 한 번만 내보낸다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -340,14 +358,21 @@ class PhoneLinkTest {
         assertEquals(listOf(combo), received)
     }
 
-    private class Fixture(private val testScope: TestScope, isSendHanging: Boolean = false) {
+    private class Fixture(
+        private val testScope: TestScope,
+        isSendHanging: Boolean = false,
+        sendDelayMs: (WatchMessage) -> Long = { 0 },
+    ) {
         val sent = mutableListOf<WatchMessage>()
+        val delivered = mutableListOf<WatchMessage>()
         private var nextId = 0
         val link = PhoneLink(
             scope = testScope.backgroundScope,
             send = {
                 sent += it
                 if (isSendHanging) awaitCancellation()
+                delay(sendDelayMs(it))
+                delivered += it
             },
             newId = { "id-${++nextId}" },
         )

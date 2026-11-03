@@ -2,6 +2,7 @@ package com.runiverse.app.phone
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
@@ -57,6 +59,18 @@ class PhoneLink(
     private var commandJob: Job? = null
     private var visibilityJob: Job? = null
 
+    // 꺼짐·켜짐이 앞뒤로 바뀌어 닿지 않게 하나씩 차례로 보낸다. 밀린 신호는 마지막 것만 남긴다
+    private val visibilitySends = Channel<Boolean>(Channel.CONFLATED)
+
+    init {
+        scope.launch {
+            for (isVisible in visibilitySends) {
+                // 보내기가 멈춰도 다음 신호를 막지 않는다
+                withTimeoutOrNull(REPLY_TIMEOUT) { send(WatchVisibilityUpdate(isVisible = isVisible)) }
+            }
+        }
+    }
+
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
 
@@ -76,13 +90,13 @@ class PhoneLink(
         if (isVisible) {
             visibilityJob = scope.launch {
                 while (true) {
-                    scope.launch { send(WatchVisibilityUpdate(isVisible = true)) }
+                    visibilitySends.trySend(true)
                     delay(VISIBILITY_INTERVAL)
                 }
             }
             if (_state.value.isSyncing) requestSync() else awaitVisibleReply()
         } else {
-            scope.launch { send(WatchVisibilityUpdate(isVisible = false)) }
+            visibilitySends.trySend(false)
             silenceJob?.cancel()
         }
     }
