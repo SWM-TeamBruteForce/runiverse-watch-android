@@ -80,7 +80,7 @@ class PhoneLink(
                     delay(VISIBILITY_INTERVAL)
                 }
             }
-            if (_state.value.isSyncing) requestSync() else watchSilence()
+            if (_state.value.isSyncing) requestSync() else awaitVisibleReply()
         } else {
             scope.launch { send(WatchVisibilityUpdate(isVisible = false)) }
             silenceJob?.cancel()
@@ -194,6 +194,16 @@ class PhoneLink(
         if (error.requestId == null || error.requestId != _state.value.pendingRequestId) return
         commandJob?.cancel()
         _state.update { it.copy(pendingRequestId = null, isCommandOverdue = false) }
+    }
+
+    // 폰은 켜짐 신호를 받으면 러닝이 없어도 지금 상태를 바로 보낸다 — 그 답이 없으면 끊긴 것이다
+    private fun awaitVisibleReply() {
+        silenceJob?.cancel()
+        silenceJob = scope.launch {
+            delay(REPLY_TIMEOUT)
+            _state.update { it.copy(isPhoneReachable = false) }
+            requestSync()
+        }
     }
 
     // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다

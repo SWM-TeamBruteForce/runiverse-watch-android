@@ -122,6 +122,43 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `러닝이 없을 때 화면으로 돌아와 3초 동안 답이 없으면 폰 연결 확인 중으로 바꾸고 SYNC를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1).copy(run = null))
+        fixture.link.onScreenStarted()
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2).copy(run = null)))
+        fixture.link.onScreenStopped()
+        runCurrent()
+        fixture.sent.clear()
+
+        // when -> 폰이 사라진 뒤 화면으로 돌아온다
+        fixture.link.onScreenStarted()
+        advanceTimeBy(3_001)
+
+        // then
+        assertFalse(fixture.link.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.any { it is WatchSync })
+    }
+
+    @Test
+    fun `러닝이 없을 때 화면으로 돌아와 폰이 상태를 보내면 연결된 채로 둔다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1).copy(run = null))
+
+        // when
+        fixture.link.onScreenStarted()
+        advanceTimeBy(1_000)
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2).copy(run = null)))
+        advanceTimeBy(5_000)
+
+        // then
+        assertTrue(fixture.link.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
     fun `지난 번호의 상태는 버린다`() = runTest {
         // given
         val fixture = Fixture(this)
