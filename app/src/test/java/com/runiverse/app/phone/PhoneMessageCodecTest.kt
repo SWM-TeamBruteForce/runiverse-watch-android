@@ -115,7 +115,7 @@ class PhoneMessageCodecTest {
     }
 
     @Test
-    fun `모르는 event는 null`() {
+    fun `모르는 event는 null을 돌려준다`() {
         // given
         val body = """{"event":"WATCH_SOMETHING_NEW","data":{}}"""
 
@@ -127,7 +127,7 @@ class PhoneMessageCodecTest {
     }
 
     @Test
-    fun `깨진 본문은 IllegalArgumentException`() {
+    fun `깨진 본문은 IllegalArgumentException을 던진다`() {
         // given
         val brokenBodies = listOf(
             "not json",

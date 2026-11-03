@@ -2,6 +2,7 @@ package com.runiverse.app.phone
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,12 +52,21 @@ class PhoneLink(
 
     private val awaitedSyncIds = ArrayDeque<String>()
     private val seenComboEventIds = ArrayDeque<String>()
-    private var isScreenVisible = false
     private var startedScreens = 0
+    private val isScreenVisible get() = startedScreens > 0
     private var syncJob: Job? = null
     private var silenceJob: Job? = null
     private var commandJob: Job? = null
     private var visibilityJob: Job? = null
+
+    // 꺼짐·켜짐이 앞뒤로 바뀌어 닿지 않게 하나씩 차례로 보낸다. 밀린 신호는 마지막 것만 남긴다
+    private val visibilitySends = Channel<Boolean>(Channel.CONFLATED)
+
+    init {
+        scope.launch {
+            for (isVisible in visibilitySends) sendWithLimit(WatchVisibilityUpdate(isVisible = isVisible))
+        }
+    }
 
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
@@ -66,23 +77,22 @@ class PhoneLink(
     }
 
     fun onScreenStopped() {
+        if (startedScreens == 0) return
         if (--startedScreens == 0) onScreenVisibilityChanged(false)
     }
 
     private fun onScreenVisibilityChanged(isVisible: Boolean) {
-        if (isScreenVisible == isVisible) return
-        isScreenVisible = isVisible
         visibilityJob?.cancel()
         if (isVisible) {
             visibilityJob = scope.launch {
                 while (true) {
-                    scope.launch { send(WatchVisibilityUpdate(isVisible = true)) }
+                    visibilitySends.trySend(true)
                     delay(VISIBILITY_INTERVAL)
                 }
             }
-            if (_state.value.isSyncing) requestSync() else watchSilence()
+            if (_state.value.isSyncing) requestSync() else awaitVisibleReply()
         } else {
-            scope.launch { send(WatchVisibilityUpdate(isVisible = false)) }
+            visibilitySends.trySend(false)
             silenceJob?.cancel()
         }
     }
@@ -114,7 +124,7 @@ class PhoneLink(
         val requestId = newId()
         _state.update { it.copy(pendingRequestId = requestId, isCommandOverdue = false) }
         scope.launch {
-            send(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
+            sendWithLimit(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
         }
         commandJob?.cancel()
         // 명령은 다시 보내지 않는다 — 폰이 이미 처리했을 수 있어, 최신 상태부터 받아 본다
@@ -136,7 +146,7 @@ class PhoneLink(
             do {
                 val syncId = newId()
                 awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY)
-                scope.launch { send(WatchSync(syncId)) }
+                scope.launch { sendWithLimit(WatchSync(syncId)) }
                 delay(REPLY_TIMEOUT)
                 _state.update { it.copy(isPhoneReachable = false) }
             } while (isScreenVisible)
@@ -196,6 +206,16 @@ class PhoneLink(
         _state.update { it.copy(pendingRequestId = null, isCommandOverdue = false) }
     }
 
+    // 폰은 켜짐 신호를 받으면 러닝이 없어도 지금 상태를 바로 보낸다 — 그 답이 없으면 끊긴 것이다
+    private fun awaitVisibleReply() {
+        silenceJob?.cancel()
+        silenceJob = scope.launch {
+            delay(REPLY_TIMEOUT)
+            _state.update { it.copy(isPhoneReachable = false) }
+            requestSync()
+        }
+    }
+
     // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
     private fun watchSilence() {
         silenceJob?.cancel()
@@ -206,6 +226,11 @@ class PhoneLink(
             _state.update { it.copy(isPhoneReachable = false) }
             requestSync()
         }
+    }
+
+    // 구글 서비스가 답을 안 줘도 보내기가 쌓이거나 다음 보내기를 막지 않게 3초에서 끊는다
+    private suspend fun sendWithLimit(message: WatchMessage) {
+        withTimeoutOrNull(REPLY_TIMEOUT) { send(message) }
     }
 
     private fun ArrayDeque<String>.addCapped(id: String, limit: Int) {
