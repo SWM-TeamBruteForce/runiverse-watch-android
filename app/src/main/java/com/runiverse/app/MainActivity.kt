@@ -1,6 +1,5 @@
 package com.runiverse.app
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,9 +28,6 @@ class MainActivity : ComponentActivity() {
 
     private val runiverseApp get() = application as RuniverseApp
     private val phoneLink get() = runiverseApp.phoneLink
-
-    // Play 서비스가 옛 Fragment를 끌어오지만, 이 결함은 FragmentActivity 것이고 여기는 ComponentActivity다
-    @SuppressLint("InvalidFragmentVersionForActivityResult")
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
         ExerciseService.start(this)
     }
