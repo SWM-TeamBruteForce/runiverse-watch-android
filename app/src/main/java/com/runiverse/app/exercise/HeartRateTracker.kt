@@ -42,7 +42,7 @@ interface HeartRateTracker {
 
     suspend fun startExercise(): Boolean
 
-    /** 듣기를 멈추고, 내 운동이 남아 있으면 끝낸다. 끄기에 실패해 내 운동이 남았을 수 있으면 false다. */
+    /** 내 운동이 남아 있으면 끝내고 듣기를 멈춘다. 끄기에 실패해 내 운동이 남았을 수 있으면 듣기를 남기고 false다. */
     suspend fun stop(): Boolean
 }
 
@@ -132,9 +132,12 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
             ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise(); true } ?: false
             ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> true
         }
-        callback?.let { registered ->
-            callback = null
-            healthCall { exerciseClient.clearUpdateCallback(registered) }
+        // 끄기에 실패했으면 심박이 계속 와서 CPU를 깨워야 다시 시도할 수 있어 콜백을 남긴다
+        if (ended) {
+            callback?.let { registered ->
+                callback = null
+                healthCall { exerciseClient.clearUpdateCallback(registered) }
+            }
         }
         return ended
     }
