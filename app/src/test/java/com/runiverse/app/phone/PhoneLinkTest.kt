@@ -332,6 +332,41 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `방이 있던 러닝이 사라지면 SYNC 없이 run null을 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = 812))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2).copy(run = null)))
+        runCurrent()
+
+        // then
+        val linkState = fixture.link.state.value
+        assertEquals(2L, linkState.phoneState?.stateSequence)
+        assertNull(linkState.phoneState?.run)
+        assertFalse(linkState.isSyncing)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
+    fun `방이 있던 러닝 다음에 방 번호 없는 러닝이 오면 SYNC 없이 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = 812))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, runningRoomId = null)))
+        runCurrent()
+
+        // then
+        val linkState = fixture.link.state.value
+        assertEquals(2L, linkState.phoneState?.stateSequence)
+        assertFalse(linkState.isSyncing)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
     fun `명령은 처리됐다는 상태가 올 때까지 잠근다`() = runTest {
         // given
         val fixture = Fixture(this)
