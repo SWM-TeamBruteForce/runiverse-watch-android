@@ -17,7 +17,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 data class PhoneLinkState(
-    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 지우지 않는다 — 화면은 이 값에서 멈춘다. */
+    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 러닝을 접기 전까지는 지우지 않는다 — 화면은 이 값에서 멈춘다. */
     val phoneState: PhoneState? = null,
     val birthday: String? = null,
     val photos: List<PlayerPhoto> = emptyList(),
@@ -84,6 +84,8 @@ class PhoneLink(
         syncJob?.cancel()
         silenceJob?.cancel()
         commandJob?.cancel()
+        // 접기 전에 보낸 물음의 답이 늦게 와도 접은 러닝을 되살리지 않는다
+        awaitedSyncIds.clear()
         _state.value = PhoneLinkState()
     }
 

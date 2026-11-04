@@ -657,6 +657,23 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `러닝을 접기 전에 보낸 SYNC의 답이 늦게 와도 받지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.probeWhileScreenOff()
+        runCurrent()
+        val lateSync = fixture.sent.last { it is WatchSync } as WatchSync
+
+        // when
+        fixture.link.forgetRun()
+        fixture.link.onReceived(synced(lateSync.syncId, state(sequence = 5)))
+
+        // then
+        assertEquals(PhoneLinkState(), fixture.link.state.value)
+    }
+
+    @Test
     fun `러닝을 접은 뒤 3초가 지나도 연결 끊김으로 바뀌지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
