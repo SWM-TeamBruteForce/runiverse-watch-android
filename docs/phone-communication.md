@@ -21,7 +21,7 @@
 | `WATCH_STATE_UPDATED` | 폰 → 워치 | 상태 전체 | 아래 「보내는 규칙」 |
 | `WATCH_PAUSE` | 워치 → 폰 | 명령 공통 | 일시정지 |
 | `WATCH_RESUME` | 워치 → 폰 | 명령 공통 | 계속 달리기 |
-| `WATCH_FINISH` | 워치 → 폰 | 명령 공통 + `forced` | 종료. `forced`는 폰 종료 버튼과 같은 규칙 |
+| `WATCH_FINISH` | 워치 → 폰 | 명령 공통 + `forced` | 종료. `forced`는 폰 종료 버튼과 같은 규칙. 보류 중이면 폰이 `true`로, 복구 중이라 거리를 모르면 `false`로 보낸다 |
 | `WATCH_COMBO_TRIGGERED` | 폰 → 워치 | `eventId`·`userId`·`comboCount`·`kind` | 콤보가 오르거나 끊긴 순간 |
 | `WATCH_VISIBILITY_UPDATE` | 워치 → 폰 | `isVisible` | 화면이 켜지거나 꺼질 때, 켜진 동안 10초마다 |
 | `ERROR` | 폰 → 워치 | `code`·`message`·`sourceType`·`requestId` | 명령을 거절할 때만 |
@@ -99,7 +99,7 @@
 | `gapMeters` | 상대 − 나. 양수면 상대가 앞. 모르면 `null` |
 | `comboCount`·`maxComboCount` | 그 사람과 나 사이의 지금 콤보·최고 콤보. 콤보가 아니면 `comboCount` 0 |
 | `isStale` | 그 사람 통지가 19초 넘게 안 왔다. 폰 파티원 화면이 카드를 흐리게 그리는 기준과 같다(통지가 한 번도 없으면 `false`) |
-| `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null` |
+| `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null`. `GOAL_PENDING`은 폰에서 `계속 달리기`를 고르거나 다시 종료하거나 서버가 끝낼 때까지 남는다 |
 | `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(방이 없었거나, 종료 확인을 못 받았거나, 조회가 실패했거나, 내 기록이 안 남음). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
 
 `WATCH_SYNCED`에만 있는 것:
@@ -121,6 +121,7 @@
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
 - 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 러닝 존재 여부와 `phoneInstanceId`·`statusVersion` 검사는 그대로 한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- `ERROR`의 `code`는 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`이다.
 - 폰에서 러닝을 시작하면 워치 앱을 켠다(메시지가 아니라 플랫폼 기능).
 
 ## 받는 규칙 — 워치
