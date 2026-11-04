@@ -190,6 +190,72 @@ class ExerciseSessionTest {
     }
 
     @Test
+    fun `운동 주인을 묻는 사이 러닝이 끝나면 운동을 시작하지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.tracker.ownerDelayMs = 1_000
+        fixture.startSession()
+
+        // when
+        fixture.receiveState(sequence = 2, run = null)
+        runCurrent()
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        // then
+        assertEquals(listOf("stop"), fixture.tracker.calls)
+    }
+
+    @Test
+    fun `운동을 끈 뒤에 세션 종료를 알린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+        fixture.tracker.stopDelayMs = 1_000
+
+        // when
+        fixture.receiveState(sequence = 2, run = null)
+        runCurrent()
+
+        // then -> 운동을 끄는 동안엔 서비스를 내리지 않는다
+        assertFalse(fixture.isEnded)
+
+        // when
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.isEnded)
+    }
+
+    @Test
+    fun `세션을 시작한 적 없이 러닝이 없다는 상태를 받으면 남은 운동을 한 번 끈다`() = runTest {
+        // given -> 앱이 죽었다 다시 열려 이 프로세스에선 세션이 없다
+        val fixture = Fixture(this)
+
+        // when
+        fixture.receiveState(sequence = 2, run = run(RunStatus.FINISHED))
+        fixture.receiveState(sequence = 3, run = null)
+        runCurrent()
+
+        // then
+        assertEquals(listOf("stop"), fixture.tracker.calls)
+    }
+
+    @Test
+    fun `세션을 시작한 적 없어도 러닝 중이면 운동을 끄지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+
+        // when
+        fixture.receiveState(sequence = 2, run = run(RunStatus.PAUSED))
+        runCurrent()
+
+        // then
+        assertTrue(fixture.tracker.calls.isEmpty())
+    }
+
+    @Test
     fun `러닝이 사라지면 운동을 끝내고 세션을 끝낸다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -552,6 +618,7 @@ class ExerciseSessionTest {
         val calls = mutableListOf<String>()
         var isMeasurable = true
         var owner: ExerciseOwner? = ExerciseOwner.NONE
+        var ownerDelayMs = 0L
         var startDelayMs = 0L
         var stopDelayMs = 0L
         private var onHeartRate: ((Int?) -> Unit)? = null
@@ -559,7 +626,10 @@ class ExerciseSessionTest {
 
         override suspend fun canMeasure() = isMeasurable
 
-        override suspend fun currentOwner() = owner
+        override suspend fun currentOwner(): ExerciseOwner? {
+            delay(ownerDelayMs)
+            return owner
+        }
 
         override fun listen(onHeartRate: (Int?) -> Unit, onMeasuringStopped: () -> Unit) {
             calls += "listen"

@@ -33,7 +33,8 @@ class ExerciseService : Service() {
             isForeground = true
             ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), FOREGROUND_TYPE)
         }
-        (application as RuniverseApp).exerciseSession.start(onEnded = { stopSelf() })
+        // 운동을 끄는 사이 새 시작 요청이 왔으면 그 요청의 서비스는 내리지 않는다
+        (application as RuniverseApp).exerciseSession.start(onEnded = { stopSelf(startId) })
         // 되살아나도 화면이 안 보이면 심박을 쓰는 서비스를 시작할 수 없다 — 앱을 열 때 다시 시작한다
         return START_NOT_STICKY
     }

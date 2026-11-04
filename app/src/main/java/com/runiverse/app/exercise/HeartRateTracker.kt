@@ -10,7 +10,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.health.services.client.ExerciseUpdateCallback
 import androidx.health.services.client.HealthServices
-import androidx.health.services.client.HealthServicesException
 import androidx.health.services.client.clearUpdateCallback
 import androidx.health.services.client.data.Availability
 import androidx.health.services.client.data.DataType
@@ -24,6 +23,9 @@ import androidx.health.services.client.endExercise
 import androidx.health.services.client.getCapabilities
 import androidx.health.services.client.getCurrentExerciseInfo
 import androidx.health.services.client.startExercise
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 enum class ExerciseOwner { NONE, ME, OTHER_APP }
@@ -122,20 +124,26 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
     } ?: false
 
     override suspend fun stop() {
-        if (currentOwner() == ExerciseOwner.ME) healthCall { exerciseClient.endExercise() }
+        // 주인을 모르면(조회 실패) 끄기를 시도한다 — 남의 운동이면 끄기 요청만 실패한다
+        when (currentOwner()) {
+            ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise() }
+            ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> Unit
+        }
         val registered = callback ?: return
         callback = null
         healthCall { exerciseClient.clearUpdateCallback(registered) }
     }
 
     // 심박은 부가 표시라 실패해도 러닝 화면을 막지 않는다
-    private inline fun <T> healthCall(call: () -> T): T? = try {
+    private suspend inline fun <T> healthCall(call: () -> T): T? = try {
         call()
-    } catch (e: HealthServicesException) {
-        Log.w(TAG, "Health Services 호출 실패", e)
+    } catch (e: CancellationException) {
+        // Health Services 연결이 끊기면 호출이 취소로 끝난다 — 이 코루틴이 취소된 게 아니면 실패로 본다
+        currentCoroutineContext().ensureActive()
+        Log.w(TAG, "Health Services 연결 끊김", e)
         null
-    } catch (e: SecurityException) {
-        Log.w(TAG, "심박 권한 없음", e)
+    } catch (e: Exception) {
+        Log.w(TAG, "Health Services 호출 실패", e)
         null
     }
 

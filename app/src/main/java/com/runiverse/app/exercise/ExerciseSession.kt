@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -48,6 +51,20 @@ class ExerciseSession(
 
     private val isActive get() = phoneWatchJob?.isActive == true
 
+    init {
+        // 앱이 죽으면 운동은 남는다 — 이 프로세스에서 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
+        scope.launch {
+            phoneLink.state
+                .map { it.phoneState != null && !it.isRunActive }
+                .distinctUntilChanged()
+                .filter { it }
+                .collect {
+                    if (phoneWatchJob != null) return@collect
+                    trackerCalls.withLock { if (phoneWatchJob == null) tracker.stop() }
+                }
+        }
+    }
+
     /** 서비스가 시작 요청을 받을 때마다 부른다 — 다른 앱에 밀렸던 심박을 화면이 켜질 때 다시 잰다. */
     fun start(onEnded: () -> Unit) {
         this.onEnded = onEnded
@@ -69,7 +86,9 @@ class ExerciseSession(
     }
 
     /** 서비스가 사라질 때 부른다. */
-    fun stop() {
+    fun stop() = finish(onFinished = null)
+
+    private fun finish(onFinished: (() -> Unit)?) {
         if (!isActive) return
         phoneWatchJob?.cancel()
         onEnded = null
@@ -79,6 +98,8 @@ class ExerciseSession(
                 isMeasuring = false
                 tracker.stop()
             }
+            // 서비스를 먼저 내리면 화면이 꺼진 사이 앱이 얼어 운동 끄기가 안 나갈 수 있다
+            onFinished?.invoke()
         }
     }
 
@@ -86,7 +107,8 @@ class ExerciseSession(
         if (!isActive || isMeasuring || !tracker.canMeasure()) return
         // 남의 운동을 끝내면서까지 부가 표시인 심박을 재지 않는다
         val owner = tracker.currentOwner()
-        if (owner == null || owner == ExerciseOwner.OTHER_APP) return
+        // 묻는 사이 러닝이 끝났으면 끝난 세션에 운동을 시작하지 않는다
+        if (!isActive || owner == null || owner == ExerciseOwner.OTHER_APP) return
         tracker.listen(onHeartRate = ::onHeartRate, onMeasuringStopped = ::onMeasuringStopped)
         // 시작을 기다리는 사이 다른 앱에 밀릴 수 있어, 끝난 뒤에 표시하면 밀린 사실을 덮어쓴다
         isMeasuring = true
@@ -141,11 +163,7 @@ class ExerciseSession(
         _phoneLost.tryEmit(Unit)
     }
 
-    private fun end() {
-        val ended = onEnded
-        stop()
-        ended?.invoke()
-    }
+    private fun end() = finish(onFinished = onEnded)
 
     private companion object {
         val CHECK_INTERVAL = 1.minutes
