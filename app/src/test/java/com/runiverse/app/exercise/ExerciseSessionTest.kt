@@ -266,6 +266,12 @@ class ExerciseSessionTest {
 
         // when
         fixture.receiveState(sequence = 2, run = null)
+        runCurrent()
+
+        // then -> 다시 시도하기 전엔 서비스를 내리지 않는다
+        assertFalse(fixture.isEnded)
+
+        // when
         advanceTimeBy(1_001)
         runCurrent()
 
@@ -273,6 +279,26 @@ class ExerciseSessionTest {
         assertEquals(listOf("listen", "start", "stop", "stop"), fixture.tracker.calls)
         assertEquals(ExerciseOwner.NONE, fixture.tracker.owner)
         assertTrue(fixture.isEnded)
+    }
+
+    @Test
+    fun `끄기를 다시 시도하는 사이 다시 시작해도 다시 시도가 끝난 뒤에 운동을 시작한다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+        fixture.tracker.stopFailures = 1
+        fixture.tracker.calls.clear()
+
+        // when
+        fixture.session.stop()
+        runCurrent()
+        fixture.startSession()
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        // then
+        assertEquals(listOf("stop", "stop", "listen", "start"), fixture.tracker.calls)
+        assertEquals(ExerciseOwner.ME, fixture.tracker.owner)
     }
 
     @Test
