@@ -163,7 +163,7 @@ class PhoneLink(
             birthday = message.birthday,
             photos = message.photos,
         )
-        watchSilence()
+        awaitNextState()
     }
 
     private fun onStateUpdated(incoming: PhoneState) {
@@ -191,7 +191,7 @@ class PhoneLink(
                 it.copy(phoneState = incoming)
             }
         }
-        watchSilence()
+        awaitNextState()
     }
 
     private fun onComboTriggered(combo: WatchComboTriggered) {
@@ -217,7 +217,7 @@ class PhoneLink(
     }
 
     // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
-    private fun watchSilence() {
+    private fun awaitNextState() {
         silenceJob?.cancel()
         val run = _state.value.phoneState?.run
         if (!isScreenVisible || run == null || run.status == RunStatus.FINISHED) return
