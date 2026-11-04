@@ -36,6 +36,8 @@ android {
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.wear.compose.material3)
+    implementation(libs.androidx.wear.ongoing)
+    implementation(libs.androidx.health.services.client)
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
