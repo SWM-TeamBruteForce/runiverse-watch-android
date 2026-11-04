@@ -190,6 +190,35 @@ class ExerciseSessionTest {
     }
 
     @Test
+    fun `운동 시작에 실패하면 다음 시작 요청에서 다시 시작한다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.tracker.startSucceeds = false
+        fixture.startSession()
+
+        // when
+        fixture.tracker.startSucceeds = true
+        fixture.startSession()
+
+        // then
+        assertEquals(listOf("listen", "start", "listen", "start"), fixture.tracker.calls)
+    }
+
+    @Test
+    fun `운동 주인을 알 수 없으면 운동을 시작하지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.tracker.owner = null
+
+        // when
+        fixture.startSession()
+
+        // then
+        assertTrue(fixture.tracker.calls.isEmpty())
+        assertFalse(fixture.isEnded)
+    }
+
+    @Test
     fun `운동 주인을 묻는 사이 러닝이 끝나면 운동을 시작하지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -529,6 +558,29 @@ class ExerciseSessionTest {
     }
 
     @Test
+    fun `폰을 잃고 끝난 뒤 다시 시작하면 10분을 처음부터 센다`() = runTest {
+        // given -> 폰을 잃어 세션이 끝났다가 앱을 다시 열어 러닝을 받았다
+        val fixture = Fixture(this)
+        fixture.startSession()
+        advanceTimeBy(720_001)
+        runCurrent()
+        fixture.link.start()
+        runCurrent()
+        fixture.answerSync(sequence = 3)
+        fixture.isEnded = false
+        fixture.isPhoneLost = false
+
+        // when
+        fixture.startSession()
+        advanceTimeBy(120_001)
+        runCurrent()
+
+        // then
+        assertFalse(fixture.isEnded)
+        assertFalse(fixture.isPhoneLost)
+    }
+
+    @Test
     fun `SYNC에 답이 오면 10분을 처음부터 다시 센다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -618,6 +670,7 @@ class ExerciseSessionTest {
         val calls = mutableListOf<String>()
         var isMeasurable = true
         var owner: ExerciseOwner? = ExerciseOwner.NONE
+        var startSucceeds = true
         var ownerDelayMs = 0L
         var startDelayMs = 0L
         var stopDelayMs = 0L
@@ -640,6 +693,7 @@ class ExerciseSessionTest {
         override suspend fun startExercise(): Boolean {
             calls += "start"
             delay(startDelayMs)
+            if (!startSucceeds) return false
             owner = ExerciseOwner.ME
             return true
         }
