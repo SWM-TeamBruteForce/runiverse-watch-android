@@ -6,7 +6,7 @@
 ## 통로
 
 - Wear OS `MessageClient`, 경로 `/running` 하나. 본문은 UTF-8 JSON `{"event": ..., "data": {...}}` — 서버 WebSocket과 같은 봉투다.
-- 받는 기기는 capability `runiverse_running`을 선언한 워치 앱이 있는 기기 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
+- 폰이 보낼 땐 capability `runiverse_running`을 선언한 워치 앱이 있는 기기 중 `isNearby`인 것, 워치가 보낼 땐 `NodeClient.connectedNodes` 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
 - 연결돼 있을 때만 보낸다. 끊긴 동안 쌓아 두지 않고, 다시 연결되면 `WATCH_SYNC`로 맞춘다.
 - 모르는 `event`·필드는 무시한다. enum 값을 늘릴 땐 양쪽을 함께 바꾼다 — 모르는 값이 든 메시지는 통째로 버려진다.
 
@@ -100,7 +100,7 @@
 | `comboCount`·`maxComboCount` | 그 사람과 나 사이의 지금 콤보·최고 콤보. 콤보가 아니면 `comboCount` 0 |
 | `isStale` | 그 사람 통지가 19초 넘게 안 왔다. 폰 파티원 화면이 카드를 흐리게 그리는 기준과 같다(통지가 한 번도 없으면 `false`) |
 | `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null` |
-| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(종료 확인을 못 받았거나 조회가 실패함). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
+| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(방이 없었거나, 종료 확인을 못 받았거나, 조회가 실패했거나, 내 기록이 안 남음). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
 
 `WATCH_SYNCED`에만 있는 것:
 
@@ -120,7 +120,7 @@
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
-- 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 러닝 존재 여부와 `phoneInstanceId`·`statusVersion` 검사는 그대로 한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - 폰에서 러닝을 시작하면 워치 앱을 켠다(메시지가 아니라 플랫폼 기능).
 
 ## 받는 규칙 — 워치
@@ -128,7 +128,7 @@
 - SYNC를 보내면 SYNCED를 받을 때까지 버튼을 잠근다. 그사이 오는 상태는 버리고, 화면이 켜져 있으면 3초마다 SYNC를 다시 보낸다.
 - 러닝 중 화면이 켜져 있는데 상태를 3초 넘게 못 받으면 `폰 연결 확인 중` — 받은 값 전부(시간 포함) 마지막 값에서 멈추고, 버튼을 잠그고, SYNC를 보낸다.
 - 화면이 다시 켜지면 러닝이 없어도 3초 안에 상태가 와야 한다. 안 오면 위와 같이 `폰 연결 확인 중`으로 바꾸고 SYNC를 보낸다.
-- `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC.
+- `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC. `null`은 모르는 번호로 보지 않는다.
 - 명령을 보내면 `lastRequestId`가 그 값인 상태나 같은 `requestId`의 `ERROR`가 올 때까지 버튼을 잠근다. 3초 넘게 없으면 SYNC를 보내고 명령은 다시 보내지 않는다.
-- 결과 요약을 닫으면 그 방 번호를 기억해, 다시 연결돼도 다시 띄우지 않는다(폰에 알리지 않는다).
+- 결과 요약을 닫으면 그때의 `phoneInstanceId`·`statusVersion` 쌍을 기억해, 같은 쌍의 끝난 상태는 다시 받아도 결과를 띄우지 않는다(폰에 알리지 않는다).
 - 종료 뒤 `GOAL_PENDING`이 오면 한 번 진동한다.
