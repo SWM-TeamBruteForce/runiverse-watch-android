@@ -593,6 +593,105 @@ class PhoneLinkTest {
         assertEquals(listOf(combo), received)
     }
 
+    @Test
+    fun `일시정지·끊김은 진행 중인 러닝이고 끝났거나 러닝이 없으면 아니다`() {
+        // given
+        val running = state(sequence = 1)
+        val runningRun = requireNotNull(running.run)
+
+        // when & then
+        assertTrue(PhoneLinkState(phoneState = running).isRunActive)
+        assertTrue(linkStateWith(running, runningRun.copy(status = RunStatus.PAUSED)).isRunActive)
+        assertTrue(linkStateWith(running, runningRun.copy(status = RunStatus.DISCONNECTED)).isRunActive)
+        assertFalse(linkStateWith(running, runningRun.copy(status = RunStatus.FINISHED)).isRunActive)
+        assertFalse(linkStateWith(running, null).isRunActive)
+        assertFalse(PhoneLinkState().isRunActive)
+    }
+
+    @Test
+    fun `화면이 꺼져 있으면 물어볼 때 SYNC를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+
+        // when
+        fixture.link.probeWhileScreenOff()
+        runCurrent()
+
+        // then
+        assertEquals(1, fixture.sent.count { it is WatchSync })
+    }
+
+    @Test
+    fun `화면이 켜져 있으면 물어봐도 SYNC를 보내지 않고 잠그지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.onScreenStarted()
+        runCurrent()
+        fixture.sent.clear()
+
+        // when
+        fixture.link.probeWhileScreenOff()
+        runCurrent()
+
+        // then
+        assertEquals(0, fixture.sent.count { it is WatchSync })
+        assertFalse(fixture.link.state.value.isLocked)
+    }
+
+    @Test
+    fun `러닝을 접으면 마지막 값을 지우고 다음 상태는 받지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.probeWhileScreenOff()
+        runCurrent()
+
+        // when
+        fixture.link.forgetRun()
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2)))
+
+        // then
+        assertEquals(PhoneLinkState(), fixture.link.state.value)
+    }
+
+    @Test
+    fun `러닝을 접은 뒤 3초가 지나도 연결 끊김으로 바뀌지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.probeWhileScreenOff()
+        runCurrent()
+
+        // when
+        fixture.link.forgetRun()
+        advanceTimeBy(3_001)
+
+        // then
+        assertTrue(fixture.link.state.value.isPhoneReachable)
+    }
+
+    @Test
+    fun `러닝을 접은 뒤 앱을 다시 열면 SYNCED로 러닝을 다시 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.forgetRun()
+
+        // when
+        fixture.link.start()
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+        fixture.link.onReceived(synced(sync.syncId, state(sequence = 5)))
+
+        // then
+        assertEquals(5L, fixture.link.state.value.phoneState?.stateSequence)
+        assertTrue(fixture.link.state.value.isRunActive)
+    }
+
+    private fun linkStateWith(base: PhoneState, run: RunState?) = PhoneLinkState(phoneState = base.copy(run = run))
+
     private class Fixture(
         private val testScope: TestScope,
         isSendHanging: Boolean = false,
