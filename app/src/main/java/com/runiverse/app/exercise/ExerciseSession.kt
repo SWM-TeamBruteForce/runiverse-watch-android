@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * 러닝 동안 심박을 재고, 러닝이 끝났거나 폰이 돌아오지 않으면 세션을 끝낸다.
@@ -60,7 +61,7 @@ class ExerciseSession(
                 .filter { it }
                 .collect {
                     if (phoneWatchJob != null) return@collect
-                    trackerCalls.withLock { if (phoneWatchJob == null) tracker.stop() }
+                    trackerCalls.withLock { if (phoneWatchJob == null) stopTracker() }
                 }
         }
     }
@@ -96,10 +97,18 @@ class ExerciseSession(
         scope.launch {
             trackerCalls.withLock {
                 isMeasuring = false
-                tracker.stop()
+                stopTracker()
             }
             // 서비스를 먼저 내리면 화면이 꺼진 사이 앱이 얼어 운동 끄기가 안 나갈 수 있다
             onFinished?.invoke()
+        }
+    }
+
+    // 서비스가 내려가면 다시 끌 길이 없어, 끄기가 실패하면 조금 뒤 다시 시도한다
+    private suspend fun stopTracker() {
+        for (attempt in 1..STOP_ATTEMPTS) {
+            if (tracker.stop()) return
+            if (attempt < STOP_ATTEMPTS) delay(STOP_RETRY_DELAY)
         }
     }
 
@@ -169,5 +178,7 @@ class ExerciseSession(
         val CHECK_INTERVAL = 1.minutes
         val PROBE_AFTER_MS = 1.minutes.inWholeMilliseconds
         val GIVE_UP_AFTER_MS = 10.minutes.inWholeMilliseconds
+        const val STOP_ATTEMPTS = 3
+        val STOP_RETRY_DELAY = 1.seconds
     }
 }

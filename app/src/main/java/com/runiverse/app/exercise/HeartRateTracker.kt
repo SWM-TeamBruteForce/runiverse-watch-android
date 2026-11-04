@@ -42,8 +42,8 @@ interface HeartRateTracker {
 
     suspend fun startExercise(): Boolean
 
-    /** 듣기를 멈추고, 내 운동이 남아 있으면 끝낸다. */
-    suspend fun stop()
+    /** 듣기를 멈추고, 내 운동이 남아 있으면 끝낸다. 끄기에 실패해 내 운동이 남았을 수 있으면 false다. */
+    suspend fun stop(): Boolean
 }
 
 /** 심박 권한 이름은 API 36에서 바뀌었다. */
@@ -125,15 +125,17 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
         true
     } ?: false
 
-    override suspend fun stop() {
+    override suspend fun stop(): Boolean {
         // 주인을 모르면(조회 실패) 끄기를 시도한다 — 남의 운동이면 끄기 요청만 실패한다
-        when (currentOwner()) {
-            ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise() }
-            ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> Unit
+        val ended = when (currentOwner()) {
+            ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise() } != null
+            ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> true
         }
-        val registered = callback ?: return
-        callback = null
-        healthCall { exerciseClient.clearUpdateCallback(registered) }
+        callback?.let { registered ->
+            callback = null
+            healthCall { exerciseClient.clearUpdateCallback(registered) }
+        }
+        return ended
     }
 
     // 심박은 부가 표시라 실패해도 러닝 화면을 막지 않는다

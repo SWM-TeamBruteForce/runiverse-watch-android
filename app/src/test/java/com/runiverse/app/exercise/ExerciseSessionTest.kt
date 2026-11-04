@@ -258,6 +258,41 @@ class ExerciseSessionTest {
     }
 
     @Test
+    fun `운동 끄기가 실패하면 다시 시도해 끈 뒤에 세션 종료를 알린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+        fixture.tracker.stopFailures = 1
+
+        // when
+        fixture.receiveState(sequence = 2, run = null)
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        // then
+        assertEquals(listOf("listen", "start", "stop", "stop"), fixture.tracker.calls)
+        assertEquals(ExerciseOwner.NONE, fixture.tracker.owner)
+        assertTrue(fixture.isEnded)
+    }
+
+    @Test
+    fun `운동 끄기가 계속 실패해도 세 번 시도한 뒤에는 세션 종료를 알린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+        fixture.tracker.stopFailures = 5
+
+        // when
+        fixture.receiveState(sequence = 2, run = null)
+        advanceTimeBy(2_001)
+        runCurrent()
+
+        // then
+        assertEquals(3, fixture.tracker.calls.count { it == "stop" })
+        assertTrue(fixture.isEnded)
+    }
+
+    @Test
     fun `세션을 시작한 적 없이 러닝이 없다는 상태를 받으면 남은 운동을 한 번 끈다`() = runTest {
         // given -> 앱이 죽었다 다시 열려 이 프로세스에선 세션이 없다
         val fixture = Fixture(this)
@@ -678,6 +713,7 @@ class ExerciseSessionTest {
         var ownerDelayMs = 0L
         var startDelayMs = 0L
         var stopDelayMs = 0L
+        var stopFailures = 0
         private var onHeartRate: ((Int?) -> Unit)? = null
         private var onMeasuringStopped: (() -> Unit)? = null
 
@@ -702,10 +738,15 @@ class ExerciseSessionTest {
             return true
         }
 
-        override suspend fun stop() {
+        override suspend fun stop(): Boolean {
             calls += "stop"
             delay(stopDelayMs)
+            if (stopFailures > 0) {
+                stopFailures--
+                return false
+            }
             owner = ExerciseOwner.NONE
+            return true
         }
 
         fun deliver(bpm: Int?) {
