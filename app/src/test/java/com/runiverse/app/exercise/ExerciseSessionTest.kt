@@ -343,8 +343,8 @@ class ExerciseSessionTest {
         val fixture = Fixture(this)
         fixture.startSession()
 
-        // when -> 첫 물음은 1분째, 그 뒤 10분을 기다린다
-        advanceTimeBy(660_001)
+        // when -> 첫 물음은 1분째, 10분 뒤인 11분째 마지막으로 묻고 1분을 더 기다린다
+        advanceTimeBy(720_001)
         runCurrent()
 
         // then
@@ -435,6 +435,24 @@ class ExerciseSessionTest {
         // when -> CPU가 잠들어 시간 재기는 멈추고 심박만 배달된다
         repeat(6) {
             fixture.sleptMs += 150_000
+            fixture.tracker.deliver(148)
+        }
+        runCurrent()
+
+        // then
+        assertTrue(fixture.isEnded)
+        assertTrue(fixture.isPhoneLost)
+    }
+
+    @Test
+    fun `심박이 5분 넘는 간격으로 와도 답이 없으면 세션을 끝낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+
+        // when -> 실기기에서 잠든 동안 배달 간격이 302초까지 벌어졌다
+        repeat(4) {
+            fixture.sleptMs += 302_000
             fixture.tracker.deliver(148)
         }
         runCurrent()

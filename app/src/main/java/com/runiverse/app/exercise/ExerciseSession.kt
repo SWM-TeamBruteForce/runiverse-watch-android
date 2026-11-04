@@ -125,10 +125,9 @@ class ExerciseSession(
         val time = now()
         if (time - heardAt < PROBE_AFTER_MS) return
         val since = unansweredSince ?: time.also { unansweredSince = it }
-        val sinceProbe = time - probedAt
-        if (sinceProbe < PROBE_AFTER_MS) return
-        // 오래 잠들어 물음이 낡았으면 그사이 폰이 돌아왔을 수 있어, 끝내지 않고 다시 묻는다
-        if (time - since >= GIVE_UP_AFTER_MS && sinceProbe < PROBE_STALE_AFTER_MS) {
+        if (time - probedAt < PROBE_AFTER_MS) return
+        // 오래 잠든 사이 폰이 돌아왔을 수 있어, 10분이 지난 뒤에 보낸 물음에도 답이 없어야 끝낸다
+        if (probedAt - since >= GIVE_UP_AFTER_MS) {
             giveUp()
             return
         }
@@ -151,7 +150,6 @@ class ExerciseSession(
     private companion object {
         val CHECK_INTERVAL = 1.minutes
         val PROBE_AFTER_MS = 1.minutes.inWholeMilliseconds
-        val PROBE_STALE_AFTER_MS = 5.minutes.inWholeMilliseconds
         val GIVE_UP_AFTER_MS = 10.minutes.inWholeMilliseconds
     }
 }
