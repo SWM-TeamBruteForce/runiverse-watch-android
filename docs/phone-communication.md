@@ -6,7 +6,7 @@
 ## 통로
 
 - Wear OS `MessageClient`, 경로 `/running` 하나. 본문은 UTF-8 JSON `{"event": ..., "data": {...}}` — 서버 WebSocket과 같은 봉투다.
-- 받는 기기는 `NodeClient.connectedNodes` 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
+- 폰이 보낼 땐 capability `runiverse_running`을 선언한 워치 앱이 있는 기기 중 `isNearby`인 것, 워치가 보낼 땐 `NodeClient.connectedNodes` 중 `isNearby`인 것. 폰 앱에 capability 선언은 두지 않는다.
 - 연결돼 있을 때만 보낸다. 끊긴 동안 쌓아 두지 않고, 다시 연결되면 `WATCH_SYNC`로 맞춘다.
 - 모르는 `event`·필드는 무시한다. enum 값을 늘릴 땐 양쪽을 함께 바꾼다 — 모르는 값이 든 메시지는 통째로 버려진다.
 
@@ -26,7 +26,7 @@
 | `WATCH_VISIBILITY_UPDATE` | 워치 → 폰 | `isVisible` | 화면이 켜지거나 꺼질 때, 켜진 동안 10초마다 |
 | `ERROR` | 폰 → 워치 | `code`·`message`·`sourceType`·`requestId` | 명령을 거절할 때만 |
 
-명령 공통 data는 `requestId`·`phoneInstanceId`·`runningRoomId`·`statusVersion`(누를 때 워치가 본 값)이다.
+명령 공통 data는 `requestId`·`phoneInstanceId`·`runningRoomId`·`statusVersion`(누를 때 워치가 본 값)이다. `runningRoomId`가 `null`인 상태에서 누르면 `null` 그대로 보낸다.
 
 ## 번호
 
@@ -74,10 +74,10 @@
         "status": "RUNNING",
         "gapMeters": 120,
         "comboCount": 12,
-        "maxComboCount": 20
+        "maxComboCount": 20,
+        "isStale": false
       }
     ],
-    "playersAgeSeconds": 3,
     "finish": null,
     "result": null
   }
@@ -87,19 +87,20 @@
 | 필드 | 뜻 |
 |---|---|
 | `run` | 진행 중인 러닝. 없으면 `null` |
+| `runningRoomId` | 방 번호. 방이 아직 안 세워졌으면 `null`(출발 직후, 오프라인 솔로). 세워지면 폰이 바로 다시 보낸다 |
 | `type` | `MATCH`·`SOLO`·`INVITE` |
 | `status` | 내 상태 `RUNNING`·`PAUSED`·`DISCONNECTED`·`FINISHED` |
 | `targetDistanceMeters` | 목표 거리. 목표 없는 솔로는 `null` |
 | `isServerConnected` | 폰↔서버 연결. `false`면 워치는 파티원만 흐리게 하고 `서버 연결 확인 중` |
 | `isPenaltyApplicable` | 못 채우면 매칭 제한이 걸리는 방 |
 | `me` | 폰 화면의 내 값. `currentPaceSecondsPerKm`은 폰처럼 30초 기준, 위치가 안 잡히면 `null`. `caloriesKcal`·`cadenceSpm`은 아직 없으면 `null` |
-| `players` | **나를 뺀** 참가자. 서버 `players`는 나를 포함하지만, 워치는 내 값을 `me`에서만 읽게 하려고 뺐다 |
-| `colorSlot` | 파티원 색 번호 1~3(0은 나). 폰 `PartyBoard.colorSlotOf` 값이고 러닝 중엔 바뀌지 않는다 |
+| `players` | **나를 뺀** 참가자. 서버 `players`는 나를 포함하지만, 워치는 내 값을 `me`에서만 읽게 하려고 뺐다. 폰 파티원 화면처럼 통지가 아직 없으면 `distanceMeters` 0·`status` `RUNNING`, 이름을 모르면 `nickname`은 `함께 달리는 사람`이다 |
+| `colorSlot` | 파티원 색 번호 1~3(0은 나). 폰 `PartyBoard.colorSlotOf`를 폰 팔레트처럼 4로 나눈 나머지라 0~3만 온다. 러닝 중엔 바뀌지 않는다 |
 | `gapMeters` | 상대 − 나. 양수면 상대가 앞. 모르면 `null` |
 | `comboCount`·`maxComboCount` | 그 사람과 나 사이의 지금 콤보·최고 콤보. 콤보가 아니면 `comboCount` 0 |
-| `playersAgeSeconds` | 파티원 값이 서버에서 온 지 몇 초 |
+| `isStale` | 그 사람 통지가 19초 넘게 안 왔다. 폰 파티원 화면이 카드를 흐리게 그리는 기준과 같다(통지가 한 번도 없으면 `false`) |
 | `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null` |
-| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — `elapsedSeconds`는 멈춘 시간을 포함한 화면 시간이라 서버 `totalDurationSeconds`와 다르다 |
+| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(방이 없었거나, 종료 확인을 못 받았거나, 조회가 실패했거나, 내 기록이 안 남음). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
 
 `WATCH_SYNCED`에만 있는 것:
 
@@ -114,11 +115,12 @@
 
 - `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면(일시정지 포함) 1초마다 보낸다. 앞 전송이 안 끝났으면 건너뛰고 최신 하나만.
 - 일시정지·재개·종료 단계·결과 확정은 화면이 꺼져 있어도 바로 보낸다.
+- 러닝이 사라지면(폰에서 요약을 닫음·서버 종료·강퇴) 화면이 꺼져 있어도 바로 `run: null`을 보낸다 — 워치 결과 화면도 같이 닫힌다.
 - 워치 명령을 반영하면 1초를 기다리지 않고 바로 보낸다(`statusVersion` +1, `lastRequestId`).
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
-- 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 러닝 존재 여부와 `phoneInstanceId`·`statusVersion` 검사는 그대로 한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - 폰에서 러닝을 시작하면 워치 앱을 켠다(메시지가 아니라 플랫폼 기능).
 
 ## 받는 규칙 — 워치
@@ -126,7 +128,7 @@
 - SYNC를 보내면 SYNCED를 받을 때까지 버튼을 잠근다. 그사이 오는 상태는 버리고, 화면이 켜져 있으면 3초마다 SYNC를 다시 보낸다.
 - 러닝 중 화면이 켜져 있는데 상태를 3초 넘게 못 받으면 `폰 연결 확인 중` — 받은 값 전부(시간 포함) 마지막 값에서 멈추고, 버튼을 잠그고, SYNC를 보낸다.
 - 화면이 다시 켜지면 러닝이 없어도 3초 안에 상태가 와야 한다. 안 오면 위와 같이 `폰 연결 확인 중`으로 바꾸고 SYNC를 보낸다.
-- `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC.
+- `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC. `null`은 모르는 번호로 보지 않는다.
 - 명령을 보내면 `lastRequestId`가 그 값인 상태나 같은 `requestId`의 `ERROR`가 올 때까지 버튼을 잠근다. 3초 넘게 없으면 SYNC를 보내고 명령은 다시 보내지 않는다.
-- 결과 요약을 닫으면 그 방 번호를 기억해, 다시 연결돼도 다시 띄우지 않는다(폰에 알리지 않는다).
+- 결과 요약을 닫으면 그때의 `phoneInstanceId`·`statusVersion` 쌍을 기억해, 같은 쌍의 끝난 상태는 다시 받아도 결과를 띄우지 않는다(폰에 알리지 않는다).
 - 종료 뒤 `GOAL_PENDING`이 오면 한 번 진동한다.

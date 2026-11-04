@@ -17,9 +17,9 @@ class PhoneChannel(context: Context) {
     private val nodeClient = Wearable.getNodeClient(context)
 
     val messages: Flow<PhoneMessage> = callbackFlow {
-        val listener = MessageClient.OnMessageReceivedListener { event ->
-            if (event.path != PATH) return@OnMessageReceivedListener
-            decodeOrNull(event.data)?.let {
+        val listener = MessageClient.OnMessageReceivedListener { messageEvent ->
+            if (messageEvent.path != PATH) return@OnMessageReceivedListener
+            decodeOrNull(messageEvent.data)?.let {
                 Log.d(TAG, "받음 — ${it::class.simpleName}")
                 trySend(it)
             }

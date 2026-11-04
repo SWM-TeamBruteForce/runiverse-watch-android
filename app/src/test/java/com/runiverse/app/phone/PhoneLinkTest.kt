@@ -302,6 +302,71 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `방 번호가 처음 오면 SYNC를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = null))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, runningRoomId = 812)))
+        runCurrent()
+
+        // then
+        assertEquals(1L, fixture.link.state.value.phoneState?.stateSequence)
+        assertTrue(fixture.sent.single() is WatchSync)
+    }
+
+    @Test
+    fun `러닝이 없다가 방 번호 없는 러닝이 오면 SYNC 없이 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1).copy(run = null))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, runningRoomId = null)))
+        runCurrent()
+
+        // then
+        assertEquals(2L, fixture.link.state.value.phoneState?.stateSequence)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
+    fun `방 번호가 있던 러닝이 사라지면 SYNC 없이 run null을 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = 812))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2).copy(run = null)))
+        runCurrent()
+
+        // then
+        val linkState = fixture.link.state.value
+        assertEquals(2L, linkState.phoneState?.stateSequence)
+        assertNull(linkState.phoneState?.run)
+        assertFalse(linkState.isSyncing)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
+    fun `방 번호가 있던 러닝 다음에 방 번호 없는 러닝이 오면 SYNC 없이 받는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = 812))
+
+        // when
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, runningRoomId = null)))
+        runCurrent()
+
+        // then
+        val linkState = fixture.link.state.value
+        assertEquals(2L, linkState.phoneState?.stateSequence)
+        assertFalse(linkState.isSyncing)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
     fun `명령은 처리됐다는 상태가 올 때까지 잠근다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -314,7 +379,10 @@ class PhoneLinkTest {
         // then
         assertTrue(isSent)
         val pause = fixture.sent.single() as WatchPause
-        assertEquals(WatchPause(pause.requestId, "p1", 812, 4), pause)
+        assertEquals(
+            WatchPause(requestId = pause.requestId, phoneInstanceId = "p1", runningRoomId = 812, statusVersion = 4),
+            pause,
+        )
         assertTrue(fixture.link.state.value.isLocked)
 
         // when -> 폰이 반영한 상태를 보낸다
@@ -324,6 +392,25 @@ class PhoneLinkTest {
 
         // then
         assertFalse(fixture.link.state.value.isLocked)
+    }
+
+    @Test
+    fun `방 번호 없는 러닝에서 누르면 방 번호 null 그대로 명령을 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1, runningRoomId = null, statusVersion = 4))
+
+        // when
+        val isSent = fixture.link.pause()
+        runCurrent()
+
+        // then
+        assertTrue(isSent)
+        val pause = fixture.sent.single() as WatchPause
+        assertEquals(
+            WatchPause(requestId = pause.requestId, phoneInstanceId = "p1", runningRoomId = null, statusVersion = 4),
+            pause,
+        )
     }
 
     @Test
@@ -380,7 +467,7 @@ class PhoneLinkTest {
         // given
         val fixture = Fixture(this)
 
-        // when & then -> 폰 상태를 받기 전
+        // when & then -> 폰 상태를 아직 받지 않았다
         assertFalse(fixture.link.pause())
 
         // given
@@ -549,7 +636,7 @@ class PhoneLinkTest {
         fun state(
             sequence: Long,
             phoneInstanceId: String = "p1",
-            runningRoomId: Long = 812,
+            runningRoomId: Long? = 812,
             statusVersion: Int = 0,
             lastRequestId: String? = null,
             distanceMeters: Int = 1000,
@@ -567,7 +654,6 @@ class PhoneLinkTest {
                 isPenaltyApplicable = true,
                 me = MyRecord(distanceMeters = distanceMeters, elapsedSeconds = 300),
                 players = emptyList(),
-                playersAgeSeconds = 0,
             ),
         )
     }
