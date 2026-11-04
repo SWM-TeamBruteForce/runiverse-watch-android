@@ -15,7 +15,7 @@ data class WatchSync(val syncId: String) : WatchMessage
 data class WatchPause(
     val requestId: String,
     val phoneInstanceId: String,
-    val runningRoomId: Long,
+    val runningRoomId: Long?,
     val statusVersion: Int,
 ) : WatchMessage
 
@@ -23,7 +23,7 @@ data class WatchPause(
 data class WatchResume(
     val requestId: String,
     val phoneInstanceId: String,
-    val runningRoomId: Long,
+    val runningRoomId: Long?,
     val statusVersion: Int,
 ) : WatchMessage
 
@@ -31,7 +31,7 @@ data class WatchResume(
 data class WatchFinish(
     val requestId: String,
     val phoneInstanceId: String,
-    val runningRoomId: Long,
+    val runningRoomId: Long?,
     val statusVersion: Int,
     val forced: Boolean,
 ) : WatchMessage
@@ -76,7 +76,7 @@ data class PhoneState(
 
 @Serializable
 data class RunState(
-    val runningRoomId: Long,
+    val runningRoomId: Long? = null,
     val type: RoomType,
     val status: RunStatus,
     val targetDistanceMeters: Int? = null,
@@ -84,7 +84,6 @@ data class RunState(
     val isPenaltyApplicable: Boolean,
     val me: MyRecord,
     val players: List<Player>,
-    val playersAgeSeconds: Int,
     val finish: FinishProgress? = null,
     val result: RunResult? = null,
 )
@@ -109,6 +108,7 @@ data class Player(
     val gapMeters: Int? = null,
     val comboCount: Int,
     val maxComboCount: Int,
+    val isStale: Boolean,
 )
 
 @Serializable

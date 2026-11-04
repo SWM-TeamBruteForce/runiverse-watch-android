@@ -115,7 +115,7 @@ class PhoneLink(
         WatchFinish(requestId, phoneInstanceId, runningRoomId, statusVersion, forced)
     }
 
-    private fun sendCommand(build: (String, String, Long, Int) -> WatchMessage): Boolean {
+    private fun sendCommand(build: (String, String, Long?, Int) -> WatchMessage): Boolean {
         val current = _state.value
         val phoneState = current.phoneState ?: return false
         val run = phoneState.run ?: return false

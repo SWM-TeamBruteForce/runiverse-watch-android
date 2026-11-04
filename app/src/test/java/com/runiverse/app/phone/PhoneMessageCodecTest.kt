@@ -20,8 +20,7 @@ class PhoneMessageCodecTest {
                       "caloriesKcal":210,"cadenceSpm":172},
                 "players":[{"userId":"u2","nickname":"콩나물","colorSlot":1,"distanceMeters":3541,
                             "currentPaceSecondsPerKm":318,"status":"RUNNING","gapMeters":120,
-                            "comboCount":12,"maxComboCount":20}],
-                "playersAgeSeconds":3,
+                            "comboCount":12,"maxComboCount":20,"isStale":false}],
                 "finish":{"stage":"GOAL_PENDING","remainingMeters":420},
                 "result":null
               }
@@ -63,15 +62,81 @@ class PhoneMessageCodecTest {
                             gapMeters = 120,
                             comboCount = 12,
                             maxComboCount = 20,
+                            isStale = false,
                         ),
                     ),
-                    playersAgeSeconds = 3,
                     finish = FinishProgress(stage = FinishStage.GOAL_PENDING, remainingMeters = 420),
                     result = null,
                 ),
             ),
         )
         assertEquals(expected, message)
+    }
+
+    @Test
+    fun `방이 아직 안 세워진 러닝은 방 번호 null로 읽는다`() {
+        // given
+        val body = """
+            {"event":"WATCH_STATE_UPDATED","data":{
+              "phoneInstanceId":"p1","stateSequence":1,"statusVersion":0,"lastRequestId":null,
+              "run":{
+                "runningRoomId":null,"type":"SOLO","status":"RUNNING","targetDistanceMeters":null,
+                "isServerConnected":false,"isPenaltyApplicable":false,
+                "me":{"distanceMeters":0,"elapsedSeconds":1},
+                "players":[],"finish":null,"result":null
+              }
+            }}
+        """.trimIndent()
+
+        // when
+        val message = PhoneMessageCodec.decode(body.encodeToByteArray())
+
+        // then
+        val expected = WatchStateUpdated(
+            PhoneState(
+                phoneInstanceId = "p1",
+                stateSequence = 1,
+                statusVersion = 0,
+                run = RunState(
+                    runningRoomId = null,
+                    type = RoomType.SOLO,
+                    status = RunStatus.RUNNING,
+                    isServerConnected = false,
+                    isPenaltyApplicable = false,
+                    me = MyRecord(distanceMeters = 0, elapsedSeconds = 1),
+                    players = emptyList(),
+                ),
+            ),
+        )
+        assertEquals(expected, message)
+    }
+
+    @Test
+    fun `파티원 흐림을 사람별로 읽는다`() {
+        // given
+        val body = """
+            {"event":"WATCH_STATE_UPDATED","data":{
+              "phoneInstanceId":"p1","stateSequence":1,"statusVersion":0,
+              "run":{
+                "runningRoomId":812,"type":"MATCH","status":"RUNNING",
+                "isServerConnected":true,"isPenaltyApplicable":true,
+                "me":{"distanceMeters":0,"elapsedSeconds":1},
+                "players":[
+                  {"userId":"u2","nickname":"콩나물","colorSlot":1,"distanceMeters":0,"status":"RUNNING",
+                   "comboCount":0,"maxComboCount":0,"isStale":true},
+                  {"userId":"u3","nickname":"두부","colorSlot":2,"distanceMeters":0,"status":"RUNNING",
+                   "comboCount":0,"maxComboCount":0,"isStale":false}
+                ]
+              }
+            }}
+        """.trimIndent()
+
+        // when
+        val message = PhoneMessageCodec.decode(body.encodeToByteArray())
+
+        // then
+        val players = (message as WatchStateUpdated).state.run?.players
+        assertEquals(listOf("u2" to true, "u3" to false), players?.map { it.userId to it.isStale })
     }
 
     @Test
@@ -160,5 +225,33 @@ class PhoneMessageCodecTest {
         val expected = """{"event":"WATCH_FINISH","data":""" +
             """{"requestId":"r1","phoneInstanceId":"p1","runningRoomId":812,"statusVersion":4,"forced":false}}"""
         assertEquals(expected, body)
+    }
+
+    @Test
+    fun `방 번호가 없는 명령은 필드를 빼지 않고 null로 쓴다`() {
+        // given
+        val messages = listOf(
+            WatchPause(requestId = "r1", phoneInstanceId = "p1", runningRoomId = null, statusVersion = 4),
+            WatchResume(requestId = "r1", phoneInstanceId = "p1", runningRoomId = null, statusVersion = 4),
+            WatchFinish(
+                requestId = "r1",
+                phoneInstanceId = "p1",
+                runningRoomId = null,
+                statusVersion = 4,
+                forced = true,
+            ),
+        )
+
+        // when
+        val bodies = messages.map { PhoneMessageCodec.encode(it).decodeToString() }
+
+        // then
+        val common = """"requestId":"r1","phoneInstanceId":"p1","runningRoomId":null,"statusVersion":4"""
+        val expected = listOf(
+            """{"event":"WATCH_PAUSE","data":{$common}}""",
+            """{"event":"WATCH_RESUME","data":{$common}}""",
+            """{"event":"WATCH_FINISH","data":{$common,"forced":true}}""",
+        )
+        assertEquals(expected, bodies)
     }
 }
