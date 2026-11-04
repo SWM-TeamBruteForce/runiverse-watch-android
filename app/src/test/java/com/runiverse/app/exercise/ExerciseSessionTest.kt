@@ -600,12 +600,15 @@ class ExerciseSessionTest {
 
     @Test
     fun `포기 시각에 막 받은 폰 답이 수집기보다 늦게 닿아도 세션을 끝내지 않는다`() = runTest {
-        // given
+        // given -> 1분째 묻고, 오래 잠들었다 깨어나 다시 물었다
         val fixture = Fixture(this)
         fixture.startSession()
         advanceTimeBy(60_001)
         runCurrent()
         fixture.sleptMs += 600_000
+        fixture.tracker.deliver(148)
+        runCurrent()
+        fixture.sleptMs += 60_000
 
         // when -> 수집기가 돌기 전에 심박이 먼저 배달된다
         fixture.answerSync(sequence = 2)
@@ -614,6 +617,7 @@ class ExerciseSessionTest {
 
         // then
         assertFalse(fixture.isEnded)
+        assertFalse(fixture.isPhoneLost)
         assertEquals(2L, fixture.link.state.value.phoneState?.stateSequence)
     }
 
