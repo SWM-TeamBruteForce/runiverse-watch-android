@@ -74,7 +74,7 @@ class PhoneMessageCodecTest {
     }
 
     @Test
-    fun `방이 아직 안 세워진 러닝은 방 번호 null로 읽는다`() {
+    fun `방 번호 없는 러닝은 방 번호를 null로 읽는다`() {
         // given
         val body = """
             {"event":"WATCH_STATE_UPDATED","data":{

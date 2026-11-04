@@ -302,7 +302,7 @@ class PhoneLinkTest {
     }
 
     @Test
-    fun `방이 세워져 번호가 처음 오면 SYNC를 보낸다`() = runTest {
+    fun `방 번호가 처음 오면 SYNC를 보낸다`() = runTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1, runningRoomId = null))
@@ -332,7 +332,7 @@ class PhoneLinkTest {
     }
 
     @Test
-    fun `방이 있던 러닝이 사라지면 SYNC 없이 run null을 받는다`() = runTest {
+    fun `방 번호가 있던 러닝이 사라지면 SYNC 없이 run null을 받는다`() = runTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1, runningRoomId = 812))
@@ -350,7 +350,7 @@ class PhoneLinkTest {
     }
 
     @Test
-    fun `방이 있던 러닝 다음에 방 번호 없는 러닝이 오면 SYNC 없이 받는다`() = runTest {
+    fun `방 번호가 있던 러닝 다음에 방 번호 없는 러닝이 오면 SYNC 없이 받는다`() = runTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1, runningRoomId = 812))
@@ -379,7 +379,10 @@ class PhoneLinkTest {
         // then
         assertTrue(isSent)
         val pause = fixture.sent.single() as WatchPause
-        assertEquals(WatchPause(pause.requestId, "p1", 812, 4), pause)
+        assertEquals(
+            WatchPause(requestId = pause.requestId, phoneInstanceId = "p1", runningRoomId = 812, statusVersion = 4),
+            pause,
+        )
         assertTrue(fixture.link.state.value.isLocked)
 
         // when -> 폰이 반영한 상태를 보낸다
@@ -392,7 +395,7 @@ class PhoneLinkTest {
     }
 
     @Test
-    fun `방이 아직 없는 러닝에서 누르면 방 번호 null 그대로 명령을 보낸다`() = runTest {
+    fun `방 번호 없는 러닝에서 누르면 방 번호 null 그대로 명령을 보낸다`() = runTest {
         // given
         val fixture = Fixture(this)
         fixture.connect(state(sequence = 1, runningRoomId = null, statusVersion = 4))
@@ -404,7 +407,10 @@ class PhoneLinkTest {
         // then
         assertTrue(isSent)
         val pause = fixture.sent.single() as WatchPause
-        assertEquals(WatchPause(pause.requestId, "p1", null, 4), pause)
+        assertEquals(
+            WatchPause(requestId = pause.requestId, phoneInstanceId = "p1", runningRoomId = null, statusVersion = 4),
+            pause,
+        )
     }
 
     @Test
@@ -461,7 +467,7 @@ class PhoneLinkTest {
         // given
         val fixture = Fixture(this)
 
-        // when & then -> 폰 상태를 받기 전
+        // when & then -> 폰 상태를 아직 받지 않았다
         assertFalse(fixture.link.pause())
 
         // given
