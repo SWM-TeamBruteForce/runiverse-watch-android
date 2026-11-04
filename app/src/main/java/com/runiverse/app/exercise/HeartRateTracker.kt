@@ -128,7 +128,8 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
     override suspend fun stop(): Boolean {
         // 주인을 모르면(조회 실패) 끄기를 시도한다 — 남의 운동이면 끄기 요청만 실패한다
         val ended = when (currentOwner()) {
-            ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise() } != null
+            // 끝내기는 성공해도 null(Void)을 돌려줘, 실패와 가르려고 true를 따로 돌려준다
+            ExerciseOwner.ME, null -> healthCall { exerciseClient.endExercise(); true } ?: false
             ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> true
         }
         callback?.let { registered ->
