@@ -107,6 +107,8 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
                 }
             }
         }
+        // 다른 앱에 밀렸다 다시 잴 때 앞 콜백이 남아 두 번 불리지 않게 먼저 푼다
+        callback?.let { exerciseClient.clearUpdateCallbackAsync(it) }
         callback = registered
         exerciseClient.setUpdateCallback(registered)
     }
