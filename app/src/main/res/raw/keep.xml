@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 코드가 참조하지 않고 시스템이 이름으로 읽는 배열이라 축소가 지운다 — values 파일에 tools:keep을 달면 남지 않는다 -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@array/android_wear_capabilities" />
