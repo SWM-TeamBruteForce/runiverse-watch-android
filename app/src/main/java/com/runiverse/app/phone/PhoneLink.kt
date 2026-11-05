@@ -17,7 +17,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 data class PhoneLinkState(
-    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 지우지 않는다 — 화면은 이 값에서 멈춘다. */
+    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 러닝을 접기 전까지는 지우지 않는다 — 화면은 이 값에서 멈춘다. */
     val phoneState: PhoneState? = null,
     val birthday: String? = null,
     val photos: List<PlayerPhoto> = emptyList(),
@@ -31,6 +31,9 @@ data class PhoneLinkState(
     val isCommandOverdue: Boolean = false,
 ) {
     val isLocked: Boolean get() = isSyncing || pendingRequestId != null
+
+    /** 마지막으로 받은 상태에 아직 끝나지 않은 러닝이 있다. */
+    val isRunActive: Boolean get() = phoneState?.run?.let { it.status != RunStatus.FINISHED } ?: false
 }
 
 /**
@@ -46,7 +49,7 @@ class PhoneLink(
     private val _state = MutableStateFlow(PhoneLinkState())
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
-    // TODO: 콤보 진동 — exercise 서비스를 만들 때 앱·서비스에서 구독한다. 받는 쪽이 없으면 버린다
+    // TODO: 콤보 진동 — 콤보 효과를 만들 때 앱에서 구독한다. 받는 쪽이 없으면 버린다
     private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
@@ -70,6 +73,21 @@ class PhoneLink(
 
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
+
+    /** 화면이 꺼진 동안 폰이 아직 있는지 묻는다. 화면이 켜져 있으면 3초 감시가 이미 묻고 있다. */
+    fun probeWhileScreenOff() {
+        if (!isScreenVisible) requestSync()
+    }
+
+    /** 폰이 돌아오지 않아 러닝을 접는다. 다음 SYNCED 전까지 상태를 받지 않는다. */
+    fun forgetRun() {
+        syncJob?.cancel()
+        silenceJob?.cancel()
+        commandJob?.cancel()
+        // 접기 전에 보낸 물음의 답이 늦게 와도 접은 러닝을 되살리지 않는다
+        awaitedSyncIds.clear()
+        _state.value = PhoneLinkState()
+    }
 
     // 화면 둘이 잠깐 겹쳐도 먼저 멈춘 쪽이 꺼짐을 보내지 않게 켜진 화면 수를 센다
     fun onScreenStarted() {
@@ -219,8 +237,7 @@ class PhoneLink(
     // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
     private fun awaitNextState() {
         silenceJob?.cancel()
-        val run = _state.value.phoneState?.run
-        if (!isScreenVisible || run == null || run.status == RunStatus.FINISHED) return
+        if (!isScreenVisible || !_state.value.isRunActive) return
         silenceJob = scope.launch {
             delay(REPLY_TIMEOUT)
             _state.update { it.copy(isPhoneReachable = false) }

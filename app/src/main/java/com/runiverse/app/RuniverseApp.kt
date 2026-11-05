@@ -3,6 +3,8 @@ package com.runiverse.app
 import android.app.Application
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
+import com.runiverse.app.exercise.ExerciseSession
+import com.runiverse.app.exercise.HealthServicesHeartRateTracker
 import com.runiverse.app.phone.PhoneChannel
 import com.runiverse.app.phone.PhoneLink
 import kotlinx.coroutines.MainScope
@@ -18,6 +20,7 @@ class RuniverseApp : Application() {
     private val scope = MainScope()
     private val phoneChannel by lazy { PhoneChannel(this) }
     val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
+    val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
 
     override fun onCreate() {
         super.onCreate()

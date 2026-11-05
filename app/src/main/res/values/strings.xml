@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Runiverse</string>
+    <string name="running_notification_channel">러닝 기록</string>
+    <string name="running_notification_title">러닝 기록 중</string>
 </resources>
