@@ -45,6 +45,15 @@ internal object RunPreviewSamples {
         players = players.map { it.copy(gapMeters = 9_999) },
     )
 
+    val finishedPlayer = player("u1", "콩나물", 2, gapMeters = 1_579, status = RunStatus.FINISHED)
+        .copy(distanceMeters = 5000)
+
+    val notNotifiedPlayer = player("u1", "함께 달리는 사람", 1, gapMeters = null, status = RunStatus.RUNNING)
+        .copy(distanceMeters = 0, currentPaceSecondsPerKm = null, maxComboCount = 0)
+
+    val longestPlayer = player("u1", "가나다라마바사아자차카", 1, gapMeters = 42_195, status = RunStatus.RUNNING)
+        .copy(distanceMeters = 42_100, currentPaceSecondsPerKm = 605, maxComboCount = 888)
+
     private fun player(
         userId: String,
         nickname: String,

@@ -79,6 +79,10 @@ internal fun runiverseTypography(): Typography {
         Typography(
             defaultFontFamily = SUIT,
             numeralExtraLarge = TextStyle(fontSize = bigNumberSize, fontWeight = FontWeight.Bold),
+            numeralLarge = TextStyle(
+                fontSize = (bigNumberSize.value * STATUS_TO_NUMBER_RATIO).sp,
+                fontWeight = FontWeight.Bold,
+            ),
             numeralSmall = TextStyle(fontSize = sizes.value, fontWeight = FontWeight.SemiBold),
             numeralExtraSmall = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),
             bodyMedium = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),

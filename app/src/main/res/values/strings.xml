@@ -10,6 +10,12 @@
     <string name="run_player_disconnected">끊김</string>
     <string name="run_player_finished">마침</string>
     <string name="run_value_unknown">--</string>
+    <string name="run_gap_ahead">앞</string>
+    <string name="run_gap_behind">뒤</string>
+    <string name="run_pace_partner">상대</string>
+    <string name="run_pace_me">나</string>
+    <string name="run_combo_current">%d콤보</string>
+    <string name="run_combo_best">최고 %d</string>
     <string name="unit_km">km</string>
     <string name="unit_m">m</string>
     <string name="unit_kilo">k</string>
