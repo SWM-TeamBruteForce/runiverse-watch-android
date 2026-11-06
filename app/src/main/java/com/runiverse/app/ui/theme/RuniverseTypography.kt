@@ -56,7 +56,7 @@ internal fun statusWordRaise(statusSize: Float, numberSize: Float): Float {
 
 private const val TABULAR_NUMERALS = "tnum"
 
-/** 글자 크기표다. 자리마다 따로 두지 않고 큰 숫자·수치·읽는 글자·보조 글자 네 단계만 쓴다. */
+/** 화면 크기별 글자 크기표다. 보조 글자는 화면과 상관없이 같고, 상태 글자는 읽는 글자에서 줄여 쓴다. */
 private class WatchFontSizes(val bigNumber: Dp, val value: TextUnit, val reading: TextUnit)
 
 private val LARGE_SCREEN_FONT_SIZES = WatchFontSizes(bigNumber = 53.dp, value = 18.sp, reading = 14.sp)
@@ -69,11 +69,7 @@ private const val STATUS_TO_NUMBER_RATIO = 0.93f
 /** 1초마다 바뀌는 내 수치에만 쓴다 — 10초마다 오는 파티원 수는 원래 폭이 글자 간격이 고르다. */
 fun TextStyle.tabularNumerals(): TextStyle = copy(fontFeatureSettings = TABULAR_NUMERALS)
 
-/**
- * 시안의 자리별 글자 크기를 Wear 글자 슬롯에 둔다. 자리마다 크기는 하나로 고정한다.
- * 큰 수(페이스·심박) numeralExtraLarge, 수치 numeralSmall, 사진 아래 격차 numeralExtraSmall,
- * 안내 문구 bodyMedium, 사진 아래 줄의 상태 글자 bodySmall, 단위·라벨 labelSmall, 사진 자리 이름 첫 글자 labelMedium이다.
- */
+/** 시안의 자리별 글자 크기를 Wear 글자 슬롯에 둔다. 자리마다 크기는 하나로 고정한다. */
 @Composable
 internal fun runiverseTypography(): Typography {
     val sizes = if (isSmallWatchScreen()) SMALL_SCREEN_FONT_SIZES else LARGE_SCREEN_FONT_SIZES

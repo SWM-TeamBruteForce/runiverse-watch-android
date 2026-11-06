@@ -61,7 +61,7 @@ private val GAP_INDICATOR_TO_VALUE = 2.dp
 private val MIN_SPACE_BESIDE_GAP_LABEL = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
-// 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 격차로 잰다
+// 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
 private val WIDEST_GAPS_METERS = listOf(888, 9_900)
 
 @Composable
