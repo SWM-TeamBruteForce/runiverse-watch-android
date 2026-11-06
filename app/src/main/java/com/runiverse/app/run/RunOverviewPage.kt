@@ -81,12 +81,22 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             abbreviateUnits,
             Modifier.contentBottomAt(slots.topRowBottom).alpha(phoneValuesAlpha),
         )
-        AlignedText(
-            formatPace(run.me.currentPaceSecondsPerKm),
-            MaterialTheme.typography.numeralExtraLarge.tabularNumerals(),
-            MaterialTheme.colorScheme.onBackground,
-            Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
-        )
+        // 버튼으로 멈춘 동안은 지금 페이스가 없어 그 자리를 상태 글자가 대신한다
+        if (run.status == RunStatus.PAUSED) {
+            AlignedText(
+                stringResource(R.string.run_status_paused),
+                MaterialTheme.typography.numeralLarge,
+                MaterialTheme.colorScheme.onBackground,
+                Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
+            )
+        } else {
+            AlignedText(
+                formatPace(run.me.currentPaceSecondsPerKm),
+                MaterialTheme.typography.numeralExtraLarge.tabularNumerals(),
+                MaterialTheme.colorScheme.onBackground,
+                Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
+            )
+        }
         if (run.players.isEmpty()) {
             SoloHeartRate(heartRateBpm, heartRateZone, Modifier.contentTopAt(slots.belowRowTop))
         } else {
@@ -264,9 +274,9 @@ internal fun connectionNotice(run: RunState, isPhoneReachable: Boolean): String?
 
 @Composable
 internal fun playerStatusWord(status: RunStatus): String? = when (status) {
-    RunStatus.PAUSED -> stringResource(R.string.run_player_paused)
-    RunStatus.DISCONNECTED -> stringResource(R.string.run_player_disconnected)
-    RunStatus.FINISHED -> stringResource(R.string.run_player_finished)
+    RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
+    RunStatus.DISCONNECTED -> stringResource(R.string.run_status_disconnected)
+    RunStatus.FINISHED -> stringResource(R.string.run_status_finished)
     RunStatus.RUNNING -> null
 }
 
@@ -431,4 +441,27 @@ private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
 @Composable
 private fun RunOverviewPageSoloPreview() = RunPreviewFrame {
     RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun RunOverviewPageSoloPausedPreview() = RunPreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
 }

@@ -28,6 +28,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -54,7 +55,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
         if (notice != null) {
             // 끊긴 동안은 첫 화면이 오래된 격차를 숨기듯 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
             MyPace(
-                run.me.currentPaceSecondsPerKm,
+                run.shownMyPaceSecondsPerKm(),
                 Modifier.contentTopAt(slots.belowRowTop).alpha(phoneValuesAlpha),
             )
             AlignedText(
@@ -64,7 +65,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 Modifier.contentTopAt(slots.bottomRowTop),
             )
         } else {
-            PaceAndComboRows(player, run.me.currentPaceSecondsPerKm, slots, playerValuesAlpha, phoneValuesAlpha)
+            PaceAndComboRows(player, run.shownMyPaceSecondsPerKm(), slots, playerValuesAlpha, phoneValuesAlpha)
         }
     }
 }
@@ -280,6 +281,13 @@ private fun PartyPageBehindComboPreview() = RunPreviewFrame {
 @Composable
 private fun PartyPagePausedPreview() = RunPreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun PartyPageMePausedPreview() = RunPreviewFrame {
+    val run = RunPreviewSamples.party.copy(status = RunStatus.PAUSED)
+    PartyPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound

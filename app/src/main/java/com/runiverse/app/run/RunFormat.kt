@@ -76,4 +76,7 @@ fun Player.shownPaceSecondsPerKm(): Int? = when (status) {
     RunStatus.RUNNING, RunStatus.FINISHED -> currentPaceSecondsPerKm
 }
 
+/** 내가 버튼으로 멈춰도 상대처럼 지금 페이스가 없다. */
+fun RunState.shownMyPaceSecondsPerKm(): Int? = if (status == RunStatus.PAUSED) null else me.currentPaceSecondsPerKm
+
 private fun Int.pad2(): String = toString().padStart(2, '0')

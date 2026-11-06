@@ -6,9 +6,9 @@
 
     <string name="run_phone_checking">폰 연결 확인 중</string>
     <string name="run_server_checking">서버 연결 확인 중</string>
-    <string name="run_player_paused">멈춤</string>
-    <string name="run_player_disconnected">끊김</string>
-    <string name="run_player_finished">마침</string>
+    <string name="run_status_paused">멈춤</string>
+    <string name="run_status_disconnected">끊김</string>
+    <string name="run_status_finished">마침</string>
     <string name="run_value_unknown">--</string>
     <string name="run_gap_ahead">앞</string>
     <string name="run_gap_behind">뒤</string>

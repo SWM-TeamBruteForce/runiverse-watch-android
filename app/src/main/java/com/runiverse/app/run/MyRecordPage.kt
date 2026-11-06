@@ -21,6 +21,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_DESCENDER_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
@@ -53,9 +54,15 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
             ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
-        if (!isPhoneReachable) {
+        // 같은 자리라 끊김 안내가 멈춤보다 먼저다 — 심박은 워치가 재는 값이라 멈춰도 그대로 둔다
+        val topNotice = when {
+            !isPhoneReachable -> stringResource(R.string.run_phone_checking)
+            run.status == RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
+            else -> null
+        }
+        if (topNotice != null) {
             AlignedText(
-                stringResource(R.string.run_phone_checking),
+                topNotice,
                 MaterialTheme.typography.bodyMedium,
                 MaterialTheme.colorScheme.onSurface,
                 Modifier.contentBottomAt(slots.topRowBottom),
@@ -129,6 +136,18 @@ private fun MyRecordPagePreview() = RunPreviewFrame {
 @Composable
 private fun MyRecordPagePhoneLostPreview() = RunPreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun MyRecordPagePausedPreview() = RunPreviewFrame {
+    MyRecordPage(
+        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
 }
 
 @WearPreviewLargeRound
