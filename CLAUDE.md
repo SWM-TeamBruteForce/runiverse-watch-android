@@ -22,8 +22,10 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   ```
   RuniverseApp   앱에 하나뿐인 것(폰 연결·운동 세션)을 직접 만든다
   MainActivity   화면을 열 때 SYNC, 켜짐·꺼짐을 알린다. 러닝이 보이면 운동 서비스를 시작한다
+  IdleScreen     러닝이 없을 때 보이는 대기 화면
   phone/         폰과 메시지 주고받기·연결 상태
   exercise/      러닝 중 앱을 살려 두는 서비스·심박 측정
+  run/           러닝 중 화면(첫 화면·내 기록 장)과 표기 규칙
   ui/theme/      여러 기능이 같이 쓰는 색·글자. 화면은 MaterialTheme으로 읽는다
   ui/component/  두 기능 이상이 쓰는 부품
   ```

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Runiverse" parent="@android:style/Theme.DeviceDefault">
+        <!-- 러닝 중에만 쓸어서 닫기를 막아야 해서 시스템 닫기를 끄고 화면이 맡는다 -->
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
+</resources>

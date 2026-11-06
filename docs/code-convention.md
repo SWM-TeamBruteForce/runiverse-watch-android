@@ -8,7 +8,7 @@
 
 ## 네이밍
 
-- 클래스·인터페이스·object·enum: `PascalCase`. `@Composable` 함수도 `PascalCase`로 짓는다.
+- 클래스·인터페이스·object·enum: `PascalCase`. `Unit`을 돌려주는 `@Composable` 함수도 `PascalCase`로, 값을 돌려주는 `@Composable` 함수는 `camelCase`로 짓는다.
 - 함수·변수·파라미터: `camelCase`
 - 상수(`const val`·최상위 불변 값): `UPPER_SNAKE_CASE`
 - 패키지: 소문자, 밑줄 없이 쓴다.
@@ -20,7 +20,7 @@
 - 화면·페이지는 파일 하나씩 둔다. 그 화면만 쓰는 부품은 같은 파일에 `private`로 둔다.
 - 부품 파일 이름은 컴포저블 이름과 같다. `Components.kt`·`Utils.kt`는 만들지 않는다.
 - 보이는 문구는 `strings.xml`에, 표기 규칙(거리·격차·심박 구간)은 Composable 밖 함수로 두고 단위 테스트한다.
-- 목업 px는 애플은 pt×2, 갤럭시는 화면 실제 px(워치8 44mm에서 dp×2.125)다. px를 그대로 dp로 옮기지 않는다.
+- 시안 치수는 dp·sp로 적혀 있다. 앱도 그 값을 그대로 쓰고 px로 환산하지 않는다.
 - 화면은 `@Preview`로 맞추고, 마지막은 손목 실물로 확인한다.
 
 ## 주석

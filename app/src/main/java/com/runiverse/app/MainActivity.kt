@@ -4,21 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.compose.foundation.SwipeToDismissValue
+import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
-import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.ScreenScaffold
-import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.run.RunScreen
+import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -56,12 +58,25 @@ class MainActivity : ComponentActivity() {
             runiverseApp.exerciseSession.phoneLost.collect { finish() }
         }
         setContent {
-            MaterialTheme {
+            val link by phoneLink.state.collectAsState()
+            val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
+            val run = link.phoneState?.run?.takeIf { link.isRunActive }
+            RuniverseTheme {
                 AppScaffold {
-                    ScreenScaffold {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(text = stringResource(R.string.app_name))
+                    if (run == null) {
+                        val dismissState = rememberSwipeToDismissBoxState()
+                        var isDismissed by remember { mutableStateOf(false) }
+                        // 라이브러리가 닫기 함수를 부르기 전에 화면을 되돌려, 앱이 한 번 더 보이지 않게 숨긴다
+                        if (dismissState.currentValue == SwipeToDismissValue.Dismissed) isDismissed = true
+                        // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
+                        SwipeToDismissBox(
+                            onDismissed = { if (!phoneLink.state.value.isRunActive) finish() },
+                            state = dismissState,
+                        ) { isBackground ->
+                            if (!isBackground && !isDismissed) IdleScreen()
                         }
+                    } else {
+                        RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
                     }
                 }
             }
