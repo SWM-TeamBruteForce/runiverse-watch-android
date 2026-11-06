@@ -220,12 +220,7 @@ private fun GapLabelRow(
 
 @Composable
 private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecimal: Boolean) {
-    val statusWord = when (player.status) {
-        RunStatus.PAUSED -> stringResource(R.string.run_player_paused)
-        RunStatus.DISCONNECTED -> stringResource(R.string.run_player_disconnected)
-        RunStatus.FINISHED -> stringResource(R.string.run_player_finished)
-        RunStatus.RUNNING -> null
-    }
+    val statusWord = playerStatusWord(player.status)
     if (statusWord != null) {
         val statusStyle = MaterialTheme.typography.bodySmall
         val numberStyle = MaterialTheme.typography.numeralExtraSmall
@@ -265,7 +260,15 @@ private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: Te
     }
 
 @Composable
-private fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
+internal fun playerStatusWord(status: RunStatus): String? = when (status) {
+    RunStatus.PAUSED -> stringResource(R.string.run_player_paused)
+    RunStatus.DISCONNECTED -> stringResource(R.string.run_player_disconnected)
+    RunStatus.FINISHED -> stringResource(R.string.run_player_finished)
+    RunStatus.RUNNING -> null
+}
+
+@Composable
+internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
     DistanceUnitLabel.METER -> stringResource(R.string.unit_m)
     DistanceUnitLabel.KILOMETER -> stringResource(R.string.unit_km)
     DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_kilo)
