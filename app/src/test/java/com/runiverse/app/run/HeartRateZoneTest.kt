@@ -7,7 +7,7 @@ import java.time.LocalDate
 
 class HeartRateZoneTest {
 
-    // 만 30세 — 최대 심박 190, 경계 95·114·133·152·171
+    // 만 30세라 최대 심박은 190이고 구간 경계는 95·114·133·152·171이다
     private val birthday = LocalDate.of(1995, 3, 10)
     private val today = LocalDate.of(2025, 3, 10)
 
