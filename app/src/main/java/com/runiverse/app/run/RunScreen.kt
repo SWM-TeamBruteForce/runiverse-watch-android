@@ -20,8 +20,10 @@ private const val PAGE_COUNT = 2
 internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, birthday: String?) {
     val pagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
     val scope = rememberCoroutineScope()
-    // 러닝 중엔 뒤로가기로 앱을 닫지 않는다 — 끝내는 길은 종료 버튼 하나다
-    BackHandler { scope.launch { pagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX) } }
+    // 첫 화면에서 뒤로가면 러닝을 끝내지 않고 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
+    BackHandler(enabled = pagerState.currentPage != OVERVIEW_PAGE_INDEX) {
+        scope.launch { pagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX) }
+    }
 
     val birthDate = remember(birthday) { parseBirthday(birthday) }
     val zone = birthDate?.let { date -> heartRateBpm?.let { calculateHeartRateZone(it, date, LocalDate.now()) } ?: 0 }
