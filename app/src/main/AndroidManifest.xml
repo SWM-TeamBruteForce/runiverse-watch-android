@@ -16,7 +16,7 @@
         android:allowBackup="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault">
+        android:theme="@style/Theme.Runiverse">
 
         <!-- 폰 앱 없이는 안 돈다 — 러닝 기록은 폰이 한다 -->
         <meta-data

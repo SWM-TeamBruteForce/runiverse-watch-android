@@ -4,21 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.compose.material3.AppScaffold
-import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.ScreenScaffold
-import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.run.RunScreen
+import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -56,11 +53,18 @@ class MainActivity : ComponentActivity() {
             runiverseApp.exerciseSession.phoneLost.collect { finish() }
         }
         setContent {
-            MaterialTheme {
+            val link by phoneLink.state.collectAsState()
+            val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
+            val run = link.phoneState?.run?.takeIf { link.isRunActive }
+            RuniverseTheme {
                 AppScaffold {
-                    ScreenScaffold {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(text = stringResource(R.string.app_name))
+                    // 시스템 닫기는 테마에서 껐다 — 러닝 중에만 막고 나머지 화면은 여기서 쓸어 닫는다
+                    SwipeToDismissBox(onDismissed = ::finish, userSwipeEnabled = run == null) { isBackground ->
+                        if (isBackground) return@SwipeToDismissBox
+                        if (run == null) {
+                            IdleScreen()
+                        } else {
+                            RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
                         }
                     }
                 }
