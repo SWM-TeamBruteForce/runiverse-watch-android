@@ -39,7 +39,6 @@ dependencies {
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.wear.compose.material3)
     // 미리보기 어노테이션만 담긴다 — 그리는 도구는 debug 빌드에만 넣는다
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.wear.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.wear.ongoing)
