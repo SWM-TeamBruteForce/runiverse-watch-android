@@ -46,6 +46,7 @@ import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
 import com.runiverse.app.ui.theme.tabularNumerals
@@ -101,12 +102,16 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             AvatarRow(run, isPhoneReachable, cellWidth, Modifier.contentTopAt(slots.belowRowTop))
             // 끊긴 동안의 격차는 오래된 값이라 숨기고 그 자리에 안내를 띄운다
             if (notice == null) {
+                // 상태 글자는 숫자보다 윗변이 높아 윗변으로 맞추면 누가 멈출 때 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
+                val gapInkHeight = with(LocalDensity.current) {
+                    MaterialTheme.typography.numeralExtraSmall.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
+                }
                 GapLabelRow(
                     run.players,
                     abbreviateGapUnits,
                     dropGapKmDecimal,
                     cellWidth,
-                    Modifier.contentTopAt(slots.bottomRowTop),
+                    Modifier.baselineAt(slots.bottomRowTop + gapInkHeight),
                 )
             }
         }

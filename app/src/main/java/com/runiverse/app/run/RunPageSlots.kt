@@ -2,6 +2,7 @@ package com.runiverse.app.run
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
@@ -69,8 +70,12 @@ internal fun Modifier.contentTopAt(y: Float): Modifier = placedAt { y - it.conte
 
 internal fun Modifier.contentCenterAt(y: Float): Modifier = placedAt { y - (it.contentTop() + it.contentBottom()) / 2f }
 
-/** `bpm`의 p 꼬리처럼 숫자 아래로 내려가는 글자가 있어도 숫자 높이를 다른 장과 맞출 때 쓴다. */
-internal fun Modifier.baselineAt(y: Float): Modifier = placedAt { y - it[FirstBaseline] }
+/** 옆 글자(`bpm`의 p 꼬리, 상태 글자)에 상관없이 숫자 기준선을 정한 높이에 둘 때 쓴다. */
+internal fun Modifier.baselineAt(y: Float): Modifier = placedAt {
+    // 통지 전 파티원만 있는 격차 줄은 그릴 글자가 없어 기준선도 없다
+    val baseline = it[FirstBaseline]
+    if (baseline == AlignmentLine.Unspecified) y else y - baseline
+}
 
 private fun Modifier.placedAt(placedTop: (Placeable) -> Float): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
