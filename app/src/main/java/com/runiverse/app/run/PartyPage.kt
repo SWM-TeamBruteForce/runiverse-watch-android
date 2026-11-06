@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -100,7 +101,8 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
                 Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
                     Box(Modifier.width(playerPaceCellWidth), contentAlignment = Alignment.CenterEnd) {
-                        playerPace(Modifier)
+                        // 상대는 같은 폭 숫자가 아니라 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 잘리지 않게 왼쪽으로 넘긴다
+                        playerPace(Modifier.wrapContentWidth(Alignment.End, unbounded = true))
                     }
                     Box(Modifier.width(myPaceCellWidth), contentAlignment = Alignment.CenterStart) {
                         myPace(Modifier)
