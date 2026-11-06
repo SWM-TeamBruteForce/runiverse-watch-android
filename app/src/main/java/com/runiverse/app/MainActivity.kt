@@ -6,11 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.compose.foundation.SwipeToDismissValue
+import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
@@ -59,11 +64,16 @@ class MainActivity : ComponentActivity() {
             RuniverseTheme {
                 AppScaffold {
                     if (run == null) {
+                        val dismissState = rememberSwipeToDismissBoxState()
+                        var isDismissed by remember { mutableStateOf(false) }
+                        // 라이브러리가 닫기 함수를 부르기 전에 화면을 되돌려, 앱이 한 번 더 보이지 않게 숨긴다
+                        if (dismissState.currentValue == SwipeToDismissValue.Dismissed) isDismissed = true
                         // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
                         SwipeToDismissBox(
                             onDismissed = { if (!phoneLink.state.value.isRunActive) finish() },
+                            state = dismissState,
                         ) { isBackground ->
-                            if (!isBackground) IdleScreen()
+                            if (!isBackground && !isDismissed) IdleScreen()
                         }
                     } else {
                         RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
