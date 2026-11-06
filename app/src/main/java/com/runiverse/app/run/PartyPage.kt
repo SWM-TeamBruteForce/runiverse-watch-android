@@ -45,51 +45,18 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
     val playerValuesAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
     // 서버가 끊겨도 내 페이스는 폰이 계속 재는 값이라 폰이 끊길 때만 흐린다
     val phoneValuesAlpha = if (isPhoneReachable) 1f else RunDimensions.STALE_CONTENT_ALPHA
-    val paceStyle = MaterialTheme.typography.numeralSmall
-    val playerLabel = stringResource(R.string.run_pace_player)
-    val myLabel = stringResource(R.string.run_pace_me)
-    val playerPaceCellWidth = widestLabeledPaceWidth(playerLabel, paceStyle)
-    val myPaceCellWidth = widestLabeledPaceWidth(myLabel, paceStyle)
-    val paceFitsOneLine = paceFitsOneLine(
-        slots.belowRowTop,
-        paceStyle,
-        playerPaceCellWidth + BETWEEN_PACES_GAP + myPaceCellWidth,
-    )
-    val comboTop = with(LocalDensity.current) {
-        partyComboRowTop(
-            slots,
-            paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
-            labelDescent = MaterialTheme.typography.labelSmall.fontSize.toPx() * SUIT_HANGUL_INK.belowBaselineEm,
-            paceRowCount = if (paceFitsOneLine) 1 else 2,
-            lineGap = RunDimensions.LINE_GAP.toPx(),
-        )
-    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(player.distanceMeters, run.targetDistanceMeters)?.let {
             ProgressRing(it, laneColor(player.colorSlot), Modifier.alpha(playerValuesAlpha))
         }
         DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(playerValuesAlpha))
         GapOrStatus(player, slots, playerValuesAlpha)
-        val myPace: @Composable (Modifier) -> Unit = { modifier ->
-            LabeledPace(
-                myLabel,
-                run.me.currentPaceSecondsPerKm,
-                paceStyle.tabularNumerals(),
-                modifier.alpha(phoneValuesAlpha),
-            )
-        }
-        val playerPace: @Composable (Modifier) -> Unit = { modifier ->
-            LabeledPace(
-                playerLabel,
-                player.shownPaceSecondsPerKm(),
-                paceStyle,
-                modifier.alpha(playerValuesAlpha),
-            )
-        }
-        val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
         if (notice != null) {
             // 끊긴 동안은 첫 화면이 오래된 격차를 숨기듯 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
-            myPace(paceRowsModifier)
+            MyPace(
+                run.me.currentPaceSecondsPerKm,
+                Modifier.contentTopAt(slots.belowRowTop).alpha(phoneValuesAlpha),
+            )
             AlignedText(
                 notice,
                 MaterialTheme.typography.bodyMedium,
@@ -97,35 +64,64 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 Modifier.contentTopAt(slots.bottomRowTop),
             )
         } else {
-            if (paceFitsOneLine) {
-                // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
-                Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
-                    Box(Modifier.width(playerPaceCellWidth), contentAlignment = Alignment.CenterEnd) {
-                        // 상대는 같은 폭 숫자가 아니라 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 잘리지 않게 왼쪽으로 넘긴다
-                        playerPace(Modifier.wrapContentWidth(Alignment.End, unbounded = true))
-                    }
-                    Box(Modifier.width(myPaceCellWidth), contentAlignment = Alignment.CenterStart) {
-                        myPace(Modifier)
-                    }
-                }
-            } else {
-                ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
-                    playerPace(Modifier)
-                    myPace(Modifier)
-                }
-            }
-            AlignedText(
-                if (player.comboCount > 0) {
-                    stringResource(R.string.run_combo_current, player.comboCount)
-                } else {
-                    stringResource(R.string.run_combo_best, player.maxComboCount)
-                },
-                MaterialTheme.typography.labelSmall,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                Modifier.contentTopAt(comboTop).alpha(playerValuesAlpha),
-            )
+            PaceAndComboRows(player, run.me.currentPaceSecondsPerKm, slots, playerValuesAlpha, phoneValuesAlpha)
         }
     }
+}
+
+// 콤보 줄 자리가 페이스 줄 수를 따라가서 같이 놓는다
+@Composable
+private fun PaceAndComboRows(
+    player: Player,
+    myPaceSecondsPerKm: Int?,
+    slots: RunPageSlots,
+    playerValuesAlpha: Float,
+    phoneValuesAlpha: Float,
+) {
+    val paceStyle = MaterialTheme.typography.numeralSmall
+    val playerCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_player), paceStyle)
+    val myCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_me), paceStyle)
+    val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + BETWEEN_PACES_GAP + myCellWidth)
+    val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
+    if (fitsOneLine) {
+        // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
+        Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
+            Box(Modifier.width(playerCellWidth), contentAlignment = Alignment.CenterEnd) {
+                // 상대는 같은 폭 숫자가 아니라 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 잘리지 않게 왼쪽으로 넘긴다
+                PlayerPace(
+                    player,
+                    Modifier.wrapContentWidth(Alignment.End, unbounded = true).alpha(playerValuesAlpha),
+                )
+            }
+            Box(Modifier.width(myCellWidth), contentAlignment = Alignment.CenterStart) {
+                MyPace(myPaceSecondsPerKm, Modifier.alpha(phoneValuesAlpha))
+            }
+        }
+    } else {
+        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
+            PlayerPace(player, Modifier.alpha(playerValuesAlpha))
+            MyPace(myPaceSecondsPerKm, Modifier.alpha(phoneValuesAlpha))
+        }
+    }
+    val comboTop = with(LocalDensity.current) {
+        partyComboRowTop(
+            slots,
+            paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
+            labelDescent = MaterialTheme.typography.labelSmall.fontSize.toPx() * SUIT_HANGUL_INK.belowBaselineEm,
+            paceRowCount = if (fitsOneLine) 1 else 2,
+            lineGap = RunDimensions.LINE_GAP.toPx(),
+        )
+    }
+    AlignedText(
+        if (player.comboCount > 0) {
+            stringResource(R.string.run_combo_current, player.comboCount)
+        } else {
+            stringResource(R.string.run_combo_best, player.maxComboCount)
+        },
+        MaterialTheme.typography.labelSmall,
+        MaterialTheme.colorScheme.onSurfaceVariant,
+        Modifier.contentTopAt(comboTop).alpha(playerValuesAlpha),
+    )
 }
 
 // 거리와 이름은 글자 종류·크기가 달라 기준선 대신 보이는 글자의 세로 가운데를 맞춘다
@@ -208,6 +204,26 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots, alpha: Float) {
             valueColor = color,
         )
     }
+}
+
+@Composable
+private fun PlayerPace(player: Player, modifier: Modifier) {
+    LabeledPace(
+        stringResource(R.string.run_pace_player),
+        player.shownPaceSecondsPerKm(),
+        MaterialTheme.typography.numeralSmall,
+        modifier,
+    )
+}
+
+@Composable
+private fun MyPace(secondsPerKm: Int?, modifier: Modifier) {
+    LabeledPace(
+        stringResource(R.string.run_pace_me),
+        secondsPerKm,
+        MaterialTheme.typography.numeralSmall.tabularNumerals(),
+        modifier,
+    )
 }
 
 @Composable

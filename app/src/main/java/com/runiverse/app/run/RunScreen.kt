@@ -60,23 +60,40 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
             gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
-                OVERVIEW_PAGE_INDEX -> VerticalPagerScaffold(
+                OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
-                    pageIndicator = if (run.players.isEmpty()) null else ({ VerticalPageDots(verticalPagerState) }),
-                    pageIndicatorAnimationSpec = PagerScaffoldDefaults.FadeOutAnimationSpec,
-                ) {
-                    VerticalPager(verticalPagerState) { verticalPage ->
-                        ScreenScaffold {
-                            val player = run.players.getOrNull(verticalPage - 1)
-                            if (player == null) {
-                                RunOverviewPage(run, isPhoneReachable, heartRateBpm, zone)
-                            } else {
-                                PartyPage(run, player, isPhoneReachable)
-                            }
-                        }
-                    }
-                }
+                    run,
+                    isPhoneReachable,
+                    heartRateBpm,
+                    zone,
+                )
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold { MyRecordPage(run, isPhoneReachable, heartRateBpm, zone) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverviewVerticalPager(
+    pagerState: PagerState,
+    run: RunState,
+    isPhoneReachable: Boolean,
+    heartRateBpm: Int?,
+    heartRateZone: Int?,
+) {
+    VerticalPagerScaffold(
+        pagerState,
+        pageIndicator = if (run.players.isEmpty()) null else ({ VerticalPageDots(pagerState) }),
+        pageIndicatorAnimationSpec = PagerScaffoldDefaults.FadeOutAnimationSpec,
+    ) {
+        VerticalPager(pagerState) { page ->
+            ScreenScaffold {
+                val player = run.players.getOrNull(page - 1)
+                if (player == null) {
+                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
+                } else {
+                    PartyPage(run, player, isPhoneReachable)
+                }
             }
         }
     }
