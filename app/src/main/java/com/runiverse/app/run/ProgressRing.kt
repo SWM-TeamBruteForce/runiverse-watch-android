@@ -32,16 +32,26 @@ internal fun ProgressRing(progress: Float, color: Color, modifier: Modifier = Mo
         val topLeft = Offset(inset, inset)
         val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
         drawArc(
-            trackColor, RING_START_DEGREES, RING_SWEEP_DEGREES, useCenter = false,
-            topLeft = topLeft, size = arcSize, style = Stroke(stroke),
+            trackColor,
+            RING_START_DEGREES,
+            RING_SWEEP_DEGREES,
+            useCenter = false,
+            topLeft = topLeft,
+            size = arcSize,
+            style = Stroke(stroke),
         )
         // 둥근 끝은 선 끝에서 두께 절반만큼 더 나간다 — 빈칸을 칠해진 끝 기준으로 지키려고 그 각도만큼 안쪽에서 시작·끝낸다
         val capDegrees = Math.toDegrees(asin((stroke / 2) / (arcSize.width / 2)).toDouble()).toFloat()
         val sweep = progress.coerceIn(0f, 1f) * (RING_SWEEP_DEGREES - capDegrees * 2)
         if (sweep > 0f) {
             drawArc(
-                color, RING_START_DEGREES + capDegrees, sweep, useCenter = false,
-                topLeft = topLeft, size = arcSize, style = Stroke(stroke, cap = StrokeCap.Round),
+                color,
+                RING_START_DEGREES + capDegrees,
+                sweep,
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                style = Stroke(stroke, cap = StrokeCap.Round),
             )
         }
     }

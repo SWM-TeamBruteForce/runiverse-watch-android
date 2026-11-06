@@ -377,8 +377,13 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
     listOf(0.85f, 0.55f).forEach { radius ->
         val r = size.width * radius
         drawArc(
-            color, startAngle = 225f, sweepAngle = 90f, useCenter = false,
-            topLeft = Offset(center.x - r, center.y - r), size = Size(r * 2, r * 2), style = stroke,
+            color,
+            startAngle = 225f,
+            sweepAngle = 90f,
+            useCenter = false,
+            topLeft = Offset(center.x - r, center.y - r),
+            size = Size(r * 2, r * 2),
+            style = stroke,
         )
     }
     drawCircle(color, radius = size.width * 0.09f, center = center)
