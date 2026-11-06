@@ -36,6 +36,20 @@ class HeartRateZoneTest {
     }
 
     @Test
+    fun `생일이 없으면 심박이 있어도 막대를 숨긴다`() {
+        // when & then
+        assertNull(heartRateZoneOrNull(133, null, today))
+        assertNull(heartRateZoneOrNull(null, null, today))
+    }
+
+    @Test
+    fun `생일이 있으면 심박이 없을 땐 빈 막대, 있으면 그 구간이다`() {
+        // when & then
+        assertEquals(0, heartRateZoneOrNull(null, birthday, today))
+        assertEquals(3, heartRateZoneOrNull(133, birthday, today))
+    }
+
+    @Test
     fun `생일은 yyyy-MM-dd로 읽고, 없거나 깨졌으면 null이다`() {
         // when & then
         assertEquals(LocalDate.of(1995, 3, 10), parseBirthday("1995-03-10"))

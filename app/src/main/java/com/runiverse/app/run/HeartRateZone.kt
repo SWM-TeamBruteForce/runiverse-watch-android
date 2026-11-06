@@ -13,6 +13,12 @@ fun calculateHeartRateZone(bpm: Int, birthday: LocalDate, today: LocalDate): Int
     return ZONE_LOWER_BOUNDS.count { bpm >= maxBpm * it }
 }
 
+/** 막대에 채울 칸 수다. 생일이 없으면 null(막대 숨김), 심박이 아직 없으면 0칸(빈 막대)이다. */
+fun heartRateZoneOrNull(bpm: Int?, birthday: LocalDate?, today: LocalDate): Int? {
+    if (birthday == null) return null
+    return bpm?.let { calculateHeartRateZone(it, birthday, today) } ?: 0
+}
+
 /** 폰이 보낸 생일(`yyyy-MM-dd`)이다. 없거나 읽을 수 없으면 null — 구간 막대를 숨긴다. */
 fun parseBirthday(value: String?): LocalDate? {
     if (value == null) return null

@@ -26,7 +26,7 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
     }
 
     val birthDate = remember(birthday) { parseBirthday(birthday) }
-    val zone = birthDate?.let { date -> heartRateBpm?.let { calculateHeartRateZone(it, date, LocalDate.now()) } ?: 0 }
+    val zone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
 
     // 장 사이는 화면이 통째로 밀리는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
     HorizontalPagerScaffold(pagerState, pageIndicator = null) {
