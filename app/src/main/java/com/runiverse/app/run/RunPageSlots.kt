@@ -60,7 +60,6 @@ internal fun Modifier.contentCenterAt(y: Float): Modifier = placedAt { y - (it.c
 /** `bpm`의 p 꼬리처럼 숫자 아래로 내려가는 글자가 있어도 숫자 높이를 다른 장과 맞출 때 쓴다. */
 internal fun Modifier.baselineAt(y: Float): Modifier = placedAt { y - it[FirstBaseline] }
 
-// 부모(화면 전체 Box)의 높이를 그대로 차지하고 그 안에서 세로 위치만 정한다
 private fun Modifier.placedAt(placedTop: (Placeable) -> Float): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
     val y = placedTop(placeable).roundToInt()

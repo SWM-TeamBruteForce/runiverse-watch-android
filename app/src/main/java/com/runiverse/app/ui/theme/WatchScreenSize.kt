@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 // 갤럭시 44mm 226dp는 큰 화면, 40mm(438px, 44mm와 같은 밀도로 보면 약 206dp)는 작은 화면이다
 private val SMALL_SCREEN_BELOW = 215.dp
 
-/** 215dp 미만이면 작은 화면용 글자 크기를 쓴다. */
 internal fun isSmallScreenWidth(width: Dp): Boolean = width < SMALL_SCREEN_BELOW
 
 @Composable

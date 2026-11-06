@@ -17,7 +17,6 @@ import kotlin.math.roundToInt
 internal val CONTENT_TOP = HorizontalAlignmentLine(::min)
 internal val CONTENT_BOTTOM = HorizontalAlignmentLine(::max)
 
-/** 글자 잉크의 윗변(첫 기준선 − 위 높이)과 아랫변(마지막 기준선 + 아래 깊이)을 [CONTENT_TOP]·[CONTENT_BOTTOM]으로 내보낸다. */
 internal fun Modifier.textContentBounds(fontSize: TextUnit, ink: InkExtent): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
     val firstBaseline = placeable[FirstBaseline]
