@@ -58,14 +58,15 @@ class MainActivity : ComponentActivity() {
             val run = link.phoneState?.run?.takeIf { link.isRunActive }
             RuniverseTheme {
                 AppScaffold {
-                    // 시스템 닫기는 테마에서 껐다 — 러닝 중에만 막고 나머지 화면은 여기서 쓸어 닫는다
-                    SwipeToDismissBox(onDismissed = ::finish, userSwipeEnabled = run == null) { isBackground ->
-                        if (isBackground) return@SwipeToDismissBox
-                        if (run == null) {
-                            IdleScreen()
-                        } else {
-                            RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
+                    if (run == null) {
+                        // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
+                        SwipeToDismissBox(
+                            onDismissed = { if (!phoneLink.state.value.isRunActive) finish() },
+                        ) { isBackground ->
+                            if (!isBackground) IdleScreen()
                         }
+                    } else {
+                        RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
                     }
                 }
             }
