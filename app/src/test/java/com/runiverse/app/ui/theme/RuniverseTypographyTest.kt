@@ -32,4 +32,10 @@ class RuniverseTypographyTest {
         // when & then -> 위는 한글, 아래는 p 꼬리
         assertEquals(InkExtent(aboveBaselineEm = 0.814f, belowBaselineEm = 0.216f), suitInkFor("심박 bpm"))
     }
+
+    @Test
+    fun `상태 글자는 세로 가운데가 옆 숫자와 맞는 만큼 올린다`() {
+        // when & then -> 아래 7.8 − (위아래 89.2 − 숫자 72.2) / 2
+        assertEquals(-0.7f, statusWordRaise(100f, 100f), 0.001f)
+    }
 }

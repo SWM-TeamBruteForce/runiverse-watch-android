@@ -63,6 +63,19 @@ class RunFormatTest {
     }
 
     @Test
+    fun `소수를 빼면 km만 버림한 정수로 쓰고 m는 그대로다`() {
+        // when & then
+        assertEquals(
+            FormattedDistance("9", DistanceUnitLabel.SHORT_KILOMETER),
+            formatGapDistance(9_999, abbreviateUnits = true, dropKmDecimal = true),
+        )
+        assertEquals(
+            FormattedDistance("999", null),
+            formatGapDistance(999, abbreviateUnits = true, dropKmDecimal = true),
+        )
+    }
+
+    @Test
     fun `격차가 양수면 상대가 앞, 음수면 뒤, 0이면 나란히다`() {
         // when & then
         assertEquals(GapDirection.AHEAD, gapDirection(120))
