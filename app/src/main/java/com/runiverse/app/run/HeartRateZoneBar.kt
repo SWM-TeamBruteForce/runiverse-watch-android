@@ -18,7 +18,6 @@ import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.R
 
 private const val ZONE_COUNT = 5
-private val BAR_HEIGHT = 3.dp
 private val SEGMENT_GAP = 3.dp
 
 // 심박은 세 자리가 가장 길다 — 막대를 이 폭으로 고정해 100을 넘는 순간 길이가 바뀌지 않게 한다
@@ -43,7 +42,7 @@ internal fun longestHeartRateBlockWidth(valueStyle: TextStyle): Dp {
 internal fun HeartRateZoneBar(filledZones: Int, modifier: Modifier = Modifier) {
     val filledColor = MaterialTheme.colorScheme.onBackground
     val emptyColor = MaterialTheme.colorScheme.outline
-    Canvas(modifier.boxContentBounds().height(BAR_HEIGHT)) {
+    Canvas(modifier.boxContentBounds().height(RunDimensions.ZONE_BAR_HEIGHT)) {
         val gap = SEGMENT_GAP.toPx()
         val segment = (size.width - gap * (ZONE_COUNT - 1)) / ZONE_COUNT
         val radius = CornerRadius(size.height / 2)
