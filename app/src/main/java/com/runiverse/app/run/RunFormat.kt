@@ -25,13 +25,14 @@ fun formatRunDistanceKm(meters: Int): String {
 
 /**
  * 파티원과의 격차다. 1000m 미만은 m, 10km 미만은 소수 한 자리 km, 그 위는 정수 km로 버린다.
- * [abbreviateUnits]면(글자 설정이 1배를 넘음) m는 숫자만, km는 `k`로 줄인다.
+ * [abbreviateUnits]면 m는 숫자만, km는 `k`로 줄이고, [dropKmDecimal]이면 km 소수도 뺀다.
  */
-fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean): FormattedDistance {
+fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: Boolean = false): FormattedDistance {
     val meters = abs(gapMeters)
     val kilometerLabel = if (abbreviateUnits) DistanceUnitLabel.SHORT_KILOMETER else DistanceUnitLabel.KILOMETER
     return when {
         meters < METERS_PER_KM -> FormattedDistance("$meters", if (abbreviateUnits) null else DistanceUnitLabel.METER)
+        dropKmDecimal -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
         meters < ONE_DECIMAL_FROM_METERS ->
             FormattedDistance("${meters / METERS_PER_KM}.${meters % METERS_PER_KM / 100}", kilometerLabel)
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)

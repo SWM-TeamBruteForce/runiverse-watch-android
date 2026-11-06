@@ -3,4 +3,17 @@
     <string name="app_name">Runiverse</string>
     <string name="running_notification_channel">러닝 기록</string>
     <string name="running_notification_title">러닝 기록 중</string>
+
+    <string name="run_phone_checking">폰 연결 확인 중</string>
+    <string name="run_server_checking">서버 연결 확인 중</string>
+    <string name="run_player_paused">멈춤</string>
+    <string name="run_player_disconnected">끊김</string>
+    <string name="run_player_finished">마침</string>
+    <string name="run_value_unknown">--</string>
+    <string name="unit_km">km</string>
+    <string name="unit_m">m</string>
+    <string name="unit_kilo">k</string>
+    <string name="unit_bpm">bpm</string>
+    <string name="unit_spm">spm</string>
+    <string name="unit_kcal">kcal</string>
 </resources>

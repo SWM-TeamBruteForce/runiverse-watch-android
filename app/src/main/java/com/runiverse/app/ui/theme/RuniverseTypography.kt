@@ -47,6 +47,13 @@ internal fun suitInkFor(text: String): InkExtent {
     return InkExtent(kinds.maxOf { it.aboveBaselineEm }, kinds.maxOf { it.belowBaselineEm })
 }
 
+/** 상태 글자의 세로 가운데를 옆 숫자에 맞추려고 기준선에서 올릴 높이다. */
+internal fun statusWordRaise(statusSize: Float, numberSize: Float): Float {
+    val above = statusSize * SUIT_HANGUL_INK.aboveBaselineEm
+    val below = statusSize * SUIT_HANGUL_INK.belowBaselineEm
+    return below - (above + below - numberSize * SUIT_NUMERAL_INK.aboveBaselineEm) / 2
+}
+
 private const val TABULAR_NUMERALS = "tnum"
 
 /** 글자 크기표다. 자리마다 따로 두지 않고 큰 숫자·수치·읽는 글자·보조 글자 네 단계만 쓴다. */
@@ -79,7 +86,10 @@ internal fun runiverseTypography(): Typography {
             numeralSmall = TextStyle(fontSize = sizes.value, fontWeight = FontWeight.SemiBold),
             numeralExtraSmall = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),
             bodyMedium = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),
-            bodySmall = TextStyle(fontSize = (sizes.reading.value * STATUS_TO_NUMBER_RATIO).sp, fontWeight = FontWeight.SemiBold),
+            bodySmall = TextStyle(
+                fontSize = (sizes.reading.value * STATUS_TO_NUMBER_RATIO).sp,
+                fontWeight = FontWeight.SemiBold,
+            ),
             labelSmall = TextStyle(fontSize = SUPPORTING_FONT_SIZE, fontWeight = FontWeight.Medium),
             labelMedium = TextStyle(fontSize = SUPPORTING_FONT_SIZE, fontWeight = FontWeight.Bold),
         )
