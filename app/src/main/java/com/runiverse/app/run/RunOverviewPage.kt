@@ -71,11 +71,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
     val abbreviateUnits = LocalDensity.current.fontScale > 1f
     // 폰 소식이 끊기면 받은 값 전부를 마지막 값에서 멈춘 채 흐리게 둔다
     val phoneValuesAlpha = if (isPhoneReachable) 1f else RunDimensions.STALE_CONTENT_ALPHA
-    val notice = when {
-        !isPhoneReachable -> stringResource(R.string.run_phone_checking)
-        !run.isServerConnected && run.players.isNotEmpty() -> stringResource(R.string.run_server_checking)
-        else -> null
-    }
+    val notice = connectionNotice(run, isPhoneReachable)
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
             ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
@@ -188,7 +184,7 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
 private fun AvatarRow(run: RunState, isPhoneReachable: Boolean, cellWidth: Dp, modifier: Modifier) {
     Row(modifier) {
         run.players.forEach { player ->
-            val isStale = !isPhoneReachable || !run.isServerConnected || player.isStale
+            val isStale = player.hasStaleValues(run, isPhoneReachable)
             Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
                 PlayerAvatar(player, Modifier.alpha(if (isStale) RunDimensions.STALE_CONTENT_ALPHA else 1f))
             }
@@ -258,6 +254,13 @@ private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: Te
         val baseline = mapOf<AlignmentLine, Int>(FirstBaseline to placeable[FirstBaseline] + raise)
         layout(placeable.width, placeable.height, baseline) { placeable.place(0, 0) }
     }
+
+@Composable
+internal fun connectionNotice(run: RunState, isPhoneReachable: Boolean): String? = when {
+    !isPhoneReachable -> stringResource(R.string.run_phone_checking)
+    !run.isServerConnected && run.players.isNotEmpty() -> stringResource(R.string.run_server_checking)
+    else -> null
+}
 
 @Composable
 internal fun playerStatusWord(status: RunStatus): String? = when (status) {

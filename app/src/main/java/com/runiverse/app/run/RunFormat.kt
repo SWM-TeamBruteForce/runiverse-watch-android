@@ -1,5 +1,7 @@
 package com.runiverse.app.run
 
+import com.runiverse.app.phone.Player
+import com.runiverse.app.phone.RunState
 import kotlin.math.abs
 
 /** 표기를 마친 거리다. 숫자와 단위를 따로 그린다 — 단위는 작고 흐리게 쓴다. */
@@ -63,5 +65,9 @@ fun formatElapsedTime(seconds: Int): String {
 /** 목표까지 진행률이다. 목표가 없으면(솔로) null — 링을 그리지 않는다. */
 fun distanceProgress(distanceMeters: Int, targetDistanceMeters: Int?): Float? =
     targetDistanceMeters?.takeIf { it > 0 }?.let { distanceMeters.toFloat() / it }
+
+/** 폰이 끊기거나 서버가 끊기거나 그 사람 소식만 늦으면 그 사람 값은 오래된 값이다. */
+fun Player.hasStaleValues(run: RunState, isPhoneReachable: Boolean): Boolean =
+    !isPhoneReachable || !run.isServerConnected || isStale
 
 private fun Int.pad2(): String = toString().padStart(2, '0')
