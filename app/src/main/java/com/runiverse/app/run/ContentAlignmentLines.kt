@@ -17,19 +17,20 @@ import kotlin.math.roundToInt
 internal val CONTENT_TOP = HorizontalAlignmentLine(::min)
 internal val CONTENT_BOTTOM = HorizontalAlignmentLine(::max)
 
-internal fun Modifier.textContentBounds(fontSize: TextUnit, ink: InkExtent): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    val firstBaseline = placeable[FirstBaseline]
-    if (firstBaseline == AlignmentLine.Unspecified) {
-        return@layout layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+internal fun Modifier.textContentBounds(fontSize: TextUnit, ink: InkExtent): Modifier =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val firstBaseline = placeable[FirstBaseline]
+        if (firstBaseline == AlignmentLine.Unspecified) {
+            return@layout layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+        }
+        val fontSizePx = fontSize.toPx()
+        val bounds = mapOf<AlignmentLine, Int>(
+            CONTENT_TOP to firstBaseline - (fontSizePx * ink.aboveBaselineEm).roundToInt(),
+            CONTENT_BOTTOM to placeable[LastBaseline] + (fontSizePx * ink.belowBaselineEm).roundToInt(),
+        )
+        layout(placeable.width, placeable.height, bounds) { placeable.place(0, 0) }
     }
-    val fontSizePx = fontSize.toPx()
-    val bounds = mapOf<AlignmentLine, Int>(
-        CONTENT_TOP to firstBaseline - (fontSizePx * ink.aboveBaselineEm).roundToInt(),
-        CONTENT_BOTTOM to placeable[LastBaseline] + (fontSizePx * ink.belowBaselineEm).roundToInt(),
-    )
-    layout(placeable.width, placeable.height, bounds) { placeable.place(0, 0) }
-}
 
 /** 글자가 아닌 것(사진·막대)은 상자 위아래가 곧 보이는 윗변·아랫변이다. */
 internal fun Modifier.boxContentBounds(): Modifier = layout { measurable, constraints ->
