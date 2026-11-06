@@ -29,24 +29,24 @@ import java.time.LocalDate
 private const val OVERVIEW_PAGE_INDEX = 0
 private const val MY_RECORD_PAGE_INDEX = 1
 private const val PAGE_COUNT = 2
-private const val OVERVIEW_ROW_INDEX = 0
-private const val OVERVIEW_ROW_KEY = "overview"
-private const val INACTIVE_ROW_DOT_ALPHA = 0.35f
-private val ROW_DOT_DIAMETER = 3.dp
-private val ROW_DOT_SPACING = 6.dp
-private val ROW_DOTS_END_INSET = 12.5.dp
+private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
+private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
+private val PAGE_DOT_DIAMETER = 3.dp
+private val PAGE_DOT_SPACING = 6.dp
+private val PAGE_DOTS_END_INSET = 12.5.dp
 
 @Composable
 internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, birthday: String?) {
-    val pagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
-    val rowState = rememberPagerState(initialPage = OVERVIEW_ROW_INDEX) { run.players.size + 1 }
+    val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
+    val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
     val scope = rememberCoroutineScope()
-    val isOnOverview = pagerState.currentPage == OVERVIEW_PAGE_INDEX && rowState.currentPage == OVERVIEW_ROW_INDEX
+    val isOnOverview = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
+        verticalPagerState.currentPage == OVERVIEW_VERTICAL_PAGE_INDEX
     // 첫 화면에서 뒤로가면 러닝을 끝내지 않고 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
     BackHandler(enabled = !isOnOverview) {
         scope.launch {
-            pagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX)
-            rowState.animateScrollToPage(OVERVIEW_ROW_INDEX)
+            horizontalPagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX)
+            verticalPagerState.animateScrollToPage(OVERVIEW_VERTICAL_PAGE_INDEX)
         }
     }
 
@@ -54,21 +54,20 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
     val zone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
 
     // 장 사이는 화면이 통째로 밀리는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
-    HorizontalPagerScaffold(pagerState, pageIndicator = null) {
-        HorizontalPager(pagerState, gestureInclusion = overviewRowGestures(pagerState, rowState)) { page ->
+    HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
+        HorizontalPager(
+            horizontalPagerState,
+            gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
+        ) { page ->
             when (page) {
                 OVERVIEW_PAGE_INDEX -> VerticalPagerScaffold(
-                    rowState,
-                    pageIndicator = if (run.players.isEmpty()) null else ({ RowDots(rowState) }),
+                    verticalPagerState,
+                    pageIndicator = if (run.players.isEmpty()) null else ({ VerticalPageDots(verticalPagerState) }),
                     pageIndicatorAnimationSpec = PagerScaffoldDefaults.FadeOutAnimationSpec,
                 ) {
-                    // 명단이 바뀌어도 보던 사람의 장에 남는다
-                    VerticalPager(
-                        rowState,
-                        key = { row -> run.players.getOrNull(row - 1)?.userId ?: OVERVIEW_ROW_KEY },
-                    ) { row ->
+                    VerticalPager(verticalPagerState) { verticalPage ->
                         ScreenScaffold {
-                            val player = run.players.getOrNull(row - 1)
+                            val player = run.players.getOrNull(verticalPage - 1)
                             if (player == null) {
                                 RunOverviewPage(run, isPhoneReachable, heartRateBpm, zone)
                             } else {
@@ -86,33 +85,38 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
 // 파티원 장은 첫 화면에서 세로로만 오간다
 // userScrollEnabled로 막으면 첫 화면으로 돌아온 직후 첫 좌우 쓸기가 무시된다 — 라이브러리가 다음 터치에서야 감지를 다시 켠다
 @Composable
-private fun overviewRowGestures(pagerState: PagerState, rowState: PagerState): GestureInclusion {
-    val defaultGestures = PagerDefaults.gestureInclusion(pagerState)
-    return remember(defaultGestures, rowState) {
+private fun partyPageBlockingGestures(
+    horizontalPagerState: PagerState,
+    verticalPagerState: PagerState,
+): GestureInclusion {
+    val defaultGestures = PagerDefaults.gestureInclusion(horizontalPagerState)
+    return remember(defaultGestures, horizontalPagerState, verticalPagerState) {
         object : GestureInclusion {
-            override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean =
-                rowState.currentPage != OVERVIEW_ROW_INDEX ||
-                    defaultGestures.ignoreGestureStart(offset, layoutCoordinates)
+            override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean {
+                val isOnPartyPage = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
+                    verticalPagerState.currentPage != OVERVIEW_VERTICAL_PAGE_INDEX
+                return isOnPartyPage || defaultGestures.ignoreGestureStart(offset, layoutCoordinates)
+            }
         }
     }
 }
 
 // 라이브러리 기본 표시는 화면 끝을 따라 그려져 진행 링과 겹친다 — 링 안쪽에 점으로 그린다
 @Composable
-private fun RowDots(rowState: PagerState) {
+private fun VerticalPageDots(pagerState: PagerState) {
     val color = MaterialTheme.colorScheme.onBackground
-    val count = rowState.pageCount
+    val count = pagerState.pageCount
     Canvas(
-        Modifier.padding(end = ROW_DOTS_END_INSET)
-            .size(ROW_DOT_DIAMETER, ROW_DOT_SPACING * (count - 1) + ROW_DOT_DIAMETER),
+        Modifier.padding(end = PAGE_DOTS_END_INSET)
+            .size(PAGE_DOT_DIAMETER, PAGE_DOT_SPACING * (count - 1) + PAGE_DOT_DIAMETER),
     ) {
         val radius = size.width / 2
         repeat(count) { index ->
             drawCircle(
                 color,
                 radius,
-                Offset(radius, radius + ROW_DOT_SPACING.toPx() * index),
-                alpha = if (index == rowState.currentPage) 1f else INACTIVE_ROW_DOT_ALPHA,
+                Offset(radius, radius + PAGE_DOT_SPACING.toPx() * index),
+                alpha = if (index == pagerState.currentPage) 1f else INACTIVE_PAGE_DOT_ALPHA,
             )
         }
     }

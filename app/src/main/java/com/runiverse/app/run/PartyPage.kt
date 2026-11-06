@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -18,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
@@ -33,48 +35,54 @@ import com.runiverse.app.ui.theme.tabularNumerals
 private const val WIDEST_PACE = "88'88\""
 private val LABEL_TO_PACE_GAP = 3.dp
 private val BETWEEN_PACES_GAP = 8.dp
-private val DISTANCE_TO_NAME_MIN_GAP = 8.dp
+private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
 internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean) {
     val slots = currentRunPageSlots()
     val notice = connectionNotice(run, isPhoneReachable)
-    val partnerAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
+    val playerValuesAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
     // 서버가 끊겨도 내 페이스는 폰이 계속 재는 값이라 폰이 끊길 때만 흐린다
-    val myAlpha = if (isPhoneReachable) 1f else RunDimensions.STALE_CONTENT_ALPHA
+    val phoneValuesAlpha = if (isPhoneReachable) 1f else RunDimensions.STALE_CONTENT_ALPHA
     val paceStyle = MaterialTheme.typography.numeralSmall
-    val paceFitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle)
+    val playerLabel = stringResource(R.string.run_pace_player)
+    val myLabel = stringResource(R.string.run_pace_me)
+    val playerPaceCellWidth = widestLabeledPaceWidth(playerLabel, paceStyle)
+    val myPaceCellWidth = widestLabeledPaceWidth(myLabel, paceStyle)
+    val paceFitsOneLine = paceFitsOneLine(
+        slots.belowRowTop,
+        paceStyle,
+        playerPaceCellWidth + BETWEEN_PACES_GAP + myPaceCellWidth,
+    )
     val comboTop = with(LocalDensity.current) {
-        val paceInk = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-        val labelDescent = MaterialTheme.typography.labelSmall.fontSize.toPx() * SUIT_HANGUL_INK.belowBaselineEm
-        val paceBottom = if (paceFitsOneLine) {
-            slots.belowRowTop + paceInk + labelDescent
-        } else {
-            slots.belowRowTop + paceInk * 2 + RunDimensions.LINE_GAP.toPx() + labelDescent
-        }
-        // 페이스가 두 줄이면 맨 아래 줄 자리까지 내려오므로 페이스 바로 아래로 간다
-        maxOf(slots.bottomRowTop, paceBottom + RunDimensions.LINE_GAP.toPx())
+        partyComboRowTop(
+            slots,
+            paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
+            labelDescent = MaterialTheme.typography.labelSmall.fontSize.toPx() * SUIT_HANGUL_INK.belowBaselineEm,
+            paceRowCount = if (paceFitsOneLine) 1 else 2,
+            lineGap = RunDimensions.LINE_GAP.toPx(),
+        )
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(player.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(player.colorSlot), Modifier.alpha(partnerAlpha))
+            ProgressRing(it, laneColor(player.colorSlot), Modifier.alpha(playerValuesAlpha))
         }
-        DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(partnerAlpha))
-        GapOrStatus(player, slots, partnerAlpha)
+        DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(playerValuesAlpha))
+        GapOrStatus(player, slots, playerValuesAlpha)
         val myPace: @Composable (Modifier) -> Unit = { modifier ->
             LabeledPace(
-                stringResource(R.string.run_pace_me),
+                myLabel,
                 run.me.currentPaceSecondsPerKm,
                 paceStyle.tabularNumerals(),
-                modifier.alpha(myAlpha),
+                modifier.alpha(phoneValuesAlpha),
             )
         }
-        val partnerPace: @Composable (Modifier) -> Unit = { modifier ->
+        val playerPace: @Composable (Modifier) -> Unit = { modifier ->
             LabeledPace(
-                stringResource(R.string.run_pace_partner),
-                player.currentPaceSecondsPerKm,
+                playerLabel,
+                player.shownPaceSecondsPerKm(),
                 paceStyle,
-                modifier.alpha(partnerAlpha),
+                modifier.alpha(playerValuesAlpha),
             )
         }
         val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
@@ -89,13 +97,18 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
             )
         } else {
             if (paceFitsOneLine) {
+                // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
                 Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
-                    partnerPace(Modifier)
-                    myPace(Modifier)
+                    Box(Modifier.width(playerPaceCellWidth), contentAlignment = Alignment.CenterEnd) {
+                        playerPace(Modifier)
+                    }
+                    Box(Modifier.width(myPaceCellWidth), contentAlignment = Alignment.CenterStart) {
+                        myPace(Modifier)
+                    }
                 }
             } else {
                 ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
-                    partnerPace(Modifier)
+                    playerPace(Modifier)
                     myPace(Modifier)
                 }
             }
@@ -107,7 +120,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 },
                 MaterialTheme.typography.labelSmall,
                 MaterialTheme.colorScheme.onSurfaceVariant,
-                Modifier.contentTopAt(comboTop).alpha(partnerAlpha),
+                Modifier.contentTopAt(comboTop).alpha(playerValuesAlpha),
             )
         }
     }
@@ -133,7 +146,7 @@ private fun DistanceNameRow(player: Player, modifier: Modifier) {
             MaterialTheme.colorScheme.onSurface,
             Modifier.alignBy(Measured::contentCenter)
                 .weight(1f, fill = false)
-                .padding(start = DISTANCE_TO_NAME_MIN_GAP),
+                .padding(start = MIN_DISTANCE_TO_NAME_GAP),
             overflow = TextOverflow.Ellipsis,
         )
     }
@@ -208,24 +221,27 @@ private fun LabeledPace(label: String, secondsPerKm: Int?, style: TextStyle, mod
     }
 }
 
-// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 흔들린다
 @Composable
-private fun paceFitsOneLine(rowTop: Float, paceStyle: TextStyle): Boolean {
+private fun widestLabeledPaceWidth(label: String, paceStyle: TextStyle): Dp {
     val labelStyle = MaterialTheme.typography.labelSmall
-    val partnerLabel = stringResource(R.string.run_pace_partner)
-    val myLabel = stringResource(R.string.run_pace_me)
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
-    return remember(rowTop, paceStyle, labelStyle, partnerLabel, myLabel, density, screenWidth) {
+    return remember(label, paceStyle, labelStyle, density) {
         with(density) {
-            fun width(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
-            val widestRow = width(partnerLabel, labelStyle) + width(myLabel, labelStyle) +
-                width(WIDEST_PACE, paceStyle.tabularNumerals()) * 2 +
-                LABEL_TO_PACE_GAP.toPx() * 2 + BETWEEN_PACES_GAP.toPx()
-            val baseline = rowTop + paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-            widestRow <= usableWidthAt(baseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+            val textWidth = measurer.measure(label, labelStyle).size.width +
+                measurer.measure(WIDEST_PACE, paceStyle.tabularNumerals()).size.width
+            textWidth.toDp() + LABEL_TO_PACE_GAP
         }
+    }
+}
+
+// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 흔들린다
+@Composable
+private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRow: Dp): Boolean {
+    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+    return with(LocalDensity.current) {
+        val firstBaseline = rowsTop + paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
+        widestRow.toPx() <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
     }
 }
 

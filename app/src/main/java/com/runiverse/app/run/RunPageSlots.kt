@@ -41,6 +41,18 @@ internal fun runPageSlots(
     )
 }
 
+/** 파티원 장 콤보 줄의 윗변이다. 페이스가 두 줄이면 맨 아래 줄 자리까지 내려오므로 페이스 바로 아래로 간다. */
+internal fun partyComboRowTop(
+    slots: RunPageSlots,
+    paceInkHeight: Float,
+    labelDescent: Float,
+    paceRowCount: Int,
+    lineGap: Float,
+): Float {
+    val paceRowsHeight = (paceInkHeight + labelDescent) * paceRowCount + lineGap * (paceRowCount - 1)
+    return maxOf(slots.bottomRowTop, slots.belowRowTop + paceRowsHeight + lineGap)
+}
+
 /** 둥근 화면 높이 [y]에서 좌우 여백을 뺀 폭이다. */
 internal fun usableWidthAt(y: Float, screenSize: Float, edgeMargin: Float): Float {
     val radius = screenSize / 2 - edgeMargin
