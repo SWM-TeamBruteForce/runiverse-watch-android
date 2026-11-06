@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.Measured
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -35,8 +36,12 @@ private val BETWEEN_PACES_GAP = 8.dp
 private val DISTANCE_TO_NAME_MIN_GAP = 8.dp
 
 @Composable
-internal fun PartyPage(run: RunState, player: Player) {
+internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean) {
     val slots = currentRunPageSlots()
+    val notice = connectionNotice(run, isPhoneReachable)
+    val partnerAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
+    // 서버가 끊겨도 내 페이스는 폰이 계속 재는 값이라 폰이 끊길 때만 흐린다
+    val myAlpha = if (isPhoneReachable) 1f else RunDimensions.STALE_CONTENT_ALPHA
     val paceStyle = MaterialTheme.typography.numeralSmall
     val paceFitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle)
     val comboTop = with(LocalDensity.current) {
@@ -52,26 +57,59 @@ internal fun PartyPage(run: RunState, player: Player) {
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(player.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(player.colorSlot))
+            ProgressRing(it, laneColor(player.colorSlot), Modifier.alpha(partnerAlpha))
         }
-        DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom))
-        GapOrStatus(player, slots)
-        PaceRows(
-            player,
-            run.me.currentPaceSecondsPerKm,
-            paceFitsOneLine,
-            Modifier.contentTopAt(slots.belowRowTop),
-        )
-        AlignedText(
-            if (player.comboCount > 0) {
-                stringResource(R.string.run_combo_current, player.comboCount)
+        DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(partnerAlpha))
+        GapOrStatus(player, slots, partnerAlpha)
+        val myPace: @Composable (Modifier) -> Unit = { modifier ->
+            LabeledPace(
+                stringResource(R.string.run_pace_me),
+                run.me.currentPaceSecondsPerKm,
+                paceStyle.tabularNumerals(),
+                modifier.alpha(myAlpha),
+            )
+        }
+        val partnerPace: @Composable (Modifier) -> Unit = { modifier ->
+            LabeledPace(
+                stringResource(R.string.run_pace_partner),
+                player.currentPaceSecondsPerKm,
+                paceStyle,
+                modifier.alpha(partnerAlpha),
+            )
+        }
+        val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
+        if (notice != null) {
+            // 끊긴 동안은 첫 화면이 오래된 격차를 숨기듯 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
+            myPace(paceRowsModifier)
+            AlignedText(
+                notice,
+                MaterialTheme.typography.bodyMedium,
+                MaterialTheme.colorScheme.onSurface,
+                Modifier.contentTopAt(slots.bottomRowTop),
+            )
+        } else {
+            if (paceFitsOneLine) {
+                Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
+                    partnerPace(Modifier)
+                    myPace(Modifier)
+                }
             } else {
-                stringResource(R.string.run_combo_best, player.maxComboCount)
-            },
-            MaterialTheme.typography.labelSmall,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-            Modifier.contentTopAt(comboTop),
-        )
+                ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
+                    partnerPace(Modifier)
+                    myPace(Modifier)
+                }
+            }
+            AlignedText(
+                if (player.comboCount > 0) {
+                    stringResource(R.string.run_combo_current, player.comboCount)
+                } else {
+                    stringResource(R.string.run_combo_best, player.maxComboCount)
+                },
+                MaterialTheme.typography.labelSmall,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Modifier.contentTopAt(comboTop).alpha(partnerAlpha),
+            )
+        }
     }
 }
 
@@ -104,11 +142,16 @@ private fun DistanceNameRow(player: Player, modifier: Modifier) {
 private fun Measured.contentCenter(): Int = (this[CONTENT_TOP] + this[CONTENT_BOTTOM]) / 2
 
 @Composable
-private fun GapOrStatus(player: Player, slots: RunPageSlots) {
+private fun GapOrStatus(player: Player, slots: RunPageSlots, alpha: Float) {
     val color = MaterialTheme.colorScheme.onBackground
     val statusWord = playerStatusWord(player.status)
     if (statusWord != null) {
-        AlignedText(statusWord, MaterialTheme.typography.numeralLarge, color, Modifier.contentCenterAt(slots.center))
+        AlignedText(
+            statusWord,
+            MaterialTheme.typography.numeralLarge,
+            color,
+            Modifier.contentCenterAt(slots.center).alpha(alpha),
+        )
         return
     }
     val style = MaterialTheme.typography.numeralExtraLarge
@@ -119,7 +162,7 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots) {
             stringResource(R.string.run_value_unknown),
             stringResource(R.string.unit_m),
             style,
-            Modifier.baselineAt(slots.bigNumberBaseline),
+            Modifier.baselineAt(slots.bigNumberBaseline).alpha(alpha),
             valueColor = color,
         )
         return
@@ -131,7 +174,7 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots) {
         GapDirection.LEVEL -> null
     }
     Row(
-        Modifier.baselineAt(slots.bigNumberBaseline),
+        Modifier.baselineAt(slots.bigNumberBaseline).alpha(alpha),
         horizontalArrangement = Arrangement.spacedBy(RunDimensions.VALUE_UNIT_GAP),
     ) {
         if (directionWord != null) {
@@ -153,37 +196,8 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots) {
 }
 
 @Composable
-private fun PaceRows(player: Player, myPaceSecondsPerKm: Int?, fitsOneLine: Boolean, modifier: Modifier) {
-    val partnerPace: @Composable () -> Unit = {
-        LabeledPace(
-            stringResource(R.string.run_pace_partner),
-            player.currentPaceSecondsPerKm,
-            MaterialTheme.typography.numeralSmall,
-        )
-    }
-    val myPace: @Composable () -> Unit = {
-        LabeledPace(
-            stringResource(R.string.run_pace_me),
-            myPaceSecondsPerKm,
-            MaterialTheme.typography.numeralSmall.tabularNumerals(),
-        )
-    }
-    if (fitsOneLine) {
-        Row(modifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
-            partnerPace()
-            myPace()
-        }
-    } else {
-        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = modifier) {
-            partnerPace()
-            myPace()
-        }
-    }
-}
-
-@Composable
-private fun LabeledPace(label: String, secondsPerKm: Int?, style: TextStyle) {
-    Row(horizontalArrangement = Arrangement.spacedBy(LABEL_TO_PACE_GAP)) {
+private fun LabeledPace(label: String, secondsPerKm: Int?, style: TextStyle, modifier: Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(LABEL_TO_PACE_GAP)) {
         AlignedText(
             label,
             MaterialTheme.typography.labelSmall,
@@ -219,36 +233,57 @@ private fun paceFitsOneLine(rowTop: Float, paceStyle: TextStyle): Boolean {
 @WearPreviewSmallRound
 @Composable
 private fun PartyPageAheadPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0])
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun PartyPageBehindComboPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[1])
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[1], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun PartyPagePausedPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2])
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun PartyPageFinishedPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.finishedPlayer)
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.finishedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun PartyPageNotNotifiedPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.notNotifiedPlayer)
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.notNotifiedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
 private fun PartyPageLongestPreview() = RunPreviewFrame {
-    PartyPage(RunPreviewSamples.longValues, RunPreviewSamples.longestPlayer)
+    PartyPage(RunPreviewSamples.longValues, RunPreviewSamples.longestPlayer, isPhoneReachable = true)
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun PartyPageStalePreview() = RunPreviewFrame {
+    val player = RunPreviewSamples.party.players[0].copy(isStale = true)
+    PartyPage(RunPreviewSamples.party, player, isPhoneReachable = true)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun PartyPageServerLostPreview() = RunPreviewFrame {
+    val run = RunPreviewSamples.party.copy(isServerConnected = false)
+    PartyPage(run, run.players[0], isPhoneReachable = true)
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun PartyPagePhoneLostPreview() = RunPreviewFrame {
+    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = false)
 }

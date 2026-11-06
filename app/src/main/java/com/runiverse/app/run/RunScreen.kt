@@ -72,7 +72,7 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
                             if (player == null) {
                                 RunOverviewPage(run, isPhoneReachable, heartRateBpm, zone)
                             } else {
-                                PartyPage(run, player)
+                                PartyPage(run, player, isPhoneReachable)
                             }
                         }
                     }
