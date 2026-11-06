@@ -35,12 +35,20 @@ class RunFormatTest {
     fun `격차는 10km 미만이면 소수 한 자리 km, 그 위는 정수 km로 버린다`() {
         // when & then
         assertEquals(
+            FormattedDistance("1.0", DistanceUnitLabel.KILOMETER),
+            formatGapDistance(1000, abbreviateUnits = false),
+        )
+        assertEquals(
             FormattedDistance("1.2", DistanceUnitLabel.KILOMETER),
             formatGapDistance(1299, abbreviateUnits = false),
         )
         assertEquals(
             FormattedDistance("9.9", DistanceUnitLabel.KILOMETER),
             formatGapDistance(-9999, abbreviateUnits = false),
+        )
+        assertEquals(
+            FormattedDistance("10", DistanceUnitLabel.KILOMETER),
+            formatGapDistance(10_000, abbreviateUnits = false),
         )
         assertEquals(
             FormattedDistance("42", DistanceUnitLabel.KILOMETER),
