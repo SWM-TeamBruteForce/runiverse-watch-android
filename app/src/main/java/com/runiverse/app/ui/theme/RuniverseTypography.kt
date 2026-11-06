@@ -56,14 +56,14 @@ internal fun statusWordRaise(statusSize: Float, numberSize: Float): Float {
 
 private const val TABULAR_NUMERALS = "tnum"
 
-/** 화면 크기별 글자 크기표다. 보조 글자는 화면과 상관없이 같고, 상태 글자는 읽는 글자에서 줄여 쓴다. */
+/** 화면 크기별 글자 크기표다. 보조 글자는 화면과 상관없이 같고, 상태 글자는 그 자리 숫자에서 줄여 쓴다. */
 private class WatchFontSizes(val bigNumber: Dp, val value: TextUnit, val reading: TextUnit)
 
 private val LARGE_SCREEN_FONT_SIZES = WatchFontSizes(bigNumber = 53.dp, value = 18.sp, reading = 14.sp)
 private val SMALL_SCREEN_FONT_SIZES = WatchFontSizes(bigNumber = 47.dp, value = 17.sp, reading = 13.sp)
 private val SUPPORTING_FONT_SIZE = 12.sp
 
-// 숫자 자리에 드는 상태 글자는 옆 숫자와 같은 크기면 튀어 보여 조금 줄인다
+// 숫자 자리에 드는 상태 글자는 숫자와 같은 크기면 튀어 보여 조금 줄인다
 private const val STATUS_TO_NUMBER_RATIO = 0.93f
 
 /** 1초마다 바뀌는 내 수치에만 쓴다 — 10초마다 오는 파티원 수는 원래 폭이 글자 간격이 고르다. */
@@ -79,6 +79,10 @@ internal fun runiverseTypography(): Typography {
         Typography(
             defaultFontFamily = SUIT,
             numeralExtraLarge = TextStyle(fontSize = bigNumberSize, fontWeight = FontWeight.Bold),
+            numeralLarge = TextStyle(
+                fontSize = (bigNumberSize.value * STATUS_TO_NUMBER_RATIO).sp,
+                fontWeight = FontWeight.Bold,
+            ),
             numeralSmall = TextStyle(fontSize = sizes.value, fontWeight = FontWeight.SemiBold),
             numeralExtraSmall = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),
             bodyMedium = TextStyle(fontSize = sizes.reading, fontWeight = FontWeight.SemiBold),

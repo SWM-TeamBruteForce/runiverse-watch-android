@@ -1,5 +1,8 @@
 package com.runiverse.app.run
 
+import com.runiverse.app.phone.Player
+import com.runiverse.app.phone.RunState
+import com.runiverse.app.phone.RunStatus
 import kotlin.math.abs
 
 /** 표기를 마친 거리다. 숫자와 단위를 따로 그린다 — 단위는 작고 흐리게 쓴다. */
@@ -16,7 +19,7 @@ private const val METERS_PER_KM = 1000
 private const val ONE_DECIMAL_FROM_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
-/** 내 거리(km)다. 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
+/** 러닝 거리(km)다. 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
 fun formatRunDistanceKm(meters: Int): String {
     val km = meters / METERS_PER_KM
     val rest = meters % METERS_PER_KM
@@ -63,5 +66,14 @@ fun formatElapsedTime(seconds: Int): String {
 /** 목표까지 진행률이다. 목표가 없으면(솔로) null — 링을 그리지 않는다. */
 fun distanceProgress(distanceMeters: Int, targetDistanceMeters: Int?): Float? =
     targetDistanceMeters?.takeIf { it > 0 }?.let { distanceMeters.toFloat() / it }
+
+fun Player.hasStaleValues(run: RunState, isPhoneReachable: Boolean): Boolean =
+    !isPhoneReachable || !run.isServerConnected || isStale
+
+/** 멈췄거나 끊긴 사람은 지금 페이스가 없다 — 폰은 마지막 값을 그대로 보낸다. */
+fun Player.shownPaceSecondsPerKm(): Int? = when (status) {
+    RunStatus.PAUSED, RunStatus.DISCONNECTED -> null
+    RunStatus.RUNNING, RunStatus.FINISHED -> currentPaceSecondsPerKm
+}
 
 private fun Int.pad2(): String = toString().padStart(2, '0')

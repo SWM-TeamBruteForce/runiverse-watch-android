@@ -1,7 +1,10 @@
 package com.runiverse.app.run
 
+import com.runiverse.app.phone.RunStatus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RunFormatTest {
@@ -118,5 +121,30 @@ class RunFormatTest {
         assertEquals(0.5f, distanceProgress(2500, 5000))
         assertNull(distanceProgress(2500, null))
         assertNull(distanceProgress(2500, 0))
+    }
+
+    @Test
+    fun `폰이나 서버가 끊기거나 그 사람 소식이 늦으면 그 사람 값은 오래된 값이다`() {
+        // given
+        val run = RunPreviewSamples.party.copy(isServerConnected = true)
+        val player = run.players[0].copy(isStale = false)
+
+        // when & then
+        assertFalse(player.hasStaleValues(run, isPhoneReachable = true))
+        assertTrue(player.hasStaleValues(run, isPhoneReachable = false))
+        assertTrue(player.hasStaleValues(run.copy(isServerConnected = false), isPhoneReachable = true))
+        assertTrue(player.copy(isStale = true).hasStaleValues(run, isPhoneReachable = true))
+    }
+
+    @Test
+    fun `멈췄거나 끊긴 사람은 폰이 마지막 값을 보내도 페이스를 비우고, 달리거나 끝난 사람은 받은 값을 쓴다`() {
+        // given
+        val player = RunPreviewSamples.party.players[0].copy(currentPaceSecondsPerKm = 318)
+
+        // when & then
+        assertNull(player.copy(status = RunStatus.PAUSED).shownPaceSecondsPerKm())
+        assertNull(player.copy(status = RunStatus.DISCONNECTED).shownPaceSecondsPerKm())
+        assertEquals(318, player.copy(status = RunStatus.RUNNING).shownPaceSecondsPerKm())
+        assertEquals(318, player.copy(status = RunStatus.FINISHED).shownPaceSecondsPerKm())
     }
 }
