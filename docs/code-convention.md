@@ -8,7 +8,7 @@
 
 ## 네이밍
 
-- 클래스·인터페이스·object·enum: `PascalCase`. `@Composable` 함수도 `PascalCase`로 짓는다.
+- 클래스·인터페이스·object·enum: `PascalCase`. `Unit`을 돌려주는 `@Composable` 함수도 `PascalCase`로, 값을 돌려주는 `@Composable` 함수는 `camelCase`로 짓는다.
 - 함수·변수·파라미터: `camelCase`
 - 상수(`const val`·최상위 불변 값): `UPPER_SNAKE_CASE`
 - 패키지: 소문자, 밑줄 없이 쓴다.
