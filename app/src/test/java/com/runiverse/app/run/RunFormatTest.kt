@@ -1,6 +1,7 @@
 package com.runiverse.app.run
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RunFormatTest {
@@ -87,5 +88,14 @@ class RunFormatTest {
         assertEquals("59:59", formatElapsedTime(3599))
         assertEquals("1:00:00", formatElapsedTime(3600))
         assertEquals("4:59:59", formatElapsedTime(17_999))
+    }
+
+    @Test
+    fun `목표가 있으면 진행률을 주고, 없으면 null이다`() {
+        // when & then -> 0m여도 빈 링을 그리도록 null이 아니라 0이다
+        assertEquals(0f, distanceProgress(0, 5000))
+        assertEquals(0.5f, distanceProgress(2500, 5000))
+        assertNull(distanceProgress(2500, null))
+        assertNull(distanceProgress(2500, 0))
     }
 }
