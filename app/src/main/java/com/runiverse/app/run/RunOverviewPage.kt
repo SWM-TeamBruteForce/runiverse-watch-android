@@ -153,7 +153,7 @@ private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Mod
             style,
         )
         if (heartRateZone != null) {
-            HeartRateZoneBar(heartRateZone, Modifier.width(longestHeartRateBlockWidth(style)))
+            HeartRateZoneBar(heartRateZone, Modifier.width(widestHeartRateBlockWidth(style)))
         }
     }
 }

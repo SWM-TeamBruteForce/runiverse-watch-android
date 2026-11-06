@@ -71,7 +71,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
         if (heartRateZone != null) {
             HeartRateZoneBar(
                 heartRateZone,
-                Modifier.contentTopAt(barTop).width(longestHeartRateBlockWidth(heartRateStyle)),
+                Modifier.contentTopAt(barTop).width(widestHeartRateBlockWidth(heartRateStyle)),
             )
         }
         RecordRows(run.me, rowsTop, Modifier.contentTopAt(rowsTop).alpha(phoneValuesAlpha))

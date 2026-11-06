@@ -21,17 +21,17 @@ private const val ZONE_COUNT = 5
 private val SEGMENT_GAP = 3.dp
 
 // 심박은 세 자리가 가장 길다 — 막대를 이 폭으로 고정해 100을 넘는 순간 길이가 바뀌지 않게 한다
-private const val LONGEST_HEART_RATE = "888"
+private const val WIDEST_HEART_RATE = "888"
 
-/** 가장 긴 심박 덩어리(세 자리 숫자 + `bpm`) 폭이다. 구간 막대 길이로 쓴다. */
+/** 가장 넓은 심박 덩어리(세 자리 숫자 + `bpm`) 폭이다. 구간 막대 길이로 쓴다. */
 @Composable
-internal fun longestHeartRateBlockWidth(valueStyle: TextStyle): Dp {
+internal fun widestHeartRateBlockWidth(valueStyle: TextStyle): Dp {
     val measurer = rememberTextMeasurer()
     val unitStyle = MaterialTheme.typography.labelSmall
     val unit = stringResource(R.string.unit_bpm)
     val density = LocalDensity.current
     return remember(valueStyle, unitStyle, unit, density) {
-        val valueWidth = measurer.measure(LONGEST_HEART_RATE, valueStyle).size.width
+        val valueWidth = measurer.measure(WIDEST_HEART_RATE, valueStyle).size.width
         val unitWidth = measurer.measure(unit, unitStyle).size.width
         with(density) { valueWidth.toDp() + RunDimensions.VALUE_UNIT_GAP + unitWidth.toDp() }
     }
