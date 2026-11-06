@@ -1,7 +1,9 @@
 package com.runiverse.app.run
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RunFormatTest {
@@ -118,5 +120,18 @@ class RunFormatTest {
         assertEquals(0.5f, distanceProgress(2500, 5000))
         assertNull(distanceProgress(2500, null))
         assertNull(distanceProgress(2500, 0))
+    }
+
+    @Test
+    fun `폰이나 서버가 끊기거나 그 사람 소식이 늦으면 그 사람 값은 오래된 값이다`() {
+        // given
+        val run = RunPreviewSamples.party
+        val player = run.players[0]
+
+        // when & then
+        assertFalse(player.hasStaleValues(run, isPhoneReachable = true))
+        assertTrue(player.hasStaleValues(run, isPhoneReachable = false))
+        assertTrue(player.hasStaleValues(run.copy(isServerConnected = false), isPhoneReachable = true))
+        assertTrue(player.copy(isStale = true).hasStaleValues(run, isPhoneReachable = true))
     }
 }
