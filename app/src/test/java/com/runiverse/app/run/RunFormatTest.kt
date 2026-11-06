@@ -147,4 +147,14 @@ class RunFormatTest {
         assertEquals(318, player.copy(status = RunStatus.RUNNING).shownPaceSecondsPerKm())
         assertEquals(318, player.copy(status = RunStatus.FINISHED).shownPaceSecondsPerKm())
     }
+
+    @Test
+    fun `내가 멈추면 폰이 마지막 값을 보내도 내 페이스를 비우고, 달리는 중엔 받은 값을 쓴다`() {
+        // given
+        val run = RunPreviewSamples.party.copy(me = RunPreviewSamples.party.me.copy(currentPaceSecondsPerKm = 332))
+
+        // when & then
+        assertNull(run.copy(status = RunStatus.PAUSED).shownMyPaceSecondsPerKm())
+        assertEquals(332, run.copy(status = RunStatus.RUNNING).shownMyPaceSecondsPerKm())
+    }
 }
