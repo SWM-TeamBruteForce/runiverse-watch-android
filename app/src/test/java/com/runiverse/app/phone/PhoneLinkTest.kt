@@ -996,6 +996,100 @@ class PhoneLinkTest {
         assertTrue(removals.isEmpty())
     }
 
+    @Test
+    fun `결과를 받는 중 13초 넘게 소식이 없으면 끊긴 것으로 보고 SYNC를 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.onScreenStarted()
+        fixture.connect(finishedState(stateSequence = 1, result = null))
+
+        // when -> 13초 직전까지는 끊긴 것으로 보지 않는다
+        advanceTimeBy(12_900)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.none { it is WatchSync })
+
+        // when
+        advanceTimeBy(200)
+        runCurrent()
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.any { it is WatchSync })
+    }
+
+    @Test
+    fun `결과를 받는 중 켜짐 신호의 답이 오면 끊긴 것으로 보지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.onScreenStarted()
+        fixture.connect(finishedState(stateSequence = 1, result = null))
+
+        // when -> 10초 신호의 답을 받고 다시 12초가 지난다
+        advanceTimeBy(10_000)
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, result = null)))
+        advanceTimeBy(12_000)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
+    fun `결과를 받으면 끊김 감시를 멈춘다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.onScreenStarted()
+        fixture.connect(finishedState(stateSequence = 1, result = null))
+
+        // when
+        advanceTimeBy(5_000)
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2)))
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
+    @Test
+    fun `끊겼다고 본 뒤 SYNCED가 오면 결과를 받고 다시 연결된 것으로 본다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.onScreenStarted()
+        fixture.connect(finishedState(stateSequence = 1, result = null))
+        advanceTimeBy(13_100)
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+
+        // when
+        fixture.phoneLink.onReceived(synced(sync.syncId, finishedState(stateSequence = 2)))
+
+        // then
+        val linkState = fixture.phoneLink.state.value
+        assertTrue(linkState.isPhoneReachable)
+        assertEquals(RESULT, linkState.finishedRun?.result)
+    }
+
+    @Test
+    fun `화면이 꺼져 있으면 결과를 받는 중에도 끊김을 재지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, result = null))
+
+        // when
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isPhoneReachable)
+        assertTrue(fixture.sent.none { it is WatchSync })
+    }
+
     private fun linkStateWith(base: PhoneState, run: RunState?) = PhoneLinkState(phoneState = base.copy(run = run))
 
     private class Fixture(
