@@ -16,8 +16,8 @@ class ControlsPageSlotsTest {
         lineAdvance = 30f,
         hintStartTop = 70f,
         hintMaxShift = 50f,
-        pillTopAtDefaultFont = 157f,
-        hintToPillGap = 10f,
+        firstButtonTopAtDefaultFont = 157f,
+        hintToButtonGap = 10f,
         isFontScaled = isFontScaled,
         widthOf = widthOf,
     )
@@ -60,7 +60,7 @@ class ControlsPageSlotsTest {
         val slots = slots(listOf("가".repeat(30), "나".repeat(30)), isFontScaled = false)
 
         // then
-        assertEquals(157f, slots.pillTop)
+        assertEquals(157f, slots.firstButtonTop)
     }
 
     @Test
@@ -69,8 +69,8 @@ class ControlsPageSlotsTest {
         val slots = slots(listOf("가".repeat(40), "나".repeat(40)), isFontScaled = true)
 
         // then -> 안내 두 줄 60과 안내↔버튼 간격 10 아래로 간다
-        assertTrue(slots.pillTop > 157f)
-        assertEquals(slots.hintTop + 70f, slots.pillTop, 0.01f)
+        assertTrue(slots.firstButtonTop > 157f)
+        assertEquals(slots.hintTop + 70f, slots.firstButtonTop, 0.01f)
     }
 
     @Test

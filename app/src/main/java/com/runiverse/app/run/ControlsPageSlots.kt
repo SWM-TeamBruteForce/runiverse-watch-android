@@ -4,7 +4,7 @@ import kotlin.math.hypot
 import kotlin.math.sqrt
 
 /** 안내와 첫 버튼의 높이(화면 위에서 px)다. 안내 길이로 안 움직인다. */
-internal data class ControlsPageSlots(val hintTop: Float, val pillTop: Float)
+internal data class ControlsPageSlots(val hintTop: Float, val firstButtonTop: Float)
 
 internal data class PlacedHintLine(val text: String, val hintIndex: Int, val top: Float)
 
@@ -41,8 +41,8 @@ internal fun controlsPageSlots(
     lineAdvance: Float,
     hintStartTop: Float,
     hintMaxShift: Float,
-    pillTopAtDefaultFont: Float,
-    hintToPillGap: Float,
+    firstButtonTopAtDefaultFont: Float,
+    hintToButtonGap: Float,
     isFontScaled: Boolean,
     widthOf: (String) -> Float,
 ): ControlsPageSlots {
@@ -51,8 +51,12 @@ internal fun controlsPageSlots(
         ?: topWhereFirstLineFits(widthOf(longestHints.first()), screenSize, edgeMargin, hintStartTop)
     val lines = placeHintLines(longestHints, hintTop, lineAdvance, widthAt, widthOf)
     val hintsEnd = lines.last().top + lineAdvance
-    val pillTop = if (isFontScaled) maxOf(pillTopAtDefaultFont, hintsEnd + hintToPillGap) else pillTopAtDefaultFont
-    return ControlsPageSlots(hintTop, pillTop)
+    val firstButtonTop = if (isFontScaled) {
+        maxOf(firstButtonTopAtDefaultFont, hintsEnd + hintToButtonGap)
+    } else {
+        firstButtonTopAtDefaultFont
+    }
+    return ControlsPageSlots(hintTop, firstButtonTop)
 }
 
 private fun firstTopWhereHintsFit(

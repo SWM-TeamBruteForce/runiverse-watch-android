@@ -13,8 +13,8 @@ internal object RunDimensions {
 
     val GROUP_GAP = 13.dp
     val LINE_GAP = 7.dp
-    val VALUE_UNIT_GAP = 2.dp
-    val ZONE_BAR_GAP = 4.dp
+    val VALUE_TO_UNIT_GAP = 2.dp
+    val VALUE_TO_ZONE_BAR_GAP = 4.dp
     val ZONE_BAR_HEIGHT = 3.dp
     val AVATAR_SIZE = 24.5.dp
     val COMBO_BORDER_WIDTH = 2.dp

@@ -45,11 +45,11 @@ class ExerciseService : Service() {
     }
 
     private fun buildNotification(): Notification {
-        val title = getString(R.string.running_notification_title)
+        val title = getString(R.string.run_notification_title)
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.running_notification_channel),
+                getString(R.string.run_notification_channel),
                 NotificationManager.IMPORTANCE_LOW,
             ),
         )

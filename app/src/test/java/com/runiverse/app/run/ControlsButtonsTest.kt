@@ -111,8 +111,8 @@ class ControlsButtonsTest {
         val atDistance = { meters: Int -> running.copy(me = running.me.copy(distanceMeters = meters)) }
 
         // when & then
-        assertTrue(finishForced(atDistance(4999).copy(targetDistanceMeters = 5000)))
-        assertFalse(finishForced(atDistance(5000).copy(targetDistanceMeters = 5000)))
-        assertFalse(finishForced(RunPreviewSamples.solo))
+        assertTrue(isFinishForced(atDistance(4999).copy(targetDistanceMeters = 5000)))
+        assertFalse(isFinishForced(atDistance(5000).copy(targetDistanceMeters = 5000)))
+        assertFalse(isFinishForced(RunPreviewSamples.solo))
     }
 }

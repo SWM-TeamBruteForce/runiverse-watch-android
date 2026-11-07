@@ -41,7 +41,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     val (barTop, rowsTop) = with(LocalDensity.current) {
         // 막대는 숫자가 아니라 `bpm`의 p 꼬리 아래에서 잰다
         val heartRateBottom = slots.bigNumberBaseline + unitSize.toPx() * SUIT_DESCENDER_INK.belowBaselineEm
-        val barTop = heartRateBottom + RunDimensions.ZONE_BAR_GAP.toPx()
+        val barTop = heartRateBottom + RunDimensions.VALUE_TO_ZONE_BAR_GAP.toPx()
         val groupGap = RunDimensions.GROUP_GAP.toPx()
         val rowsTop = if (heartRateZone != null) {
             barTop + RunDimensions.ZONE_BAR_HEIGHT.toPx() + groupGap
@@ -118,7 +118,7 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
             fun width(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
             val widestRow = width(WIDEST_CADENCE, style) + width(spmUnit, unitStyle) +
                 width(WIDEST_CALORIES, style) + width(kcalUnit, unitStyle) +
-                RunDimensions.VALUE_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
+                RunDimensions.VALUE_TO_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
             val firstBaseline = rowsTop + style.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
             widestRow <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
         }

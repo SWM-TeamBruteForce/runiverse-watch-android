@@ -73,18 +73,19 @@ import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val FADED_PILL_ALPHA = 0.55f
+private const val FADED_BUTTON_ALPHA = 0.55f
 private const val ICON_TO_FONT_RATIO = 0.62f
-private const val PAUSE_ICON_BAR_RATIO = 0.28f
-private const val PAUSE_ICON_LEFT_BAR_RATIO = 0.1f
-private const val PAUSE_ICON_RIGHT_BAR_RATIO = 0.62f
+private const val PAUSE_ICON_BAR_FRACTION = 0.28f
+private const val PAUSE_ICON_LEFT_BAR_FRACTION = 0.1f
+private const val PAUSE_ICON_RIGHT_BAR_FRACTION = 0.62f
 
 // 제재 방은 10km, 초대 방은 42.195km까지다 — SUIT 숫자는 0, 4 순으로 넓다
 private const val WIDEST_PENALTY_LINE_REMAINING = "4.0km"
 private const val WIDEST_GOAL_REMAINING = "40.0km"
-private const val HOLD_TO_FINISH_MILLIS = 1200
-private const val HOLD_LONGER_NOTICE_MILLIS = 1500L
+private const val HOLD_TO_FINISH_MS = 1200
+private val HOLD_LONGER_NOTICE = 1500.milliseconds
 
 // 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
 private val PILL_WIDTH = 120.dp
@@ -97,8 +98,8 @@ private val LIST_BOTTOM_PADDING = 24.dp
 
 private val HINT_START_TOP = 34.dp
 private val HINT_MAX_SHIFT = 24.dp
-private val PILL_TOP_AT_DEFAULT_FONT = 74.dp
-private val HINT_TO_PILL_GAP = 5.dp
+private val FIRST_BUTTON_TOP_AT_DEFAULT_FONT = 74.dp
+private val HINT_TO_BUTTON_GAP = 5.dp
 
 private val CLOCK_TOP_PADDING = 2.dp
 private val CLOCK_TO_COVER_END = 2.dp
@@ -153,21 +154,21 @@ private fun ControlsPageContent(
     val isPaused = run.status == RunStatus.PAUSED
     val isLocked = areControlsLocked(run, isPhoneReachable, commandState)
     val isDimmed = areControlsDimmed(run, isPhoneReachable, commandState)
-    val pillAlpha = if (isDimmed) RunDimensions.STALE_CONTENT_ALPHA else 1f
-    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
+    val buttonAlpha = if (isDimmed) RunDimensions.STALE_CONTENT_ALPHA else 1f
+    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
     val isScrolled = listState.canScrollBackward
-    val (secondPillFits, comboRowFits) = with(LocalDensity.current) {
+    val (finishButtonFits, comboRowFits) = with(LocalDensity.current) {
         val step = (PILL_HEIGHT + PILL_GAP).toPx()
         val fits = { top: Float ->
-            pillFitsRoundScreen(screenSize, PILL_FIT_EDGE_MARGIN.toPx(), pillWidth.toPx(), PILL_HEIGHT.toPx(), top)
+            pillFitsRoundScreen(screenWidth, PILL_FIT_EDGE_MARGIN.toPx(), pillWidth.toPx(), PILL_HEIGHT.toPx(), top)
         }
-        fits(slots.pillTop + step) to fits(slots.pillTop + step * 2)
+        fits(slots.firstButtonTop + step) to fits(slots.firstButtonTop + step * 2)
     }
     // 화면 끝에 걸린 칸이 잘못 눌리지 않게 스크롤 전엔 막는다
-    val isSecondPillReachable = secondPillFits || isScrolled
-    val isComboRowReachable = (secondPillFits && comboRowFits) || isScrolled
-    val pillTopDistanceToBottom = with(LocalDensity.current) {
-        screenSize - slots.pillTop - (PILL_HEIGHT + PILL_GAP).toPx()
+    val isFinishButtonReachable = finishButtonFits || isScrolled
+    val isComboRowReachable = (finishButtonFits && comboRowFits) || isScrolled
+    val finishButtonTopToBottom = with(LocalDensity.current) {
+        screenWidth - slots.firstButtonTop - (PILL_HEIGHT + PILL_GAP).toPx()
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -179,25 +180,25 @@ private fun ControlsPageContent(
         ) {
             item { ControlsHintLines(run, isPhoneReachable, slots) }
             item {
-                ControlPill(
+                ControlButton(
                     stringResource(if (isPaused) R.string.controls_resume else R.string.controls_pause),
                     if (isPaused) ControlIcon.PLAY else ControlIcon.PAUSE,
                     MaterialTheme.colorScheme.outlineVariant,
                     pillWidth,
                     isEnabled = !isLocked,
-                    Modifier.alpha(pillAlpha),
+                    Modifier.alpha(buttonAlpha),
                     onClick = { if (isPaused) commands.resume() else commands.pause() },
                 )
             }
             item {
-                FinishPill(
+                FinishButton(
                     finishButtonStage(run, commandState),
                     pillWidth,
-                    isEnabled = !isLocked && isSecondPillReachable,
+                    isEnabled = !isLocked && isFinishButtonReachable,
                     Modifier
-                        .fadedTowardScreenBottom(!isSecondPillReachable, pillTopDistanceToBottom)
-                        .alpha(pillAlpha),
-                    onFinish = { commands.finish(finishForced(run)) },
+                        .fadedTowardScreenBottom(!isFinishButtonReachable, finishButtonTopToBottom)
+                        .alpha(buttonAlpha),
+                    onFinish = { commands.finish(isFinishForced(run)) },
                 )
             }
             item {
@@ -219,24 +220,24 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
     val style = MaterialTheme.typography.bodyMedium
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
+    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
     val widestFirstHints = listOf(
         stringResource(R.string.controls_to_penalty_line, WIDEST_PENALTY_LINE_REMAINING),
         stringResource(R.string.controls_to_goal, WIDEST_GOAL_REMAINING),
     )
     val longestSecondHint = stringResource(R.string.controls_penalty_if_short)
-    return remember(widestFirstHints, longestSecondHint, style, density, screenSize) {
+    return remember(widestFirstHints, longestSecondHint, style, density, screenWidth) {
         with(density) {
             val widestFirstHint = widestFirstHints.maxBy { measurer.measure(it, style).size.width }
             controlsPageSlots(
                 listOf(widestFirstHint, longestSecondHint),
-                screenSize,
+                screenWidth,
                 edgeMargin = RunDimensions.TEXT_EDGE_MARGIN.toPx(),
                 lineAdvance = hintLineAdvance(style.fontSize.toPx()),
                 hintStartTop = HINT_START_TOP.toPx(),
                 hintMaxShift = HINT_MAX_SHIFT.toPx(),
-                pillTopAtDefaultFont = PILL_TOP_AT_DEFAULT_FONT.toPx(),
-                hintToPillGap = HINT_TO_PILL_GAP.toPx(),
+                firstButtonTopAtDefaultFont = FIRST_BUTTON_TOP_AT_DEFAULT_FONT.toPx(),
+                hintToButtonGap = HINT_TO_BUTTON_GAP.toPx(),
                 isFontScaled = fontScale > 1f,
                 widthOf = { measurer.measure(it, style).size.width.toFloat() },
             )
@@ -254,19 +255,19 @@ private fun ControlsHintLines(run: RunState, isPhoneReachable: Boolean, slots: C
     val style = MaterialTheme.typography.bodyMedium
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
-    val lines = remember(hints, slots, style, density, screenSize) {
+    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+    val lines = remember(hints, slots, style, density, screenWidth) {
         with(density) {
             placeHintLines(
                 hints,
                 slots.hintTop,
                 hintLineAdvance(style.fontSize.toPx()),
-                widthAt = { usableWidthAt(it, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx()) },
+                widthAt = { usableWidthAt(it, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx()) },
                 widthOf = { measurer.measure(it, style).size.width.toFloat() },
             )
         }
     }
-    val height = with(density) { slots.pillTop.toDp() } - PILL_GAP
+    val height = with(density) { slots.firstButtonTop.toDp() } - PILL_GAP
     val firstHintColor = MaterialTheme.colorScheme.onSurface
     val secondHintColor = MaterialTheme.colorScheme.onSurfaceVariant
     Box(Modifier.fillMaxWidth().height(height), contentAlignment = Alignment.TopCenter) {
@@ -291,7 +292,7 @@ private fun controlsHintTexts(hint: ControlsHint): List<String> = listOfNotNull(
 private fun controlsFirstHintText(first: ControlsFirstHint, remainingMeters: Int?): String = when (first) {
     ControlsFirstHint.PHONE_CHECKING -> stringResource(R.string.run_phone_checking)
     ControlsFirstHint.SERVER_CHECKING -> stringResource(R.string.run_server_checking)
-    ControlsFirstHint.CHECKING_DISTANCE -> stringResource(R.string.controls_checking_distance)
+    ControlsFirstHint.DISTANCE_CHECKING -> stringResource(R.string.controls_distance_checking)
     ControlsFirstHint.TO_PENALTY_LINE ->
         stringResource(R.string.controls_to_penalty_line, remainingDistanceText(remainingMeters ?: 0))
     ControlsFirstHint.TO_GOAL -> stringResource(R.string.controls_to_goal, remainingDistanceText(remainingMeters ?: 0))
@@ -316,7 +317,7 @@ private fun controlsSecondHintText(second: ControlsSecondHint): String = stringR
 )
 
 @Composable
-private fun FinishPill(
+private fun FinishButton(
     stage: FinishButtonStage,
     width: Dp,
     isEnabled: Boolean,
@@ -325,8 +326,8 @@ private fun FinishPill(
 ) {
     val background = laneColor(SELF_LANE_COLOR_SLOT)
     when (stage) {
-        FinishButtonStage.HOLD -> HoldToFinishPill(background, width, isEnabled, modifier, onFinish)
-        FinishButtonStage.TAP -> ControlPill(
+        FinishButtonStage.HOLD -> HoldToFinishButton(background, width, isEnabled, modifier, onFinish)
+        FinishButtonStage.TAP -> ControlButton(
             stringResource(R.string.controls_finish),
             ControlIcon.STOP,
             background,
@@ -335,7 +336,7 @@ private fun FinishPill(
             modifier,
             onFinish,
         )
-        FinishButtonStage.FINISHING -> ControlPill(
+        FinishButtonStage.FINISHING -> ControlButton(
             stringResource(R.string.controls_finishing),
             icon = null,
             background,
@@ -344,7 +345,7 @@ private fun FinishPill(
             modifier,
             onClick = {},
         )
-        FinishButtonStage.CHECKING -> ControlPill(
+        FinishButtonStage.CHECKING -> ControlButton(
             stringResource(R.string.controls_finish_checking),
             icon = null,
             background,
@@ -357,13 +358,13 @@ private fun FinishPill(
 }
 
 @Composable
-private fun ControlPill(
+private fun ControlButton(
     label: String,
     icon: ControlIcon?,
     background: Color,
     width: Dp,
     isEnabled: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     onClick: () -> Unit,
 ) {
     Box(
@@ -373,13 +374,13 @@ private fun ControlPill(
             .background(background)
             .clickable(enabled = isEnabled, role = Role.Button, onClick = onClick),
     ) {
-        PillContent(label, icon, MaterialTheme.colorScheme.onBackground)
+        ButtonContent(label, icon, MaterialTheme.colorScheme.onBackground)
     }
 }
 
 // 달리는 중에 손가락이 스쳐 기록이 끝나지 않게 한다
 @Composable
-private fun HoldToFinishPill(
+private fun HoldToFinishButton(
     background: Color,
     width: Dp,
     isEnabled: Boolean,
@@ -395,19 +396,19 @@ private fun HoldToFinishPill(
     LaunchedEffect(isFilling) {
         if (isFilling) {
             progress.snapTo(0f)
-            launch { progress.animateTo(1f, tween(HOLD_TO_FINISH_MILLIS, easing = LinearEasing)) }
+            launch { progress.animateTo(1f, tween(HOLD_TO_FINISH_MS, easing = LinearEasing)) }
             // 시스템 애니메이션을 끄면 채움이 바로 끝나서 누른 시간은 따로 잰다
-            delay(HOLD_TO_FINISH_MILLIS.toLong())
+            delay(HOLD_TO_FINISH_MS.toLong())
             currentOnFinish()
             isPressing = false
             progress.snapTo(0f)
         } else {
-            progress.animateTo(0f, tween(remainingMillis(progress.value), easing = LinearEasing))
+            progress.animateTo(0f, tween(remainingMs(progress.value), easing = LinearEasing))
         }
     }
     LaunchedEffect(showsHoldLonger) {
         if (showsHoldLonger) {
-            delay(HOLD_LONGER_NOTICE_MILLIS)
+            delay(HOLD_LONGER_NOTICE)
             showsHoldLonger = false
         }
     }
@@ -458,7 +459,7 @@ private fun HoldToFinishPill(
                 }
             },
     ) {
-        PillContent(label, icon, MaterialTheme.colorScheme.onBackground)
+        ButtonContent(label, icon, MaterialTheme.colorScheme.onBackground)
         Box(
             Modifier
                 .matchParentSize()
@@ -468,15 +469,15 @@ private fun HoldToFinishPill(
                 }
                 .background(MaterialTheme.colorScheme.onBackground),
         ) {
-            PillContent(label, icon, MaterialTheme.colorScheme.background)
+            ButtonContent(label, icon, MaterialTheme.colorScheme.background)
         }
     }
 }
 
-private fun remainingMillis(remainingFraction: Float): Int = (HOLD_TO_FINISH_MILLIS * remainingFraction).toInt()
+private fun remainingMs(remainingFraction: Float): Int = (HOLD_TO_FINISH_MS * remainingFraction).toInt()
 
 @Composable
-private fun PillContent(label: String, icon: ControlIcon?, color: Color) {
+private fun ButtonContent(label: String, icon: ControlIcon?, color: Color) {
     val style = MaterialTheme.typography.bodyMedium
     val density = LocalDensity.current
     val iconSize = with(density) { style.fontSize.toDp() } * ICON_TO_FONT_RATIO
@@ -494,9 +495,9 @@ private fun PillContent(label: String, icon: ControlIcon?, color: Color) {
 private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
     when (icon) {
         ControlIcon.PAUSE -> {
-            val barSize = Size(size.width * PAUSE_ICON_BAR_RATIO, size.height)
-            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_LEFT_BAR_RATIO, 0f), size = barSize)
-            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_RIGHT_BAR_RATIO, 0f), size = barSize)
+            val barSize = Size(size.width * PAUSE_ICON_BAR_FRACTION, size.height)
+            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_LEFT_BAR_FRACTION, 0f), size = barSize)
+            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_RIGHT_BAR_FRACTION, 0f), size = barSize)
         }
         ControlIcon.PLAY -> drawPath(
             Path().apply {
@@ -517,7 +518,7 @@ private fun Modifier.fadedTowardScreenBottom(isFaded: Boolean, distanceToScreenB
     return drawWithContent {
         drawContent()
         drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black), endY = distanceToScreenBottom))
-    }.alpha(FADED_PILL_ALPHA)
+    }.alpha(FADED_BUTTON_ALPHA)
 }
 
 @Composable
@@ -525,7 +526,7 @@ private fun ComboEffectRow(
     isOn: Boolean,
     width: Dp,
     isEnabled: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     onToggle: (Boolean) -> Unit,
 ) {
     val style = MaterialTheme.typography.bodyMedium

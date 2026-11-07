@@ -33,7 +33,7 @@ internal fun widestHeartRateBlockWidth(valueStyle: TextStyle): Dp {
     return remember(valueStyle, unitStyle, unit, density) {
         val valueWidth = measurer.measure(WIDEST_HEART_RATE, valueStyle).size.width
         val unitWidth = measurer.measure(unit, unitStyle).size.width
-        with(density) { valueWidth.toDp() + RunDimensions.VALUE_UNIT_GAP + unitWidth.toDp() }
+        with(density) { valueWidth.toDp() + RunDimensions.VALUE_TO_UNIT_GAP + unitWidth.toDp() }
     }
 }
 

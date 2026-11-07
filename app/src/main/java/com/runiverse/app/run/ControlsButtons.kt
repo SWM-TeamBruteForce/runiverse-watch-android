@@ -38,7 +38,7 @@ fun areControlsDimmed(run: RunState, isPhoneReachable: Boolean, commandState: Ru
         run.finish?.stage == FinishStage.FINISHING
 
 /** 폰 종료 버튼과 같은 규칙이다. */
-fun finishForced(run: RunState): Boolean {
-    val target = run.targetDistanceMeters ?: return false
-    return run.me.distanceMeters < target
+fun isFinishForced(run: RunState): Boolean {
+    val targetMeters = run.targetDistanceMeters ?: return false
+    return run.me.distanceMeters < targetMeters
 }

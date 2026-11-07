@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Runiverse</string>
-    <string name="running_notification_channel">러닝 기록</string>
-    <string name="running_notification_title">러닝 기록 중</string>
+    <string name="run_notification_channel">러닝 기록</string>
+    <string name="run_notification_title">러닝 기록 중</string>
 
     <string name="run_phone_checking">폰 연결 확인 중</string>
     <string name="run_server_checking">서버 연결 확인 중</string>
@@ -27,7 +27,7 @@
     <string name="controls_combo_effect">콤보 효과</string>
     <string name="controls_to_penalty_line">80%%까지 약 %1$s</string>
     <string name="controls_to_goal">목표까지 약 %1$s</string>
-    <string name="controls_checking_distance">거리 확인 중</string>
+    <string name="controls_distance_checking">거리 확인 중</string>
     <string name="controls_after_reconnect">연결 후 조작 가능</string>
     <string name="controls_recording">러닝 기록 중</string>
     <string name="controls_keep_running_if_short">모자라면 계속 달리기</string>

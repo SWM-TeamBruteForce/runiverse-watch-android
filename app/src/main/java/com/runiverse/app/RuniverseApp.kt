@@ -26,7 +26,7 @@ class RuniverseApp : Application() {
     private val phoneChannel by lazy { PhoneChannel(this) }
     val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
     val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
-    val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(SETTINGS_NAME, MODE_PRIVATE)) }
+    val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)) }
 
     override fun onCreate() {
         super.onCreate()
@@ -50,16 +50,16 @@ class RuniverseApp : Application() {
 
     // 기본 용도는 터치 진동 설정에 막히고, 알림 용도는 앱이 뒤에 있으면 막힌다
     private fun vibrateOnce() {
-        val effect = VibrationEffect.createOneShot(GOAL_PENDING_VIBRATION_MILLIS, GOAL_PENDING_VIBRATION_AMPLITUDE)
+        val effect = VibrationEffect.createOneShot(GOAL_PENDING_VIBRATION_MS, GOAL_PENDING_VIBRATION_AMPLITUDE)
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build()
         getSystemService(Vibrator::class.java).vibrate(effect, attributes)
     }
 
     private companion object {
         const val TAG = "RuniverseApp"
-        const val SETTINGS_NAME = "settings"
+        const val PREFERENCES_NAME = "settings"
         // 콤보의 짧은 여러 번과 구분되게 한 번만 세게 울린다
-        const val GOAL_PENDING_VIBRATION_MILLIS = 300L
+        const val GOAL_PENDING_VIBRATION_MS = 300L
         const val GOAL_PENDING_VIBRATION_AMPLITUDE = 255
         val RETRY_DELAY = 3.seconds
         val MAX_RETRY_DELAY = 1.minutes

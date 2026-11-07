@@ -57,7 +57,7 @@ private const val STATUS_OVERLAY_ALPHA = 0.45f
 private const val STATUS_ICON_FRACTION = 0.42f
 private val GAP_INDICATOR_WIDTH = 7.5.dp
 private val GAP_INDICATOR_HEIGHT = 6.6.dp
-private val GAP_INDICATOR_TO_VALUE = 2.dp
+private val INDICATOR_TO_VALUE_GAP = 2.dp
 private val MIN_SPACE_BESIDE_GAP_LABEL = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
@@ -152,7 +152,7 @@ private fun DistanceTimeRow(me: MyRecord, abbreviateUnits: Boolean, modifier: Mo
 @Composable
 private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
-    ContentBoundsColumn(gap = RunDimensions.ZONE_BAR_GAP, modifier = modifier) {
+    ContentBoundsColumn(gap = RunDimensions.VALUE_TO_ZONE_BAR_GAP, modifier = modifier) {
         ValueWithUnit(
             heartRateBpm?.toString() ?: stringResource(R.string.run_value_unknown),
             stringResource(R.string.unit_bpm),
@@ -182,9 +182,9 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
         val widestLabel = widestLabels.maxOf { (value, unit) ->
             val valueWidth = with(density) { measurer.measure(value, valueStyle).size.width.toDp() }
             val unitWidth = unit?.let {
-                with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_UNIT_GAP
+                with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_TO_UNIT_GAP
             } ?: 0.dp
-            GAP_INDICATOR_WIDTH + GAP_INDICATOR_TO_VALUE + valueWidth + unitWidth
+            GAP_INDICATOR_WIDTH + INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
         }
         maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_SPACE_BESIDE_GAP_LABEL)
     }
@@ -241,7 +241,7 @@ private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecim
     // 그 사람 통지가 아직 없으면 폰도 격차 줄을 그리지 않는다
     val gapMeters = player.gapMeters ?: return
     val gap = formatGapDistance(gapMeters, abbreviateUnits, dropKmDecimal)
-    Row(horizontalArrangement = Arrangement.spacedBy(GAP_INDICATOR_TO_VALUE)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(INDICATOR_TO_VALUE_GAP)) {
         when (gapDirection(gapMeters)) {
             GapDirection.AHEAD -> GapDirectionIndicator(pointsUp = true, Modifier.alignByBaseline())
             GapDirection.BEHIND -> GapDirectionIndicator(pointsUp = false, Modifier.alignByBaseline())

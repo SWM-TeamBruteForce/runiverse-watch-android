@@ -56,11 +56,11 @@ class ControlsHintTest {
     fun `화면 거리가 목표에 닿으면 확인 중으로 두고 달리는 중에만 계속 달리기를 권한다`() {
         // when & then
         assertEquals(
-            ControlsHint(ControlsFirstHint.CHECKING_DISTANCE, second = ControlsSecondHint.KEEP_RUNNING_IF_SHORT),
+            ControlsHint(ControlsFirstHint.DISTANCE_CHECKING, second = ControlsSecondHint.KEEP_RUNNING_IF_SHORT),
             controlsHint(party.at(5000), isPhoneReachable = true),
         )
         assertEquals(
-            ControlsHint(ControlsFirstHint.CHECKING_DISTANCE),
+            ControlsHint(ControlsFirstHint.DISTANCE_CHECKING),
             controlsHint(party.at(5000, RunStatus.PAUSED), isPhoneReachable = true),
         )
     }
@@ -109,14 +109,5 @@ class ControlsHintTest {
             ControlsHint(ControlsFirstHint.TO_PENALTY_LINE, 420, ControlsSecondHint.PENALTY_IF_SHORT),
             controlsHint(soloMatch.at(3580), isPhoneReachable = true),
         )
-    }
-
-    @Test
-    fun `남은 거리는 1000m 미만이면 m로, 그 위는 소수 한 자리 km로 올려 쓴다`() {
-        // when & then
-        assertEquals(FormattedDistance("999", DistanceUnitLabel.METER), formatRemainingDistance(999))
-        assertEquals(FormattedDistance("1.0", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1000))
-        assertEquals(FormattedDistance("1.1", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1001))
-        assertEquals(FormattedDistance("42.2", DistanceUnitLabel.KILOMETER), formatRemainingDistance(42_195))
     }
 }

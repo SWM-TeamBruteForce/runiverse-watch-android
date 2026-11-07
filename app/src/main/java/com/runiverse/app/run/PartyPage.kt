@@ -36,7 +36,7 @@ import com.runiverse.app.ui.theme.tabularNumerals
 
 private const val WIDEST_PACE = "88'88\""
 private val LABEL_TO_PACE_GAP = 3.dp
-private val BETWEEN_PACES_GAP = 8.dp
+private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
@@ -82,11 +82,11 @@ private fun PaceAndComboRows(
     val paceStyle = MaterialTheme.typography.numeralSmall
     val playerCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_player), paceStyle)
     val myCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_me), paceStyle)
-    val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + BETWEEN_PACES_GAP + myCellWidth)
+    val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + PACE_GAP + myCellWidth)
     val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
     if (fitsOneLine) {
         // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭을 가장 넓은 페이스로 잡는다
-        Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
+        Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(PACE_GAP)) {
             Box(Modifier.width(playerCellWidth), contentAlignment = Alignment.CenterEnd) {
                 // 상대는 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 안 잘리게 왼쪽으로 넘긴다
                 PlayerPace(
@@ -187,7 +187,7 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots, alpha: Float) {
     }
     Row(
         Modifier.baselineAt(slots.bigNumberBaseline).alpha(alpha),
-        horizontalArrangement = Arrangement.spacedBy(RunDimensions.VALUE_UNIT_GAP),
+        horizontalArrangement = Arrangement.spacedBy(RunDimensions.VALUE_TO_UNIT_GAP),
     ) {
         if (directionWord != null) {
             AlignedText(

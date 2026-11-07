@@ -21,7 +21,7 @@ internal fun ValueWithUnit(
     Row(modifier) {
         AlignedText(value, valueStyle, valueColor, Modifier.alignByBaseline())
         if (unit != null) {
-            Spacer(Modifier.width(RunDimensions.VALUE_UNIT_GAP))
+            Spacer(Modifier.width(RunDimensions.VALUE_TO_UNIT_GAP))
             AlignedText(
                 unit,
                 MaterialTheme.typography.labelSmall,
