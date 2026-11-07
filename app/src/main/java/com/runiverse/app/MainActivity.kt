@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     private val runiverseApp get() = application as RuniverseApp
     private val phoneLink get() = runiverseApp.phoneLink
+
+    // 결과가 지워진 채 닫히면 그 사이 대기 화면이 보여 내용을 숨긴다
+    private var isClosing by mutableStateOf(false)
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
         ExerciseService.start(this)
     }
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
             runiverseApp.exerciseSession.phoneLost.collect { finish() }
         }
         lifecycleScope.launch {
-            phoneLink.state.finishedRunRemovals().collect { finish() }
+            phoneLink.state.finishedRunRemovals().collect { finishHidden() }
         }
         setContent {
             val linkState by phoneLink.state.collectAsState()
@@ -89,7 +92,7 @@ class MainActivity : ComponentActivity() {
                             onDismissed = { if (!phoneLink.state.value.isRunActive) closeScreen() },
                             state = dismissState,
                         ) { isBackground ->
-                            if (!isBackground && !isDismissed) {
+                            if (!isBackground && !isDismissed && !isClosing) {
                                 if (finishedRun != null) {
                                     RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
                                 } else {
@@ -117,6 +120,11 @@ class MainActivity : ComponentActivity() {
     // 닫기 버튼·뒤로가기·쓸어 닫기가 모두 여기로 온다
     private fun closeScreen() {
         phoneLink.dismissResult()
+        finishHidden()
+    }
+
+    private fun finishHidden() {
+        isClosing = true
         finish()
     }
 
