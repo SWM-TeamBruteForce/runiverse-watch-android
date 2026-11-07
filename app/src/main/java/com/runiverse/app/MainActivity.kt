@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         lifecycleScope.launch {
-            runiverseApp.exerciseSession.phoneLost.collect { finish() }
+            runiverseApp.exerciseSession.phoneLost.collect { finishHidden() }
         }
         lifecycleScope.launch {
             phoneLink.state.finishedRunRemovals().collect { finishHidden() }
