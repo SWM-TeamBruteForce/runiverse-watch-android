@@ -1,9 +1,15 @@
 package com.runiverse.app.run
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,9 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,14 +39,23 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
@@ -54,6 +71,7 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
+import kotlinx.coroutines.delay
 
 private const val FADED_PILL_ALPHA = 0.55f
 private const val ICON_TO_FONT_RATIO = 0.62f
@@ -61,6 +79,8 @@ private const val PAUSE_ICON_BAR_RATIO = 0.28f
 private const val PAUSE_ICON_LEFT_BAR_RATIO = 0.1f
 private const val PAUSE_ICON_RIGHT_BAR_RATIO = 0.62f
 private const val LONGEST_HINT_REMAINING = "420m"
+private const val HOLD_TO_FINISH_MILLIS = 1200
+private const val HOLD_LONGER_NOTICE_MILLIS = 1500L
 
 // 세 칸은 화면이 달라도 폭이 같고 글자 설정으로만 갈린다 — 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
 private val PILL_WIDTH = 120.dp
@@ -91,20 +111,33 @@ private val COMBO_SWITCH_THUMB_INSET = 3.dp
 private enum class ControlIcon { PAUSE, PLAY, STOP }
 
 @Composable
-internal fun ControlsPage(run: RunState, isPhoneReachable: Boolean) {
+internal fun ControlsPage(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    commandState: RunCommandState,
+    commands: RunCommands,
+) {
     val listState = rememberTransformingLazyColumnState()
     // 스크롤 상태를 시계에 연결하지 않는다 — 연결하면 스크롤 중에 시계가 사라진다
     ScreenScaffold(scrollIndicator = { ScrollIndicator(listState, Modifier.align(Alignment.CenterEnd)) }) {
-        ControlsPageContent(run, isPhoneReachable, listState)
+        ControlsPageContent(run, isPhoneReachable, commandState, commands, listState)
     }
 }
 
 @Composable
-private fun ControlsPageContent(run: RunState, isPhoneReachable: Boolean, listState: TransformingLazyColumnState) {
+private fun ControlsPageContent(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    commandState: RunCommandState,
+    commands: RunCommands,
+    listState: TransformingLazyColumnState,
+) {
     val slots = currentControlsPageSlots()
     val pillWidth = if (LocalDensity.current.fontScale > 1f) PILL_WIDTH_SCALED_FONT else PILL_WIDTH
     val isPaused = run.status == RunStatus.PAUSED
-    val isLocked = !isPhoneReachable
+    val isLocked = areControlsLocked(run, isPhoneReachable, commandState)
+    val isDimmed = areControlsDimmed(run, isPhoneReachable, commandState)
+    val pillAlpha = if (isDimmed) RunDimensions.STALE_CONTENT_ALPHA else 1f
     val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     val isScrolled = listState.canScrollBackward
     val (secondPillFits, comboRowFits) = with(LocalDensity.current) {
@@ -131,29 +164,25 @@ private fun ControlsPageContent(run: RunState, isPhoneReachable: Boolean, listSt
         ) {
             item { ControlsHintLines(run, isPhoneReachable, slots) }
             item {
-                // TODO: 명령 연결 — 버튼을 연결할 때 폰으로 보낸다
                 ControlPill(
                     stringResource(if (isPaused) R.string.controls_resume else R.string.controls_pause),
                     if (isPaused) ControlIcon.PLAY else ControlIcon.PAUSE,
                     MaterialTheme.colorScheme.outlineVariant,
                     pillWidth,
                     isEnabled = !isLocked,
-                    Modifier.alpha(if (isLocked) RunDimensions.STALE_CONTENT_ALPHA else 1f),
-                    onClick = {},
+                    Modifier.alpha(pillAlpha),
+                    onClick = { if (isPaused) commands.resume() else commands.pause() },
                 )
             }
             item {
-                // TODO: 명령 연결 — 달리는 중엔 길게 눌러야 보낸다
-                ControlPill(
-                    stringResource(if (isPaused) R.string.controls_finish else R.string.controls_hold_to_finish),
-                    ControlIcon.STOP,
-                    laneColor(SELF_LANE_COLOR_SLOT),
+                FinishPill(
+                    finishButtonStage(run, commandState),
                     pillWidth,
                     isEnabled = !isLocked && isSecondPillReachable,
                     Modifier
                         .fadedTowardScreenBottom(!isSecondPillReachable, pillTopDistanceToBottom)
-                        .alpha(if (isLocked) RunDimensions.STALE_CONTENT_ALPHA else 1f),
-                    onClick = {},
+                        .alpha(pillAlpha),
+                    onFinish = { commands.finish(finishForced(run)) },
                 )
             }
             item {
@@ -271,31 +300,177 @@ private fun controlsSecondHintText(second: ControlsSecondHint): String = stringR
 )
 
 @Composable
+private fun FinishPill(
+    stage: FinishButtonStage,
+    width: Dp,
+    isEnabled: Boolean,
+    modifier: Modifier,
+    onFinish: () -> Unit,
+) {
+    val background = laneColor(SELF_LANE_COLOR_SLOT)
+    when (stage) {
+        FinishButtonStage.HOLD -> HoldToFinishPill(background, width, isEnabled, modifier, onFinish)
+        FinishButtonStage.TAP -> ControlPill(
+            stringResource(R.string.controls_finish),
+            ControlIcon.STOP,
+            background,
+            width,
+            isEnabled,
+            modifier,
+            onFinish,
+        )
+        // 잠금 중엔 버튼이 답을 기다린다는 말만 한다 — 눌러도 다시 보내지 않는다
+        FinishButtonStage.FINISHING -> ControlPill(
+            stringResource(R.string.controls_finishing),
+            icon = null,
+            background,
+            width,
+            isEnabled = false,
+            modifier,
+            onClick = {},
+        )
+        FinishButtonStage.CHECKING -> ControlPill(
+            stringResource(R.string.controls_finish_checking),
+            icon = null,
+            background,
+            width,
+            isEnabled = false,
+            modifier,
+            onClick = {},
+        )
+    }
+}
+
+@Composable
 private fun ControlPill(
     label: String,
-    icon: ControlIcon,
+    icon: ControlIcon?,
     background: Color,
     width: Dp,
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val style = MaterialTheme.typography.bodyMedium
-    val contentColor = MaterialTheme.colorScheme.onBackground
-    val density = LocalDensity.current
-    val iconSize = with(density) { style.fontSize.toDp() } * ICON_TO_FONT_RATIO
-    val pillCenter = with(density) { PILL_HEIGHT.toPx() } / 2
-    Row(
+    Box(
         modifier
             .size(width, PILL_HEIGHT)
             .clip(CircleShape)
             .background(background)
             .clickable(enabled = isEnabled, role = Role.Button, onClick = onClick),
+    ) {
+        PillContent(label, icon, MaterialTheme.colorScheme.onBackground)
+    }
+}
+
+// 달리는 중에 손가락이 스쳐 기록이 끝나지 않게 다 찰 때까지 눌러야 끝난다. 누르는 동안 흰색이 왼쪽부터 차오른다
+@Composable
+private fun HoldToFinishPill(
+    background: Color,
+    width: Dp,
+    isEnabled: Boolean,
+    modifier: Modifier,
+    onFinish: () -> Unit,
+) {
+    val currentOnFinish by rememberUpdatedState(onFinish)
+    var isPressing by remember { mutableStateOf(false) }
+    var showsHoldLonger by remember { mutableStateOf(false) }
+    val progress = remember { Animatable(0f) }
+    val isFilling = isPressing && isEnabled
+
+    LaunchedEffect(isFilling) {
+        if (isFilling) {
+            progress.animateTo(1f, tween(remainingMillis(1f - progress.value), easing = LinearEasing))
+            currentOnFinish()
+            isPressing = false
+            progress.snapTo(0f)
+        } else {
+            progress.animateTo(0f, tween(remainingMillis(progress.value), easing = LinearEasing))
+        }
+    }
+    LaunchedEffect(showsHoldLonger) {
+        if (showsHoldLonger) {
+            delay(HOLD_LONGER_NOTICE_MILLIS)
+            showsHoldLonger = false
+        }
+    }
+    // 화면이 꺼지면 프레임이 멈춰 눌림이 남는다 — 켜졌을 때 이어서 차지 않게 취소한다
+    LifecycleStartEffect(Unit) {
+        onStopOrDispose { isPressing = false }
+    }
+
+    val label = stringResource(
+        when {
+            isPressing -> R.string.controls_keep_pressing
+            showsHoldLonger -> R.string.controls_hold_longer
+            else -> R.string.controls_hold_to_finish
+        },
+    )
+    val icon = if (showsHoldLonger && !isPressing) null else ControlIcon.STOP
+    val holdLabel = stringResource(R.string.controls_hold_to_finish)
+    Box(
+        modifier
+            .size(width, PILL_HEIGHT)
+            .clip(CircleShape)
+            .background(background)
+            // 쓸기로 넘어가면 부모가 입력을 가져가 up이 null이다 — 짧게 누른 것으로 보지 않는다
+            .pointerInput(isEnabled) {
+                if (!isEnabled) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown()
+                    showsHoldLonger = false
+                    isPressing = true
+                    try {
+                        val up = waitForUpOrCancellation()
+                        if (isPressing && up != null) showsHoldLonger = true
+                    } finally {
+                        isPressing = false
+                    }
+                }
+            }
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                contentDescription = holdLabel
+                if (isEnabled) {
+                    onLongClick(holdLabel) {
+                        currentOnFinish()
+                        true
+                    }
+                } else {
+                    disabled()
+                }
+            },
+    ) {
+        PillContent(label, icon, MaterialTheme.colorScheme.onBackground)
+        // 찬 부분의 글자는 검게 보인다
+        Box(
+            Modifier
+                .matchParentSize()
+                .clearAndSetSemantics {}
+                .drawWithContent {
+                    clipRect(right = size.width * progress.value) { this@drawWithContent.drawContent() }
+                }
+                .background(MaterialTheme.colorScheme.onBackground),
+        ) {
+            PillContent(label, icon, MaterialTheme.colorScheme.background)
+        }
+    }
+}
+
+private fun remainingMillis(remainingFraction: Float): Int = (HOLD_TO_FINISH_MILLIS * remainingFraction).toInt()
+
+@Composable
+private fun PillContent(label: String, icon: ControlIcon?, color: Color) {
+    val style = MaterialTheme.typography.bodyMedium
+    val density = LocalDensity.current
+    val iconSize = with(density) { style.fontSize.toDp() } * ICON_TO_FONT_RATIO
+    val pillCenter = with(density) { PILL_HEIGHT.toPx() } / 2
+    Row(
+        Modifier.fillMaxSize(),
         horizontalArrangement = Arrangement.spacedBy(ICON_TO_LABEL_GAP, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.size(iconSize)) { drawControlIcon(icon, contentColor) }
-        AlignedText(label, style, contentColor, Modifier.contentCenterAt(pillCenter))
+        if (icon != null) Canvas(Modifier.size(iconSize)) { drawControlIcon(icon, color) }
+        AlignedText(label, style, color, Modifier.contentCenterAt(pillCenter))
     }
 }
 
@@ -393,12 +568,20 @@ private fun ClockFade(modifier: Modifier) {
     )
 }
 
+private val PREVIEW_COMMANDS = RunCommands(pause = {}, resume = {}, finish = {})
+
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
 private fun ControlsPageRunningPreview() = RunPreviewFrame {
-    ControlsPageContent(RunPreviewSamples.party, isPhoneReachable = true, rememberTransformingLazyColumnState())
+    ControlsPageContent(
+        RunPreviewSamples.party,
+        isPhoneReachable = true,
+        RunCommandState(),
+        PREVIEW_COMMANDS,
+        rememberTransformingLazyColumnState(),
+    )
 }
 
 @WearPreviewLargeRound
@@ -407,6 +590,8 @@ private fun ControlsPagePausedPreview() = RunPreviewFrame {
     ControlsPageContent(
         RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
+        RunCommandState(),
+        PREVIEW_COMMANDS,
         rememberTransformingLazyColumnState(),
     )
 }
@@ -414,5 +599,23 @@ private fun ControlsPagePausedPreview() = RunPreviewFrame {
 @WearPreviewLargeRound
 @Composable
 private fun ControlsPagePhoneLostPreview() = RunPreviewFrame {
-    ControlsPageContent(RunPreviewSamples.party, isPhoneReachable = false, rememberTransformingLazyColumnState())
+    ControlsPageContent(
+        RunPreviewSamples.party,
+        isPhoneReachable = false,
+        RunCommandState(),
+        PREVIEW_COMMANDS,
+        rememberTransformingLazyColumnState(),
+    )
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun ControlsPageFinishingPreview() = RunPreviewFrame {
+    ControlsPageContent(
+        RunPreviewSamples.party,
+        isPhoneReachable = true,
+        RunCommandState(isLocked = true, isFinishPending = true),
+        PREVIEW_COMMANDS,
+        rememberTransformingLazyColumnState(),
+    )
 }

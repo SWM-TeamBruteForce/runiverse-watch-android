@@ -20,6 +20,10 @@
     <string name="controls_resume">계속 달리기</string>
     <string name="controls_hold_to_finish">길게 눌러 종료</string>
     <string name="controls_finish">종료</string>
+    <string name="controls_keep_pressing">계속 누르기</string>
+    <string name="controls_hold_longer">길게 눌러야 종료</string>
+    <string name="controls_finishing">종료 중</string>
+    <string name="controls_finish_checking">종료 확인 중</string>
     <string name="controls_combo_effect">콤보 효과</string>
     <string name="controls_to_penalty_line">80%%까지 약 %1$s</string>
     <string name="controls_to_goal">목표까지 약 %1$s</string>

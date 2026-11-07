@@ -27,6 +27,8 @@ data class PhoneLinkState(
     val isSyncing: Boolean = false,
     /** 보내고 아직 결과를 못 받은 명령이다. */
     val pendingRequestId: String? = null,
+    /** 보내고 아직 결과를 못 받은 명령이 종료다. */
+    val isFinishPending: Boolean = false,
     /** 명령을 보낸 지 3초가 넘었다 — 종료면 `종료 확인 중`을 띄운다. */
     val isCommandOverdue: Boolean = false,
 ) {
@@ -125,22 +127,23 @@ class PhoneLink(
     }
 
     /** 잠겨 있거나 러닝이 없으면 보내지 않고 false를 돌려준다. 아래 셋 모두 같다. */
-    fun pause(): Boolean = sendCommand(::WatchPause)
+    fun pause(): Boolean = sendCommand(isFinish = false, ::WatchPause)
 
-    fun resume(): Boolean = sendCommand(::WatchResume)
+    fun resume(): Boolean = sendCommand(isFinish = false, ::WatchResume)
 
-    fun finish(forced: Boolean): Boolean = sendCommand { requestId, phoneInstanceId, runningRoomId, statusVersion ->
-        WatchFinish(requestId, phoneInstanceId, runningRoomId, statusVersion, forced)
-    }
+    fun finish(forced: Boolean): Boolean =
+        sendCommand(isFinish = true) { requestId, phoneInstanceId, runningRoomId, statusVersion ->
+            WatchFinish(requestId, phoneInstanceId, runningRoomId, statusVersion, forced)
+        }
 
-    private fun sendCommand(build: (String, String, Long?, Int) -> WatchMessage): Boolean {
+    private fun sendCommand(isFinish: Boolean, build: (String, String, Long?, Int) -> WatchMessage): Boolean {
         val current = _state.value
         val phoneState = current.phoneState ?: return false
         val run = phoneState.run ?: return false
         if (current.isLocked) return false
 
         val requestId = newId()
-        _state.update { it.copy(pendingRequestId = requestId, isCommandOverdue = false) }
+        _state.update { it.copy(pendingRequestId = requestId, isFinishPending = isFinish, isCommandOverdue = false) }
         scope.launch {
             sendWithLimit(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
         }
@@ -204,7 +207,12 @@ class PhoneLink(
         if (isCommandDone) commandJob?.cancel()
         _state.update {
             if (isCommandDone) {
-                it.copy(phoneState = incoming, pendingRequestId = null, isCommandOverdue = false)
+                it.copy(
+                    phoneState = incoming,
+                    pendingRequestId = null,
+                    isFinishPending = false,
+                    isCommandOverdue = false,
+                )
             } else {
                 it.copy(phoneState = incoming)
             }
@@ -221,7 +229,7 @@ class PhoneLink(
     private fun onError(error: PhoneError) {
         if (error.requestId == null || error.requestId != _state.value.pendingRequestId) return
         commandJob?.cancel()
-        _state.update { it.copy(pendingRequestId = null, isCommandOverdue = false) }
+        _state.update { it.copy(pendingRequestId = null, isFinishPending = false, isCommandOverdue = false) }
     }
 
     // 폰은 켜짐 신호를 받으면 러닝이 없어도 지금 상태를 바로 보낸다 — 그 답이 없으면 끊긴 것이다

@@ -36,7 +36,14 @@ private val PAGE_DOT_SPACING = 6.dp
 private val PAGE_DOTS_END_INSET = 12.5.dp
 
 @Composable
-internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, birthday: String?) {
+internal fun RunScreen(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    heartRateBpm: Int?,
+    birthday: String?,
+    commandState: RunCommandState,
+    commands: RunCommands,
+) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
     val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
     val scope = rememberCoroutineScope()
@@ -60,7 +67,7 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
             gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
-                CONTROLS_PAGE_INDEX -> ControlsPage(run, isPhoneReachable)
+                CONTROLS_PAGE_INDEX -> ControlsPage(run, isPhoneReachable, commandState, commands)
                 OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
                     run,
