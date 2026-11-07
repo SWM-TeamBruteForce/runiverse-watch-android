@@ -77,6 +77,7 @@ internal fun RunScreen(
                     isComboEffectOn,
                     onComboEffectChange,
                 )
+
                 OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
                     run,
@@ -84,6 +85,7 @@ internal fun RunScreen(
                     heartRateBpm,
                     heartRateZone,
                 )
+
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold {
                     MyRecordPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
                 }

@@ -33,19 +33,23 @@ fun controlsHint(run: RunState, isPhoneReachable: Boolean): ControlsHint {
     return when {
         !isPhoneReachable ->
             ControlsHint(ControlsFirstHint.PHONE_CHECKING, second = ControlsSecondHint.CONTROLS_AFTER_RECONNECT)
+
         !run.isServerConnected && run.players.isNotEmpty() ->
             ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RUN_RECORDING)
+
         serverRemainingMeters != null -> toGoalHint(serverRemainingMeters, isPaused)
         targetDistanceMeters == null -> ControlsHint()
         distanceMeters >= targetDistanceMeters -> ControlsHint(
             ControlsFirstHint.DISTANCE_CHECKING,
             second = if (isPaused) null else ControlsSecondHint.KEEP_RUNNING_IF_SHORT,
         )
+
         run.isPenaltyApplicable && distanceMeters < targetDistanceMeters * PENALTY_LINE_PERCENT / 100 -> ControlsHint(
             ControlsFirstHint.TO_PENALTY_LINE,
             targetDistanceMeters * PENALTY_LINE_PERCENT / 100 - distanceMeters,
             if (isPaused) ControlsSecondHint.PENALTY_IF_FINISHED else ControlsSecondHint.PENALTY_IF_SHORT,
         )
+
         else -> toGoalHint(targetDistanceMeters - distanceMeters, isPaused)
     }
 }

@@ -297,6 +297,7 @@ private fun controlsFirstHintText(first: ControlsFirstHint, remainingMeters: Int
     ControlsFirstHint.DISTANCE_CHECKING -> stringResource(R.string.controls_distance_checking)
     ControlsFirstHint.TO_PENALTY_LINE ->
         stringResource(R.string.controls_to_penalty_line, remainingDistanceText(remainingMeters ?: 0))
+
     ControlsFirstHint.TO_GOAL -> stringResource(R.string.controls_to_goal, remainingDistanceText(remainingMeters ?: 0))
 }
 
@@ -338,6 +339,7 @@ private fun FinishButton(
             modifier,
             onFinish,
         )
+
         FinishButtonStage.FINISHING -> ControlButton(
             stringResource(R.string.controls_finishing),
             icon = null,
@@ -347,6 +349,7 @@ private fun FinishButton(
             modifier,
             onClick = {},
         )
+
         FinishButtonStage.CHECKING -> ControlButton(
             stringResource(R.string.controls_finish_checking),
             icon = null,
@@ -501,6 +504,7 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
             drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_LEFT_BAR_FRACTION, 0f), size = barSize)
             drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_RIGHT_BAR_FRACTION, 0f), size = barSize)
         }
+
         ControlIcon.PLAY -> drawPath(
             Path().apply {
                 moveTo(0f, 0f)
@@ -510,6 +514,7 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
             },
             color,
         )
+
         ControlIcon.STOP -> drawRect(color)
     }
 }

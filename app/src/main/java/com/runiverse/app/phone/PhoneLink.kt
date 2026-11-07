@@ -277,6 +277,7 @@ class PhoneLink(
     private companion object {
         val REPLY_TIMEOUT = 3.seconds
         val VISIBILITY_INTERVAL = 10.seconds
+
         // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
         const val SYNC_ID_MEMORY_COUNT = 5
         const val COMBO_EVENT_ID_MEMORY_COUNT = 64

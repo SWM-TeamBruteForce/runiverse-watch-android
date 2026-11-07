@@ -45,6 +45,7 @@ fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: B
             val tenthsOfKm = meters % METERS_PER_KM / METERS_PER_TENTH_KM
             FormattedDistance("${meters / METERS_PER_KM}.$tenthsOfKm", kilometerLabel)
         }
+
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
     }
 }

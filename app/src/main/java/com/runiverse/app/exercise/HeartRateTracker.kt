@@ -133,6 +133,7 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
                 exerciseClient.endExercise()
                 true
             } ?: false
+
             ExerciseOwner.NONE, ExerciseOwner.OTHER_APP -> true
         }
         // 끄기에 실패했으면 심박이 계속 와서 CPU를 깨워야 다시 시도할 수 있어 콜백을 남긴다

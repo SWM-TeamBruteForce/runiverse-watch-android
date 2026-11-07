@@ -58,6 +58,7 @@ class RuniverseApp : Application() {
     private companion object {
         const val TAG = "RuniverseApp"
         const val PREFERENCES_NAME = "settings"
+
         // 콤보의 짧은 여러 번과 구분되게 한 번만 세게 울린다
         const val GOAL_PENDING_VIBRATION_MS = 300L
         const val GOAL_PENDING_VIBRATION_AMPLITUDE = 255

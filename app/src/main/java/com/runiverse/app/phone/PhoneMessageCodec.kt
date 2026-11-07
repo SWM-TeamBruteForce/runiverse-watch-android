@@ -46,6 +46,7 @@ object PhoneMessageCodec {
                     photos = extras.photos,
                 )
             }
+
             "WATCH_STATE_UPDATED" -> WatchStateUpdated(json.decodeFromJsonElement(PhoneState.serializer(), data))
             "WATCH_COMBO_TRIGGERED" -> json.decodeFromJsonElement(WatchComboTriggered.serializer(), data)
             "ERROR" -> json.decodeFromJsonElement(PhoneError.serializer(), data)
