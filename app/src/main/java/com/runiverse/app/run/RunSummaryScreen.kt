@@ -13,8 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -90,13 +88,12 @@ private fun RunSummaryContent(result: RunResult?, isPhoneReachable: Boolean, onC
     }
 }
 
-// 긴 값은 줄이 넓어지고, 짧은 값은 양끝으로 벌어진다
 @Composable
 private fun TimePaceRow(time: String, pace: String, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall
     val color = MaterialTheme.colorScheme.onSurface
     Row(
-        modifier.widthIn(min = fractionOfScreenWidth(TIME_PACE_ROW_WIDTH_FRACTION)),
+        modifier.widthIn(min = currentScreenWidth() * TIME_PACE_ROW_WIDTH_FRACTION),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         AlignedText(time, style, color)
@@ -106,20 +103,13 @@ private fun TimePaceRow(time: String, pace: String, modifier: Modifier) {
 }
 
 @Composable
-private fun closeButtonWidth(): Dp =
-    maxOf(fractionOfScreenWidth(CLOSE_BUTTON_WIDTH_FRACTION), MIN_CLOSE_BUTTON_WIDTH)
-
-@Composable
-private fun fractionOfScreenWidth(fraction: Float): Dp {
-    val screenWidth = LocalWindowInfo.current.containerSize.width
-    return with(LocalDensity.current) { (screenWidth * fraction).toDp() }
-}
+private fun closeButtonWidth(): Dp = maxOf(currentScreenWidth() * CLOSE_BUTTON_WIDTH_FRACTION, MIN_CLOSE_BUTTON_WIDTH)
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryConfirmedPreview() = RunPreviewFrame {
+private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
     RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = true, onClose = {})
 }
 
@@ -127,18 +117,18 @@ private fun RunSummaryConfirmedPreview() = RunPreviewFrame {
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryLongValuesPreview() = RunPreviewFrame {
+private fun RunSummaryScreenLongValuesPreview() = RunPreviewFrame {
     RunSummaryContent(RunPreviewSamples.longResult, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryPendingPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPendingPreview() = RunPreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryPhoneLostPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPhoneLostPreview() = RunPreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = false, onClose = {})
 }
