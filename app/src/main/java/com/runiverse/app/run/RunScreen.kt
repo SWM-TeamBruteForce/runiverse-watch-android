@@ -33,7 +33,7 @@ private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
 private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
 private val PAGE_DOT_DIAMETER = 3.dp
 private val PAGE_DOT_SPACING = 6.dp
-private val PAGE_DOTS_END_INSET = 12.5.dp
+private val PAGE_DOTS_END_PADDING = 12.5.dp
 
 @Composable
 internal fun RunScreen(
@@ -138,7 +138,7 @@ private fun VerticalPageDots(pagerState: PagerState) {
     val color = MaterialTheme.colorScheme.onBackground
     val count = pagerState.pageCount
     Canvas(
-        Modifier.padding(end = PAGE_DOTS_END_INSET)
+        Modifier.padding(end = PAGE_DOTS_END_PADDING)
             .size(PAGE_DOT_DIAMETER, PAGE_DOT_SPACING * (count - 1) + PAGE_DOT_DIAMETER),
     ) {
         val radius = size.width / 2
