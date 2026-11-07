@@ -14,7 +14,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** 장 공통 줄 높이(화면 위에서 px)다. 가운데 글자가 무엇이든 큰 숫자 높이로 잡아 장을 넘겨도 줄이 제자리에 있다. */
+/** 장 공통 줄 높이(화면 위에서 px)다. 큰 숫자 높이로 잡아 장을 넘겨도 줄이 제자리에 있다. */
 internal data class RunPageSlots(
     val topRowBottom: Float,
     val center: Float,
@@ -41,7 +41,7 @@ internal fun runPageSlots(
     )
 }
 
-/** 파티원 장 콤보 줄의 윗변이다. 페이스가 두 줄이면 맨 아래 줄 자리까지 내려오므로 페이스 바로 아래로 간다. */
+/** 페이스가 두 줄이면 맨 아래 줄 자리까지 내려오므로 콤보 줄은 페이스 바로 아래로 간다. */
 internal fun partyComboRowTop(
     slots: RunPageSlots,
     paceInkHeight: Float,
@@ -82,7 +82,7 @@ internal fun Modifier.contentTopAt(y: Float): Modifier = placedAt { y - it.conte
 
 internal fun Modifier.contentCenterAt(y: Float): Modifier = placedAt { y - (it.contentTop() + it.contentBottom()) / 2f }
 
-/** 옆 글자(`bpm`의 p 꼬리, 상태 글자)에 상관없이 숫자 기준선을 정한 높이에 둘 때 쓴다. */
+/** 옆 글자에 상관없이 숫자 기준선을 정한 높이에 둘 때 쓴다. */
 internal fun Modifier.baselineAt(y: Float): Modifier = placedAt {
     // 통지 전 파티원만 있는 격차 줄은 그릴 글자가 없어 기준선도 없다
     val baseline = it[FirstBaseline]

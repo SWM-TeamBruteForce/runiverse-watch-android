@@ -82,7 +82,7 @@ private const val LONGEST_HINT_REMAINING = "420m"
 private const val HOLD_TO_FINISH_MILLIS = 1200
 private const val HOLD_LONGER_NOTICE_MILLIS = 1500L
 
-// 세 칸은 화면이 달라도 폭이 같고 글자 설정으로만 갈린다 — 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
+// 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
 private val PILL_WIDTH = 120.dp
 private val PILL_WIDTH_SCALED_FONT = 140.dp
 private val PILL_HEIGHT = 48.dp
@@ -118,7 +118,7 @@ internal fun ControlsPage(
     commands: RunCommands,
 ) {
     val listState = rememberTransformingLazyColumnState()
-    // 스크롤 상태를 시계에 연결하지 않는다 — 연결하면 스크롤 중에 시계가 사라진다
+    // 스크롤 중에도 시계를 남기려고 스크롤 상태를 연결하지 않는다
     ScreenScaffold(scrollIndicator = { ScrollIndicator(listState, Modifier.align(Alignment.CenterEnd)) }) {
         ControlsPageContent(run, isPhoneReachable, commandState, commands, listState)
     }
@@ -147,7 +147,7 @@ private fun ControlsPageContent(
         }
         fits(slots.pillTop + step) to fits(slots.pillTop + step * 2)
     }
-    // 처음부터 다 안 보이는 칸은 스크롤하기 전엔 못 누른다 — 화면 끝에 걸린 채 잘못 눌리지 않게 한다
+    // 화면 끝에 걸린 칸이 잘못 눌리지 않게 스크롤 전엔 막는다
     val isSecondPillReachable = secondPillFits || isScrolled
     val isComboRowReachable = (secondPillFits && comboRowFits) || isScrolled
     val pillTopDistanceToBottom = with(LocalDensity.current) {
@@ -231,7 +231,7 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
 private fun Density.hintLineAdvance(fontSizePx: Float): Float =
     fontSizePx * (SUIT_HANGUL_INK.aboveBaselineEm + SUIT_HANGUL_INK.belowBaselineEm) + RunDimensions.LINE_GAP.toPx()
 
-// 버튼 자리는 안내 내용과 상관없이 고정이라, 안내 칸 높이를 첫 버튼 자리까지 잡는다
+// 안내 길이와 상관없이 버튼 자리가 고정되게 칸 높이를 잡는다
 @Composable
 private fun ControlsHintLines(run: RunState, isPhoneReachable: Boolean, slots: ControlsPageSlots) {
     val hints = controlsHintTexts(controlsHint(run, isPhoneReachable))
@@ -319,7 +319,6 @@ private fun FinishPill(
             modifier,
             onFinish,
         )
-        // 잠금 중엔 버튼이 답을 기다린다는 말만 한다 — 눌러도 다시 보내지 않는다
         FinishButtonStage.FINISHING -> ControlPill(
             stringResource(R.string.controls_finishing),
             icon = null,
@@ -362,7 +361,7 @@ private fun ControlPill(
     }
 }
 
-// 달리는 중에 손가락이 스쳐 기록이 끝나지 않게 다 찰 때까지 눌러야 끝난다. 누르는 동안 흰색이 왼쪽부터 차오른다
+// 달리는 중에 손가락이 스쳐 기록이 끝나지 않게 한다
 @Composable
 private fun HoldToFinishPill(
     background: Color,
@@ -393,7 +392,7 @@ private fun HoldToFinishPill(
             showsHoldLonger = false
         }
     }
-    // 화면이 꺼지면 프레임이 멈춰 눌림이 남는다 — 켜졌을 때 이어서 차지 않게 취소한다
+    // 화면이 꺼지면 프레임이 멈춰, 그대로 두면 켜졌을 때 이어서 찬다
     LifecycleStartEffect(Unit) {
         onStopOrDispose { isPressing = false }
     }
@@ -412,7 +411,7 @@ private fun HoldToFinishPill(
             .size(width, PILL_HEIGHT)
             .clip(CircleShape)
             .background(background)
-            // 쓸기로 넘어가면 부모가 입력을 가져가 up이 null이다 — 짧게 누른 것으로 보지 않는다
+            // 쓸기로 넘어가면 up이 null이다 — 짧게 누른 것으로 보지 않는다
             .pointerInput(isEnabled) {
                 if (!isEnabled) return@pointerInput
                 awaitEachGesture {
@@ -441,7 +440,6 @@ private fun HoldToFinishPill(
             },
     ) {
         PillContent(label, icon, MaterialTheme.colorScheme.onBackground)
-        // 찬 부분의 글자는 검게 보인다
         Box(
             Modifier
                 .matchParentSize()
@@ -494,7 +492,7 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
     }
 }
 
-// 종료 버튼을 찾을 수 있게 숨기지 않고 아래로 흐려지게 보여 준다 — 스크롤하면 선명해진다
+// 종료 버튼을 찾을 수 있게 숨기지 않고 흐리게 보여 준다
 private fun Modifier.fadedTowardScreenBottom(isFaded: Boolean, distanceToScreenBottom: Float): Modifier {
     if (!isFaded) return this
     return drawWithContent {
@@ -547,7 +545,7 @@ private fun ComboSwitch(isOn: Boolean) {
     }
 }
 
-// 스크롤 중에도 시계를 남긴다 — 시계 아랫선 + 2dp까지 검게 덮고 그 아래로 걷힌다. 시계는 글자 설정을 따라 커져서 그 크기로 잰다
+// 시계는 글자 설정을 따라 커져서 그 크기로 덮는다
 @Composable
 private fun ClockFade(modifier: Modifier) {
     val background = MaterialTheme.colorScheme.background

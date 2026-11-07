@@ -19,7 +19,7 @@ private const val METERS_PER_KM = 1000
 private const val ONE_DECIMAL_FROM_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
-/** 러닝 거리(km)다. 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
+/** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
 fun formatRunDistanceKm(meters: Int): String {
     val km = meters / METERS_PER_KM
     val rest = meters % METERS_PER_KM

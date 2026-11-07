@@ -3,12 +3,12 @@ package com.runiverse.app.run
 import kotlin.math.hypot
 import kotlin.math.sqrt
 
-/** 조작 장 안내와 첫 버튼의 높이(화면 위에서 px)다. 기기·글자 설정마다 하나로 고정해 안내 길이로 안 움직인다. */
+/** 안내와 첫 버튼의 높이(화면 위에서 px)다. 안내 길이로 안 움직인다. */
 internal data class ControlsPageSlots(val hintTop: Float, val pillTop: Float)
 
 internal data class PlacedHintLine(val text: String, val hintIndex: Int, val top: Float)
 
-/** 그 줄을 쓰는 높이의 폭에 안 들어가면 두 쪽 폭이 가장 고른 곳에서 나눈다. */
+/** 안 들어가면 두 쪽 폭이 가장 고른 곳에서 나눈다. */
 internal fun splitHintLine(text: String, maxWidth: Float, widthOf: (String) -> Float): List<String> {
     if (widthOf(text) <= maxWidth) return listOf(text)
     val words = text.split(' ')
@@ -33,7 +33,7 @@ internal fun placeHintLines(
     }
 }
 
-/** 가장 긴 안내 기준으로 자리를 정한다. 안내는 줄을 안 나눠도 되는 높이까지 내리고, 첫 버튼은 키운 글자에서만 안내 아래로 밀린다. */
+/** 가장 긴 안내 기준으로 자리를 정한다. 첫 버튼은 키운 글자에서만 밀린다. */
 internal fun controlsPageSlots(
     longestHints: List<String>,
     screenSize: Float,
@@ -80,7 +80,7 @@ private fun topWhereFirstLineFits(firstHintWidth: Float, screenSize: Float, edge
     return maxOf(startTop, screenSize / 2 - sqrt(radius * radius - halfWidth * halfWidth) + 0.5f)
 }
 
-/** 버튼 양 끝 둥근 부분까지 화면 끝에서 [edgeMargin] 안쪽에 통째로 들어오는지 본다. */
+/** 양 끝 둥근 부분까지 [edgeMargin] 안쪽에 들어오는지 본다. */
 internal fun pillFitsRoundScreen(
     screenSize: Float,
     edgeMargin: Float,

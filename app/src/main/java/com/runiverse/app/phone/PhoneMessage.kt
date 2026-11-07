@@ -39,7 +39,7 @@ data class WatchFinish(
 @Serializable
 data class WatchVisibilityUpdate(val isVisible: Boolean) : WatchMessage
 
-// 상태 필드는 WATCH_STATE_UPDATED와 같은 높이에 펼쳐져 온다 — 코덱이 한 data에서 두 번 읽는다
+// 상태 필드가 syncId와 같은 높이에 펼쳐져 온다 — 코덱이 한 data에서 두 번 읽는다
 data class WatchSynced(
     val syncId: String,
     val state: PhoneState,

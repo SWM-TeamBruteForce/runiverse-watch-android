@@ -15,7 +15,7 @@ enum class ControlsSecondHint {
     MAY_NOT_COMPLETE,
 }
 
-/** 조작 장 버튼 위 안내 두 줄이다. [remainingMeters]는 [first]가 남은 거리를 말할 때만 있다. */
+/** [remainingMeters]는 [first]가 남은 거리를 말할 때만 있다. */
 data class ControlsHint(
     val first: ControlsFirstHint? = null,
     val remainingMeters: Int? = null,
@@ -26,7 +26,7 @@ private const val PENALTY_LINE_PERCENT = 80
 private const val METERS_PER_KM = 1000
 private const val METERS_PER_TENTH_KM = 100
 
-/** 서버 판정 전이라 화면 거리로는 단정하지 않는다 — 서버가 답한 남은 거리가 있으면 그 값을 먼저 쓴다. */
+/** 서버가 답한 남은 거리를 화면 거리보다 먼저 쓴다. */
 fun controlsHint(run: RunState, isPhoneReachable: Boolean): ControlsHint {
     val isPaused = run.status == RunStatus.PAUSED
     val target = run.targetDistanceMeters
@@ -58,7 +58,7 @@ private fun toGoalHint(remainingMeters: Int, isPaused: Boolean) = ControlsHint(
     if (isPaused) ControlsSecondHint.MAY_NOT_COMPLETE else null,
 )
 
-/** 남은 거리를 실제보다 적게 말하지 않게 폰처럼 올린다. 1000m 미만은 m, 그 위는 소수 한 자리 km다. */
+/** 남은 거리를 적게 말하지 않게 폰처럼 올린다. */
 fun formatRemainingDistance(meters: Int): FormattedDistance {
     if (meters < METERS_PER_KM) return FormattedDistance("$meters", DistanceUnitLabel.METER)
     val tenthsOfKm = (meters + METERS_PER_TENTH_KM - 1) / METERS_PER_TENTH_KM

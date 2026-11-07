@@ -49,7 +49,7 @@ internal fun RunScreen(
     val scope = rememberCoroutineScope()
     val isOnOverview = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
         verticalPagerState.currentPage == OVERVIEW_VERTICAL_PAGE_INDEX
-    // 첫 화면에서 뒤로가면 러닝을 끝내지 않고 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
+    // 첫 화면에서 뒤로가면 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
     BackHandler(enabled = !isOnOverview) {
         scope.launch {
             horizontalPagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX)
@@ -60,7 +60,7 @@ internal fun RunScreen(
     val birthDate = remember(birthday) { parseBirthday(birthday) }
     val zone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
 
-    // 장 사이는 화면이 통째로 밀리는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
+    // 장 사이는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
     HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
         HorizontalPager(
             horizontalPagerState,
@@ -107,9 +107,8 @@ private fun OverviewVerticalPager(
     }
 }
 
-// 파티원 장은 첫 화면에서 세로로만 오간다
-// userScrollEnabled로 막으면 첫 화면으로 돌아온 직후 첫 좌우 쓸기가 무시된다 — 라이브러리가 다음 터치에서야 감지를 다시 켠다
-// 러닝 중엔 쓸어 닫기가 꺼져 있어 기본값처럼 첫 장 왼쪽 가장자리를 비우지 않는다 — 비우면 조작 장에서 왼쪽 끝부터 쓸 때 안 넘어간다
+// 파티원 장은 세로로만 오간다 — userScrollEnabled로 막으면 돌아온 직후 첫 좌우 쓸기가 무시된다
+// 쓸어 닫기가 꺼져 있어 첫 장 가장자리를 안 비운다 — 비우면 조작 장에서 왼쪽 끝 쓸기가 막힌다
 @Composable
 private fun partyPageBlockingGestures(
     horizontalPagerState: PagerState,

@@ -81,7 +81,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             abbreviateUnits,
             Modifier.contentBottomAt(slots.topRowBottom).alpha(phoneValuesAlpha),
         )
-        // 버튼으로 멈춘 동안은 지금 페이스가 없어 그 자리를 상태 글자가 대신한다
+        // 멈춘 동안은 지금 페이스가 없다
         if (run.status == RunStatus.PAUSED) {
             AlignedText(
                 stringResource(R.string.run_status_paused),
@@ -108,7 +108,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             AvatarRow(run, isPhoneReachable, cellWidth, Modifier.contentTopAt(slots.belowRowTop))
             // 끊긴 동안의 격차는 오래된 값이라 숨기고 그 자리에 안내를 띄운다
             if (notice == null) {
-                // 상태 글자는 숫자보다 윗변이 높아 윗변으로 맞추면 누가 멈출 때 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
+                // 상태 글자는 윗변이 높아 윗변으로 맞추면 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
                 val gapInkHeight = with(LocalDensity.current) {
                     MaterialTheme.typography.numeralExtraSmall.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
                 }
@@ -256,7 +256,7 @@ private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecim
     }
 }
 
-// 칸마다 기준선을 맞춘 채 상태 글자의 세로 가운데만 옆 숫자에 맞춘다 — 기준선을 그만큼 낮춰 알려 위로 올라가게 한다
+// 상태 글자의 세로 가운데를 옆 숫자에 맞춘다 — 기준선을 그만큼 낮춰 알려 위로 올린다
 private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: TextUnit): Modifier =
     layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
@@ -287,7 +287,7 @@ internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
     DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_kilo)
 }
 
-// 앞/뒤에 색을 주면 레인 색·콤보 테두리와 겹치고 좋다/나쁘다로 읽혀서 숫자와 같은 흰색으로 둔다
+// 앞/뒤에 색을 주면 레인 색과 겹치고 좋다/나쁘다로 읽혀서 흰색으로 둔다
 @Composable
 private fun GapDirectionIndicator(pointsUp: Boolean, modifier: Modifier) {
     val color = MaterialTheme.colorScheme.onSurface
@@ -315,7 +315,7 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
     }
 }
 
-// TODO: 파티원 사진 — 폰이 사진을 보내기 시작하면 photos로 그린다. 그 전엔 레인 색 원에 이름 첫 글자를 쓴다
+// TODO: 파티원 사진 — 폰이 사진을 보내면 photos로 그린다. 그 전엔 색 원에 첫 글자를 쓴다
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
 private fun PlayerAvatar(player: Player, modifier: Modifier) {

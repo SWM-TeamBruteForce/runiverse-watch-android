@@ -54,7 +54,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
             ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
-        // 같은 자리라 끊김 안내가 멈춤보다 먼저다 — 심박은 워치가 재는 값이라 멈춰도 그대로 둔다
+        // 같은 자리라 끊김 안내가 멈춤보다 먼저다
         val topNotice = when {
             !isPhoneReachable -> stringResource(R.string.run_phone_checking)
             run.status == RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
@@ -85,7 +85,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     }
 }
 
-// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 칼로리가 늘어도 모양이 안 바뀐다
+// 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 칼로리가 늘어도 모양이 안 바뀐다
 @Composable
 private fun RecordRows(me: MyRecord, rowsTop: Float, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()

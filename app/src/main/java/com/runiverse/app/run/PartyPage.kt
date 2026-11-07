@@ -53,7 +53,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
         DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(playerValuesAlpha))
         GapOrStatus(player, slots, playerValuesAlpha)
         if (notice != null) {
-            // 끊긴 동안은 첫 화면이 오래된 격차를 숨기듯 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
+            // 끊긴 동안은 오래된 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
             MyPace(
                 run.shownMyPaceSecondsPerKm(),
                 Modifier.contentTopAt(slots.belowRowTop).alpha(phoneValuesAlpha),
@@ -85,10 +85,10 @@ private fun PaceAndComboRows(
     val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + BETWEEN_PACES_GAP + myCellWidth)
     val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
     if (fitsOneLine) {
-        // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
+        // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭을 가장 넓은 페이스로 잡는다
         Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
             Box(Modifier.width(playerCellWidth), contentAlignment = Alignment.CenterEnd) {
-                // 상대는 같은 폭 숫자가 아니라 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 잘리지 않게 왼쪽으로 넘긴다
+                // 상대는 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 안 잘리게 왼쪽으로 넘긴다
                 PlayerPace(
                     player,
                     Modifier.wrapContentWidth(Alignment.End, unbounded = true).alpha(playerValuesAlpha),
@@ -254,7 +254,7 @@ private fun widestLabeledPaceWidth(label: String, paceStyle: TextStyle): Dp {
     }
 }
 
-// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 흔들린다
+// 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 바뀐다
 @Composable
 private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRow: Dp): Boolean {
     val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()

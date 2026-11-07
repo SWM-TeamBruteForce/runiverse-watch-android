@@ -21,7 +21,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 data class PhoneLinkState(
-    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 러닝을 접기 전까지는 지우지 않는다 — 화면은 이 값에서 멈춘다. */
+    /** 연결이 끊겨도 러닝을 접기 전까지 지우지 않는다 — 화면은 이 값에서 멈춘다. */
     val phoneState: PhoneState? = null,
     val birthday: String? = null,
     val photos: List<PlayerPhoto> = emptyList(),
@@ -42,7 +42,7 @@ data class PhoneLinkState(
     val isRunActive: Boolean get() = phoneState?.run?.let { it.status != RunStatus.FINISHED } ?: false
 }
 
-/** 서버가 종료를 미룬 상태로 들어갈 때마다 한 번 낸다. 같은 보류가 1초마다 다시 와도 한 번이다. */
+/** 같은 보류가 1초마다 다시 와도 들어갈 때 한 번만 낸다. */
 fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
     map { it.phoneState?.run?.finish?.stage == FinishStage.GOAL_PENDING }
         .distinctUntilChanged()
@@ -87,7 +87,7 @@ class PhoneLink(
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
 
-    /** 화면이 꺼진 동안 폰이 아직 있는지 묻는다. 화면이 켜져 있으면 3초 감시가 이미 묻고 있다. */
+    /** 화면이 꺼진 동안 폰이 있는지 묻는다. 켜져 있으면 3초 감시가 이미 묻고 있다. */
     fun probeWhileScreenOff() {
         if (!isScreenVisible) requestSync()
     }
@@ -243,7 +243,7 @@ class PhoneLink(
         _state.update { it.copy(pendingRequestId = null, isFinishPending = false, isCommandOverdue = false) }
     }
 
-    // 폰은 켜짐 신호를 받으면 러닝이 없어도 지금 상태를 바로 보낸다 — 그 답이 없으면 끊긴 것이다
+    // 폰은 켜짐 신호를 받으면 러닝이 없어도 바로 답한다 — 답이 없으면 끊긴 것이다
     private fun awaitVisibleReply() {
         silenceJob?.cancel()
         silenceJob = scope.launch {
@@ -253,7 +253,7 @@ class PhoneLink(
         }
     }
 
-    // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
+    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
     private fun awaitNextState() {
         silenceJob?.cancel()
         if (!isScreenVisible || !_state.value.isRunActive) return

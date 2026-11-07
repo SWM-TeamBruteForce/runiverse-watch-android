@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Dp
 
-/** 위에서 아래로 가운데 정렬해 쌓되, 앞 줄의 보이는 아랫변과 다음 줄의 보이는 윗변 사이를 [gap]으로 둔다. */
+/** 앞 줄의 보이는 아랫변과 다음 줄의 보이는 윗변 사이를 [gap]으로 두고 쌓는다. */
 @Composable
 internal fun ContentBoundsColumn(gap: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Layout(content, modifier) { measurables, constraints ->

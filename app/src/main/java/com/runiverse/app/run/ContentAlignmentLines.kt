@@ -13,7 +13,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-// 시안은 묶음 간격을 상자가 아니라 보이는 내용 사이로 쟀다 — 글자 상자엔 글꼴 위아래 여백이 들어 있다
+// 시안은 간격을 보이는 내용 사이로 쟀다 — 글자 상자엔 글꼴 위아래 여백이 들어 있다
 internal val CONTENT_TOP = HorizontalAlignmentLine(::min)
 internal val CONTENT_BOTTOM = HorizontalAlignmentLine(::max)
 

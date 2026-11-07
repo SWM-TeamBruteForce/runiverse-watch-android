@@ -53,7 +53,7 @@ class ExerciseSession(
     private val isActive get() = phoneWatchJob?.isActive == true
 
     init {
-        // 앱이 죽으면 운동은 남는다 — 이 프로세스에서 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
+        // 앱이 죽어도 운동은 남는다 — 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
         scope.launch {
             phoneLink.state
                 .map { it.phoneState != null && !it.isRunActive }
@@ -66,7 +66,7 @@ class ExerciseSession(
         }
     }
 
-    /** 서비스가 시작 요청을 받을 때마다 부른다 — 다른 앱에 밀렸던 심박을 화면이 켜질 때 다시 잰다. */
+    /** 시작 요청마다 부른다 — 다른 앱에 밀렸던 심박을 화면이 켜질 때 다시 잰다. */
     fun start(onEnded: () -> Unit) {
         this.onEnded = onEnded
         if (!isActive) {
@@ -147,7 +147,7 @@ class ExerciseSession(
         }
     }
 
-    // 화면이 꺼지면 CPU가 잠들어 delay가 밀린다 — 깨어날 때마다 잠든 시간까지 세는 시계로 잰다
+    // 화면이 꺼지면 delay가 밀린다 — 깨어날 때마다 잠든 시간까지 세는 시계로 잰다
     // 화면이 꺼진 동안 폰이 조용한 건 정상이라, 물어본 뒤에도 답이 없는 시간만 센다
     private fun checkPhone() {
         // 방금 받은 폰 답이 아직 수집기에 안 닿았을 수 있어 최신 상태부터 반영한다

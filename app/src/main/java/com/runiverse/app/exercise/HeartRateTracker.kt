@@ -30,19 +30,19 @@ import kotlin.math.roundToInt
 
 enum class ExerciseOwner { NONE, ME, OTHER_APP }
 
-/** 기기의 심박 측정 기능이다. 실패는 로그만 남기고 호출한 쪽에는 측정 못 함으로 알린다. */
+/** 기기의 심박 측정 기능이다. 실패는 로그만 남기고 측정 못 함으로 알린다. */
 interface HeartRateTracker {
     suspend fun canMeasure(): Boolean
 
     /** 알 수 없으면 null이다. */
     suspend fun currentOwner(): ExerciseOwner?
 
-    /** [onHeartRate]는 측정할 수 없게 되면 null을 받는다. [onMeasuringStopped]는 운동이 끝났거나 듣기에 실패했을 때 불린다. */
+    /** [onHeartRate]는 못 재면 null을 받고, [onMeasuringStopped]는 운동이 끝나거나 듣기에 실패하면 불린다. */
     fun listen(onHeartRate: (Int?) -> Unit, onMeasuringStopped: () -> Unit)
 
     suspend fun startExercise(): Boolean
 
-    /** 내 운동이 남아 있으면 끝내고 듣기를 멈춘다. 끄기에 실패해 내 운동이 남았을 수 있으면 듣기를 남기고 false다. */
+    /** 내 운동이 남아 있으면 끝내고 듣기를 멈춘다. 끄기에 실패하면 듣기를 남기고 false다. */
     suspend fun stop(): Boolean
 }
 
@@ -146,7 +146,7 @@ class HealthServicesHeartRateTracker(private val context: Context) : HeartRateTr
     private suspend inline fun <T> healthCall(call: () -> T): T? = try {
         call()
     } catch (e: CancellationException) {
-        // Health Services 연결이 끊기면 호출이 취소로 끝난다 — 이 코루틴이 취소된 게 아니면 실패로 본다
+        // Health Services 연결이 끊기면 호출이 취소로 끝난다 — 이 코루틴 취소가 아니면 실패다
         currentCoroutineContext().ensureActive()
         Log.w(TAG, "Health Services 연결 끊김", e)
         null

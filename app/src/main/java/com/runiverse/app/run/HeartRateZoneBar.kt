@@ -20,7 +20,7 @@ import com.runiverse.app.R
 private const val ZONE_COUNT = 5
 private val SEGMENT_GAP = 3.dp
 
-// 심박은 세 자리가 가장 길다 — 막대를 이 폭으로 고정해 100을 넘는 순간 길이가 바뀌지 않게 한다
+// 막대를 가장 긴 심박 폭으로 고정해 100을 넘어도 길이가 안 바뀌게 한다
 private const val WIDEST_HEART_RATE = "888"
 
 /** 가장 넓은 심박 덩어리(세 자리 숫자 + `bpm`) 폭이다. 구간 막대 길이로 쓴다. */
