@@ -115,12 +115,12 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
     val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     return remember(rowsTop, style, unitStyle, spmUnit, kcalUnit, density, screenSize) {
         with(density) {
-            fun width(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
-            val widestRow = width(WIDEST_CADENCE, style) + width(spmUnit, unitStyle) +
-                width(WIDEST_CALORIES, style) + width(kcalUnit, unitStyle) +
+            fun widthOf(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
+            val widestRowWidth = widthOf(WIDEST_CADENCE, style) + widthOf(spmUnit, unitStyle) +
+                widthOf(WIDEST_CALORIES, style) + widthOf(kcalUnit, unitStyle) +
                 RunDimensions.VALUE_TO_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
             val firstBaseline = rowsTop + style.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-            widestRow <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+            widestRowWidth <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
         }
     }
 }
@@ -128,7 +128,7 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun MyRecordPagePreview() = RunPreviewFrame {
+private fun MyRecordPageRunningPreview() = RunPreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 

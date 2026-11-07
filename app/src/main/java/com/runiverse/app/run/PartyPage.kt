@@ -104,7 +104,7 @@ private fun PaceAndComboRows(
             MyPace(myPaceSecondsPerKm, Modifier.alpha(phoneValuesAlpha))
         }
     }
-    val comboTop = with(LocalDensity.current) {
+    val comboRowTop = with(LocalDensity.current) {
         partyComboRowTop(
             slots,
             paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
@@ -121,7 +121,7 @@ private fun PaceAndComboRows(
         },
         MaterialTheme.typography.labelSmall,
         MaterialTheme.colorScheme.onSurfaceVariant,
-        Modifier.contentTopAt(comboTop).alpha(playerValuesAlpha),
+        Modifier.contentTopAt(comboRowTop).alpha(playerValuesAlpha),
     )
 }
 
@@ -256,11 +256,11 @@ private fun widestLabeledPaceWidth(label: String, paceStyle: TextStyle): Dp {
 
 // 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 바뀐다
 @Composable
-private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRow: Dp): Boolean {
+private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRowWidth: Dp): Boolean {
     val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     return with(LocalDensity.current) {
         val firstBaseline = rowsTop + paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-        widestRow.toPx() <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+        widestRowWidth.toPx() <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
     }
 }
 

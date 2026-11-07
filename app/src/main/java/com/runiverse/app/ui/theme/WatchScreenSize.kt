@@ -10,8 +10,8 @@ import androidx.compose.ui.unit.dp
 // 갤럭시 44mm 226dp는 큰 화면, 40mm(약 206dp)는 작은 화면이다
 private val SMALL_SCREEN_BELOW = 215.dp
 
-internal fun isSmallScreenWidth(width: Dp): Boolean = width < SMALL_SCREEN_BELOW
+internal fun isSmallScreenWidth(screenWidth: Dp): Boolean = screenWidth < SMALL_SCREEN_BELOW
 
 @Composable
-internal fun isSmallWatchScreen(): Boolean =
+internal fun isSmallScreen(): Boolean =
     isSmallScreenWidth(with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() })

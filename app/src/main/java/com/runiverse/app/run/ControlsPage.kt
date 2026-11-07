@@ -101,7 +101,7 @@ private val MAX_HINT_SHIFT = 24.dp
 private val FIRST_BUTTON_TOP_AT_DEFAULT_FONT = 74.dp
 private val HINT_TO_BUTTON_GAP = 5.dp
 
-private val CLOCK_TOP_PADDING = 2.dp
+private val SCREEN_TOP_TO_CLOCK_GAP = 2.dp
 private val CLOCK_TO_COVER_END_GAP = 2.dp
 private val CLOCK_FADE_HEIGHT = 12.dp
 
@@ -245,8 +245,8 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
     }
 }
 
-private fun Density.hintLineAdvance(fontSizePx: Float): Float =
-    fontSizePx * (SUIT_HANGUL_INK.aboveBaselineEm + SUIT_HANGUL_INK.belowBaselineEm) + RunDimensions.LINE_GAP.toPx()
+private fun Density.hintLineAdvance(fontSize: Float): Float =
+    fontSize * (SUIT_HANGUL_INK.aboveBaselineEm + SUIT_HANGUL_INK.belowBaselineEm) + RunDimensions.LINE_GAP.toPx()
 
 // 안내 길이와 상관없이 버튼 자리가 고정되게 칸 높이를 잡는다
 @Composable
@@ -570,7 +570,7 @@ private fun ComboSwitch(isOn: Boolean) {
 private fun ClockFade(modifier: Modifier) {
     val background = MaterialTheme.colorScheme.background
     val clockFontSize = with(LocalDensity.current) { MaterialTheme.typography.arcMedium.fontSize.toDp() }
-    val coverHeight = CLOCK_TOP_PADDING + clockFontSize + CLOCK_TO_COVER_END_GAP
+    val coverHeight = SCREEN_TOP_TO_CLOCK_GAP + clockFontSize + CLOCK_TO_COVER_END_GAP
     val height = coverHeight + CLOCK_FADE_HEIGHT
     val coveredFraction = coverHeight / height
     Box(

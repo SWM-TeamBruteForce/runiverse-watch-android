@@ -179,14 +179,14 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
     val density = LocalDensity.current
     val screenWidth = currentScreenWidth()
     return remember(widestLabels, valueStyle, unitStyle, density, screenWidth) {
-        val widestLabel = widestLabels.maxOf { (value, unit) ->
+        val widestLabelWidth = widestLabels.maxOf { (value, unit) ->
             val valueWidth = with(density) { measurer.measure(value, valueStyle).size.width.toDp() }
             val unitWidth = unit?.let {
                 with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_TO_UNIT_GAP
             } ?: 0.dp
             DIRECTION_INDICATOR_WIDTH + DIRECTION_INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
         }
-        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_LABEL_TO_CELL_GAP)
+        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabelWidth + MIN_LABEL_TO_CELL_GAP)
     }
 }
 

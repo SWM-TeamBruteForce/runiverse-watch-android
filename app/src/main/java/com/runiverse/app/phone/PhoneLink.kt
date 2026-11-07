@@ -233,7 +233,7 @@ class PhoneLink(
 
     private fun onComboTriggered(combo: WatchComboTriggered) {
         if (combo.eventId in seenComboEventIds) return
-        seenComboEventIds.addCapped(combo.eventId, COMBO_ID_MEMORY_COUNT)
+        seenComboEventIds.addCapped(combo.eventId, COMBO_EVENT_ID_MEMORY_COUNT)
         _combos.tryEmit(combo)
     }
 
@@ -279,7 +279,7 @@ class PhoneLink(
         val VISIBILITY_INTERVAL = 10.seconds
         // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
         const val SYNC_ID_MEMORY_COUNT = 5
-        const val COMBO_ID_MEMORY_COUNT = 64
+        const val COMBO_EVENT_ID_MEMORY_COUNT = 64
         const val COMBO_BUFFER_COUNT = 8
     }
 }

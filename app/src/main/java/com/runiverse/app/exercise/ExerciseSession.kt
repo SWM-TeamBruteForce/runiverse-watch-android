@@ -135,13 +135,13 @@ class ExerciseSession(
         _heartRateBpm.value = null
     }
 
-    private fun onPhoneLinkChanged(link: PhoneLinkState) {
-        if (!link.isRunActive) {
+    private fun onPhoneLinkChanged(linkState: PhoneLinkState) {
+        if (!linkState.isRunActive) {
             end()
             return
         }
-        if (link.phoneState !== heardState) {
-            heardState = link.phoneState
+        if (linkState.phoneState !== heardState) {
+            heardState = linkState.phoneState
             heardAtMs = nowMs()
             unansweredSinceMs = null
         }

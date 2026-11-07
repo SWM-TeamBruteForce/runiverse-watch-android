@@ -17,14 +17,14 @@ const val UNKNOWN_PACE = "--'--\""
 
 private const val METERS_PER_KM = 1000
 private const val METERS_PER_TENTH_KM = 100
-private const val ONE_DECIMAL_FROM_METERS = 10_000
+private const val EXTRA_DECIMAL_BELOW_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
 /** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
 fun formatRunDistanceKm(meters: Int): String {
     val km = meters / METERS_PER_KM
     val remainderMeters = meters % METERS_PER_KM
-    return if (meters < ONE_DECIMAL_FROM_METERS) {
+    return if (meters < EXTRA_DECIMAL_BELOW_METERS) {
         "$km.${(remainderMeters / 10).padTwoDigits()}"
     } else {
         "$km.${remainderMeters / 100}"
@@ -41,7 +41,7 @@ fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: B
     return when {
         meters < METERS_PER_KM -> FormattedDistance("$meters", if (abbreviateUnits) null else DistanceUnitLabel.METER)
         dropKmDecimal -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
-        meters < ONE_DECIMAL_FROM_METERS ->
+        meters < EXTRA_DECIMAL_BELOW_METERS ->
             FormattedDistance("${meters / METERS_PER_KM}.${meters % METERS_PER_KM / 100}", kilometerLabel)
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
     }

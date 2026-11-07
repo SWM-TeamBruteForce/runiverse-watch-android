@@ -13,4 +13,4 @@ private val LANE_COLORS = listOf(
     Color(0xFF33D17A),
 )
 
-fun laneColor(slot: Int): Color = LANE_COLORS[slot.mod(LANE_COLORS.size)]
+fun laneColor(colorSlot: Int): Color = LANE_COLORS[colorSlot.mod(LANE_COLORS.size)]

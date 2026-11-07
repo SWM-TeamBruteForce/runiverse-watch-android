@@ -72,7 +72,7 @@ fun TextStyle.tabularNumerals(): TextStyle = copy(fontFeatureSettings = TABULAR_
 /** 시안의 자리별 글자 크기를 Wear 글자 슬롯에 둔다. 자리마다 크기는 하나로 고정한다. */
 @Composable
 internal fun runiverseTypography(): Typography {
-    val sizes = if (isSmallWatchScreen()) SMALL_SCREEN_FONT_SIZES else LARGE_SCREEN_FONT_SIZES
+    val sizes = if (isSmallScreen()) SMALL_SCREEN_FONT_SIZES else LARGE_SCREEN_FONT_SIZES
     // 20sp를 넘는 큰 수는 글자 설정을 따라 커지면 둥근 화면 밖으로 나가서 고정한다
     val bigNumberSize = with(LocalDensity.current) { sizes.bigNumber.toSp() }
     return remember(sizes, bigNumberSize) {
