@@ -17,7 +17,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
@@ -28,11 +31,14 @@ private const val ICON_TO_FONT_RATIO = 0.62f
 private const val PAUSE_ICON_BAR_FRACTION = 0.28f
 private const val PAUSE_ICON_LEFT_BAR_FRACTION = 0.1f
 private const val PAUSE_ICON_RIGHT_BAR_FRACTION = 0.62f
+private const val CHECK_ICON_TURN_FRACTION = 0.38f
+private const val CHECK_ICON_ARM_FRACTION = 0.35f
+private val CHECK_ICON_STROKE_WIDTH = 1.5.dp
 private val ICON_TO_LABEL_GAP = 6.dp
 
 internal val PILL_HEIGHT = 48.dp
 
-internal enum class ControlIcon { PAUSE, PLAY, STOP }
+internal enum class ControlIcon { PAUSE, PLAY, STOP, CHECK }
 
 @Composable
 internal fun ControlButton(
@@ -90,5 +96,17 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
         )
 
         ControlIcon.STOP -> drawRect(color)
+
+        ControlIcon.CHECK -> drawPath(
+            Path().apply {
+                val middle = size.height / 2
+                val arm = size.height * CHECK_ICON_ARM_FRACTION
+                moveTo(0f, middle)
+                lineTo(size.width * CHECK_ICON_TURN_FRACTION, middle + arm)
+                lineTo(size.width, middle - arm)
+            },
+            color,
+            style = Stroke(CHECK_ICON_STROKE_WIDTH.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
     }
 }

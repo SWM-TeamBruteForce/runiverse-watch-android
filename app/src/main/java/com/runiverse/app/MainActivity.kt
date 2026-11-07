@@ -19,9 +19,11 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.RunCommandState
 import com.runiverse.app.run.RunCommands
 import com.runiverse.app.run.RunScreen
+import com.runiverse.app.run.RunSummaryScreen
 import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -64,6 +66,7 @@ class MainActivity : ComponentActivity() {
             val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
             val isComboEffectOn by runiverseApp.comboEffectSetting.isOn.collectAsState()
             val run = linkState.phoneState?.run?.takeIf { linkState.isRunActive }
+            val finishedRun = linkState.phoneState?.run?.takeIf { it.status == RunStatus.FINISHED }
             val commands = remember {
                 RunCommands(
                     pause = { phoneLink.pause() },
@@ -83,7 +86,13 @@ class MainActivity : ComponentActivity() {
                             onDismissed = { if (!phoneLink.state.value.isRunActive) finish() },
                             state = dismissState,
                         ) { isBackground ->
-                            if (!isBackground && !isDismissed) IdleScreen()
+                            if (!isBackground && !isDismissed) {
+                                if (finishedRun != null) {
+                                    RunSummaryScreen(finishedRun, linkState.isPhoneReachable, onClose = { finish() })
+                                } else {
+                                    IdleScreen()
+                                }
+                            }
                         }
                     } else {
                         RunScreen(
