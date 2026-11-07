@@ -4,12 +4,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -37,6 +41,13 @@ data class PhoneLinkState(
     /** 마지막으로 받은 상태에 아직 끝나지 않은 러닝이 있다. */
     val isRunActive: Boolean get() = phoneState?.run?.let { it.status != RunStatus.FINISHED } ?: false
 }
+
+/** 서버가 종료를 미룬 상태로 들어갈 때마다 한 번 낸다. 같은 보류가 1초마다 다시 와도 한 번이다. */
+fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
+    map { it.phoneState?.run?.finish?.stage == FinishStage.GOAL_PENDING }
+        .distinctUntilChanged()
+        .filter { it }
+        .map { }
 
 /**
  * 폰에서 받은 메시지로 연결 상태를 판정하고, 명령·SYNC·화면 켜짐 신호를 보낸다.
