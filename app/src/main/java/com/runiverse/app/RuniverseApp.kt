@@ -25,9 +25,9 @@ open class RuniverseApp : Application() {
     private val scope = MainScope()
     private val phoneChannel by lazy { PhoneChannel(this) }
 
-    // 테스트가 폰 연결을 바꿔 끼운다
+    // 테스트가 폰 연결과 심박 측정을 바꿔 끼운다
     open val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
-    val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
+    open val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
     val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)) }
 
     override fun onCreate() {
