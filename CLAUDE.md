@@ -7,6 +7,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 ```bash
 ./gradlew :app:assembleDevDebug    # 빌드
 ./gradlew :app:lintDevDebug        # lint
+./gradlew :app:testDevDebugUnitTest  # 테스트
 ./gradlew :app:installDevDebug     # 연결된 워치에 설치
 ```
 
