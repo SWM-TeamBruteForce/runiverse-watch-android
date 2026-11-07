@@ -285,12 +285,18 @@ class PhoneLink(
         }
     }
 
-    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
+    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 1초마다 보낸다 — 받은 결과 뒤엔 조용한 게 정상이다
     private fun awaitNextState() {
         silenceJob?.cancel()
-        if (!isScreenVisible || !_state.value.isRunActive) return
+        if (!isScreenVisible) return
+        val run = _state.value.phoneState?.run ?: return
+        val timeout = when {
+            run.status != RunStatus.FINISHED -> REPLY_TIMEOUT
+            run.result == null -> RESULT_REPLY_TIMEOUT
+            else -> return
+        }
         silenceJob = scope.launch {
-            delay(REPLY_TIMEOUT)
+            delay(timeout)
             _state.update { it.copy(isPhoneReachable = false) }
             requestSync()
         }
@@ -309,6 +315,9 @@ class PhoneLink(
     private companion object {
         val REPLY_TIMEOUT = 3.seconds
         val VISIBILITY_INTERVAL = 10.seconds
+
+        // 끝난 뒤 폰은 켜짐 신호에만 답해, 3초로 재면 폰이 멀쩡해도 끊긴 것으로 본다
+        val RESULT_REPLY_TIMEOUT = VISIBILITY_INTERVAL + REPLY_TIMEOUT
 
         // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
         const val SYNC_ID_MEMORY_COUNT = 5
