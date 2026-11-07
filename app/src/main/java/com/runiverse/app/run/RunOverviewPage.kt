@@ -194,9 +194,9 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
 private fun AvatarRow(run: RunState, isPhoneReachable: Boolean, cellWidth: Dp, modifier: Modifier) {
     Row(modifier) {
         run.players.forEach { player ->
-            val isStale = player.hasStaleValues(run, isPhoneReachable)
+            val hasStaleValues = player.hasStaleValues(run, isPhoneReachable)
             Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
-                PlayerAvatar(player, Modifier.alpha(if (isStale) RunDimensions.STALE_CONTENT_ALPHA else 1f))
+                PlayerAvatar(player, Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f))
             }
         }
     }

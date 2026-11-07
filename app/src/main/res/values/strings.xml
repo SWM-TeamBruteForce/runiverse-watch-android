@@ -29,7 +29,7 @@
     <string name="controls_to_goal">목표까지 약 %1$s</string>
     <string name="controls_distance_checking">거리 확인 중</string>
     <string name="controls_after_reconnect">연결 후 조작 가능</string>
-    <string name="controls_recording">러닝 기록 중</string>
+    <string name="controls_run_recording">러닝 기록 중</string>
     <string name="controls_keep_running_if_short">모자라면 계속 달리기</string>
     <string name="controls_penalty_if_short">못 채우면 20분 매칭 제한</string>
     <string name="controls_penalty_if_finished">끝내면 20분 매칭 제한</string>

@@ -308,7 +308,7 @@ private fun remainingDistanceText(meters: Int): String {
 private fun controlsSecondHintText(second: ControlsSecondHint): String = stringResource(
     when (second) {
         ControlsSecondHint.CONTROLS_AFTER_RECONNECT -> R.string.controls_after_reconnect
-        ControlsSecondHint.RECORDING -> R.string.controls_recording
+        ControlsSecondHint.RUN_RECORDING -> R.string.controls_run_recording
         ControlsSecondHint.KEEP_RUNNING_IF_SHORT -> R.string.controls_keep_running_if_short
         ControlsSecondHint.PENALTY_IF_SHORT -> R.string.controls_penalty_if_short
         ControlsSecondHint.PENALTY_IF_FINISHED -> R.string.controls_penalty_if_finished

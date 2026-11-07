@@ -92,7 +92,7 @@ class ControlsHintTest {
             controlsHint(serverLost, isPhoneReachable = false),
         )
         assertEquals(
-            ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RECORDING),
+            ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RUN_RECORDING),
             controlsHint(serverLost, isPhoneReachable = true),
         )
     }

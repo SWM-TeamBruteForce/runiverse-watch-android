@@ -8,7 +8,7 @@ enum class ControlsFirstHint { PHONE_CHECKING, SERVER_CHECKING, DISTANCE_CHECKIN
 
 enum class ControlsSecondHint {
     CONTROLS_AFTER_RECONNECT,
-    RECORDING,
+    RUN_RECORDING,
     KEEP_RUNNING_IF_SHORT,
     PENALTY_IF_SHORT,
     PENALTY_IF_FINISHED,
@@ -34,7 +34,7 @@ fun controlsHint(run: RunState, isPhoneReachable: Boolean): ControlsHint {
         !isPhoneReachable ->
             ControlsHint(ControlsFirstHint.PHONE_CHECKING, second = ControlsSecondHint.CONTROLS_AFTER_RECONNECT)
         !run.isServerConnected && run.players.isNotEmpty() ->
-            ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RECORDING)
+            ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RUN_RECORDING)
         serverRemainingMeters != null -> toGoalHint(serverRemainingMeters, isPaused)
         targetDistanceMeters == null -> ControlsHint()
         distanceMeters >= targetDistanceMeters -> ControlsHint(
