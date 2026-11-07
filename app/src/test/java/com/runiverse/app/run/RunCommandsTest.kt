@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ControlsButtonsTest {
+class RunCommandsTest {
 
     private val running = RunPreviewSamples.party.copy(status = RunStatus.RUNNING, finish = null)
     private val finishing = running.copy(finish = FinishProgress(FinishStage.FINISHING))
