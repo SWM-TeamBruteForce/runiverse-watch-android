@@ -32,6 +32,16 @@ android {
         compose = true
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                // Robolectric이 Android 16 환경을 준비할 때 JDK 내부 API를 쓴다
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
+        }
+    }
+
     lint {
         // 버전은 IntelliJ에서 열리는 값으로 고정해 둔다
         disable += setOf("GradleDependency", "AndroidGradlePluginVersion")
@@ -54,4 +64,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 }
