@@ -428,6 +428,53 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `보낸 명령이 종료인지 구분하고 답을 받으면 지운다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+
+        // when
+        fixture.link.pause()
+        runCurrent()
+
+        // then
+        assertFalse(fixture.link.state.value.isFinishPending)
+
+        // when -> 일시정지가 처리된 뒤 종료를 보낸다
+        val pause = fixture.sent.single() as WatchPause
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 2, lastRequestId = pause.requestId)))
+        fixture.link.finish(forced = false)
+        runCurrent()
+
+        // then
+        assertTrue(fixture.link.state.value.isFinishPending)
+
+        // when -> 폰이 반영한 상태를 보낸다
+        val finish = fixture.sent.last() as WatchFinish
+        fixture.link.onReceived(WatchStateUpdated(state(sequence = 3, lastRequestId = finish.requestId)))
+
+        // then
+        assertFalse(fixture.link.state.value.isFinishPending)
+    }
+
+    @Test
+    fun `종료를 거절받으면 종료 대기를 지운다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.finish(forced = false)
+        runCurrent()
+        val finish = fixture.sent.single() as WatchFinish
+
+        // when
+        fixture.link.onReceived(PhoneError("STALE_STATUS", "다른 상태", "WATCH_FINISH", finish.requestId))
+
+        // then
+        assertFalse(fixture.link.state.value.isFinishPending)
+        assertFalse(fixture.link.state.value.isLocked)
+    }
+
+    @Test
     fun `명령에 3초 동안 답이 없으면 SYNC를 보내고 명령은 다시 보내지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
