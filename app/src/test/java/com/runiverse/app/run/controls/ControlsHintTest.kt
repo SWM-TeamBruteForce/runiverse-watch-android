@@ -1,9 +1,10 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.RunPreviewSamples
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

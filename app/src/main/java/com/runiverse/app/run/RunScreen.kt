@@ -22,6 +22,7 @@ import androidx.wear.compose.material3.PagerScaffoldDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.VerticalPagerScaffold
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.run.controls.ControlsPage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 

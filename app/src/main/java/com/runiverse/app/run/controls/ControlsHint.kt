@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState

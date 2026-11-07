@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -13,6 +13,9 @@ import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.RunCommandState
+import com.runiverse.app.run.RunCommands
+import com.runiverse.app.run.RunPreviewSamples
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
