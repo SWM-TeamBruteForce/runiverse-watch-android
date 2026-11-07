@@ -908,7 +908,7 @@ class PhoneLinkTest {
         fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 3)))
 
         // then
-        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+        assertEquals(confirmedResult, fixture.phoneLink.state.value.finishedRun?.result)
     }
 
     @Test
@@ -926,7 +926,7 @@ class PhoneLinkTest {
         fixture.phoneLink.onReceived(synced(sync.syncId, restarted))
 
         // then
-        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+        assertEquals(confirmedResult, fixture.phoneLink.state.value.finishedRun?.result)
     }
 
     @Test
@@ -940,7 +940,7 @@ class PhoneLinkTest {
         fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 2)))
 
         // then
-        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+        assertEquals(confirmedResult, fixture.phoneLink.state.value.finishedRun?.result)
     }
 
     @Test
@@ -1072,7 +1072,7 @@ class PhoneLinkTest {
         // then
         val linkState = fixture.phoneLink.state.value
         assertTrue(linkState.isPhoneReachable)
-        assertEquals(RESULT, linkState.finishedRun?.result)
+        assertEquals(confirmedResult, linkState.finishedRun?.result)
     }
 
     @Test
@@ -1129,7 +1129,7 @@ class PhoneLinkTest {
     }
 
     private companion object {
-        val RESULT = RunResult(
+        val confirmedResult = RunResult(
             isServerConfirmed = true,
             totalDistanceMeters = 5020,
             averagePaceSecondsPerKm = 343,
@@ -1143,7 +1143,7 @@ class PhoneLinkTest {
             stateSequence: Long,
             statusVersion: Int = 0,
             phoneInstanceId: String = "p1",
-            result: RunResult? = RESULT,
+            result: RunResult? = confirmedResult,
         ): PhoneState {
             val base = state(stateSequence, phoneInstanceId, statusVersion = statusVersion)
             return base.copy(run = base.run?.copy(status = RunStatus.FINISHED, result = result))
