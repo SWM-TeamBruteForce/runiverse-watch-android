@@ -852,6 +852,150 @@ class PhoneLinkTest {
         assertTrue(fixture.phoneLink.state.value.isRunActive)
     }
 
+    @Test
+    fun `닫은 결과는 같은 번호 쌍의 상태를 다시 받아도 띄우지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, statusVersion = 2))
+
+        // when
+        fixture.phoneLink.dismissResult()
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 2)))
+
+        // then
+        assertNull(fixture.phoneLink.state.value.finishedRun)
+    }
+
+    @Test
+    fun `결과를 받는 중에 닫으면 결과가 확정되어도 다시 띄우지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, statusVersion = 2, result = null))
+
+        // when
+        fixture.phoneLink.dismissResult()
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 2)))
+
+        // then
+        assertNull(fixture.phoneLink.state.value.finishedRun)
+    }
+
+    @Test
+    fun `닫은 결과는 SYNCED로 다시 받아도 띄우지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, statusVersion = 2))
+        fixture.phoneLink.dismissResult()
+
+        // when
+        fixture.phoneLink.start()
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+        fixture.phoneLink.onReceived(synced(sync.syncId, finishedState(stateSequence = 2, statusVersion = 2)))
+
+        // then
+        assertNull(fixture.phoneLink.state.value.finishedRun)
+    }
+
+    @Test
+    fun `statusVersion이 다른 끝난 상태는 닫은 결과로 보지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, statusVersion = 2))
+        fixture.phoneLink.dismissResult()
+
+        // when
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 3)))
+
+        // then
+        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+    }
+
+    @Test
+    fun `폰 앱이 다시 켜져 번호가 달라지면 닫은 결과로 보지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(finishedState(stateSequence = 1, statusVersion = 2))
+        fixture.phoneLink.dismissResult()
+
+        // when
+        fixture.phoneLink.start()
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+        val restarted = finishedState(stateSequence = 1, statusVersion = 2, phoneInstanceId = "p2")
+        fixture.phoneLink.onReceived(synced(sync.syncId, restarted))
+
+        // then
+        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+    }
+
+    @Test
+    fun `러닝 중엔 결과 닫기를 불러도 기억하지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1, statusVersion = 2))
+
+        // when
+        fixture.phoneLink.dismissResult()
+        fixture.phoneLink.onReceived(WatchStateUpdated(finishedState(stateSequence = 2, statusVersion = 2)))
+
+        // then
+        assertEquals(RESULT, fixture.phoneLink.state.value.finishedRun?.result)
+    }
+
+    @Test
+    fun `폰이 띄운 결과를 없애면 한 번 알린다`() = runTest {
+        // given
+        val finished = finishedState(stateSequence = 1)
+        val linkStates = listOf(
+            PhoneLinkState(phoneState = finished),
+            PhoneLinkState(phoneState = finished.copy(stateSequence = 2)),
+            linkStateWith(finished.copy(stateSequence = 3), run = null),
+            linkStateWith(finished.copy(stateSequence = 4), run = null),
+        )
+
+        // when
+        val removals = linkStates.asFlow().finishedRunRemovals().toList()
+
+        // then
+        assertEquals(1, removals.size)
+    }
+
+    @Test
+    fun `결과에서 새 러닝으로 넘어가면 알리지 않는다`() = runTest {
+        // given
+        val linkStates = listOf(
+            PhoneLinkState(phoneState = finishedState(stateSequence = 1)),
+            PhoneLinkState(phoneState = state(stateSequence = 2)),
+        )
+
+        // when
+        val removals = linkStates.asFlow().finishedRunRemovals().toList()
+
+        // then
+        assertTrue(removals.isEmpty())
+    }
+
+    @Test
+    fun `워치에서 닫은 결과나 러닝이 사라질 때는 알리지 않는다`() = runTest {
+        // given
+        val finished = finishedState(stateSequence = 1, statusVersion = 2)
+        val dismissed = ResultKey(finished.phoneInstanceId, finished.statusVersion)
+        val running = state(stateSequence = 1)
+        val linkStates = listOf(
+            PhoneLinkState(phoneState = finished, dismissedResult = dismissed),
+            linkStateWith(finished.copy(stateSequence = 2), run = null).copy(dismissedResult = dismissed),
+            PhoneLinkState(phoneState = running),
+            linkStateWith(running.copy(stateSequence = 2), run = null),
+        )
+
+        // when
+        val removals = linkStates.asFlow().finishedRunRemovals().toList()
+
+        // then
+        assertTrue(removals.isEmpty())
+    }
+
     private fun linkStateWith(base: PhoneState, run: RunState?) = PhoneLinkState(phoneState = base.copy(run = run))
 
     private class Fixture(
@@ -891,8 +1035,25 @@ class PhoneLinkTest {
     }
 
     private companion object {
+        val RESULT = RunResult(
+            isServerConfirmed = true,
+            totalDistanceMeters = 5020,
+            averagePaceSecondsPerKm = 343,
+            elapsedSeconds = 1721,
+        )
+
         fun synced(syncId: String, state: PhoneState) =
             WatchSynced(syncId = syncId, state = state, birthday = null, photos = emptyList())
+
+        fun finishedState(
+            stateSequence: Long,
+            statusVersion: Int = 0,
+            phoneInstanceId: String = "p1",
+            result: RunResult? = RESULT,
+        ): PhoneState {
+            val base = state(stateSequence, phoneInstanceId, statusVersion = statusVersion)
+            return base.copy(run = base.run?.copy(status = RunStatus.FINISHED, result = result))
+        }
 
         fun state(
             stateSequence: Long,
