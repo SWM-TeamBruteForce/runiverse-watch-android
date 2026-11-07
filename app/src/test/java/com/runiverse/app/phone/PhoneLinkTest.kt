@@ -457,6 +457,43 @@ class PhoneLinkTest {
 
         // then
         assertFalse(fixture.link.state.value.isFinishPending)
+        assertFalse(fixture.link.state.value.isLocked)
+    }
+
+    @Test
+    fun `일시정지를 거절받으면 잠금을 푼다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.pause()
+        runCurrent()
+        val pause = fixture.sent.single() as WatchPause
+
+        // when
+        fixture.link.onReceived(PhoneError("STALE_STATUS", "다른 상태", "WATCH_PAUSE", pause.requestId))
+
+        // then
+        assertFalse(fixture.link.state.value.isLocked)
+    }
+
+    @Test
+    fun `일시정지에 3초 동안 답이 없어도 종료 대기로 보지 않고 SYNC만 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(sequence = 1))
+        fixture.link.pause()
+        runCurrent()
+
+        // when
+        advanceTimeBy(3_001)
+
+        // then
+        val linkState = fixture.link.state.value
+        assertTrue(linkState.isCommandOverdue)
+        assertTrue(linkState.isLocked)
+        assertFalse(linkState.isFinishPending)
+        assertEquals(1, fixture.sent.count { it is WatchPause })
+        assertTrue(fixture.sent.last() is WatchSync)
     }
 
     @Test
@@ -489,6 +526,8 @@ class PhoneLinkTest {
 
         // then
         assertTrue(fixture.link.state.value.isCommandOverdue)
+        assertTrue(fixture.link.state.value.isFinishPending)
+        assertTrue(fixture.link.state.value.isLocked)
         assertEquals(1, fixture.sent.count { it is WatchFinish })
         assertTrue(fixture.sent.last() is WatchSync)
     }
@@ -507,6 +546,7 @@ class PhoneLinkTest {
         fixture.link.onReceived(synced(sync.syncId, state(sequence = 2)))
 
         // then
+        assertFalse(fixture.link.state.value.isFinishPending)
         assertFalse(fixture.link.state.value.isLocked)
         assertFalse(fixture.link.state.value.isCommandOverdue)
     }
@@ -648,6 +688,22 @@ class PhoneLinkTest {
         val pending = FinishProgress(FinishStage.GOAL_PENDING, remainingMeters = 40)
         val finishing = FinishProgress(FinishStage.FINISHING)
         val linkStates = listOf(null, pending, pending, finishing, pending, null).mapIndexed { index, finish ->
+            val base = state(sequence = index.toLong())
+            PhoneLinkState(phoneState = base.copy(run = base.run?.copy(finish = finish)))
+        }
+
+        // when
+        val starts = linkStates.asFlow().goalPendingStarts().toList()
+
+        // then
+        assertEquals(2, starts.size)
+    }
+
+    @Test
+    fun `계속 달리기로 보류가 풀린 뒤 다시 보류되면 한 번 더 알린다`() = runTest {
+        // given
+        val pending = FinishProgress(FinishStage.GOAL_PENDING, remainingMeters = 40)
+        val linkStates = listOf(pending, null, pending).mapIndexed { index, finish ->
             val base = state(sequence = index.toLong())
             PhoneLinkState(phoneState = base.copy(run = base.run?.copy(finish = finish)))
         }

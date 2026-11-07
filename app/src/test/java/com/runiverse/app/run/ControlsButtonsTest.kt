@@ -47,6 +47,18 @@ class ControlsButtonsTest {
     }
 
     @Test
+    fun `멈춘 상태에서 종료를 보내도 종료 중으로 바뀐다`() {
+        // given
+        val paused = running.copy(status = RunStatus.PAUSED)
+
+        // when & then
+        assertEquals(
+            FinishButtonStage.FINISHING,
+            finishButtonStage(paused, RunCommandState(isLocked = true, isFinishPending = true)),
+        )
+    }
+
+    @Test
     fun `일시정지에 답이 늦어도 종료 문구를 띄우지 않는다`() {
         // when & then
         assertEquals(

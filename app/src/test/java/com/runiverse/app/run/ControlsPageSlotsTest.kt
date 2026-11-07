@@ -41,14 +41,14 @@ class ControlsPageSlotsTest {
         val widthAt = { y: Float -> if (y < 30f) 40f else 100f }
 
         // when
-        val lines = placeHintLines(listOf("가나다 라", "사아"), top = 0f, lineAdvance = 30f, widthAt, widthOf)
+        val lines = placeHintLines(listOf("가나다 라", "사아 자차아"), top = 0f, lineAdvance = 30f, widthAt, widthOf)
 
-        // then
+        // then -> 둘째 안내는 첫 높이 폭 40엔 안 들어가지만 제 높이 폭 100엔 들어간다
         assertEquals(
             listOf(
                 PlacedHintLine("가나다", 0, 0f),
                 PlacedHintLine("라", 0, 30f),
-                PlacedHintLine("사아", 1, 60f),
+                PlacedHintLine("사아 자차아", 1, 60f),
             ),
             lines,
         )
@@ -68,8 +68,18 @@ class ControlsPageSlotsTest {
         // when
         val slots = slots(listOf("가".repeat(40), "나".repeat(40)), isFontScaled = true)
 
-        // then
+        // then -> 안내 두 줄 60과 안내↔버튼 간격 10 아래로 간다
         assertTrue(slots.pillTop > 157f)
+        assertEquals(slots.hintTop + 70f, slots.pillTop, 0.01f)
+    }
+
+    @Test
+    fun `안내가 화면 지름보다 길면 시작 높이에 둔다`() {
+        // when
+        val slots = slots(listOf("가".repeat(60), "나".repeat(60)), isFontScaled = true)
+
+        // then
+        assertEquals(70f, slots.hintTop)
     }
 
     @Test
@@ -88,7 +98,8 @@ class ControlsPageSlotsTest {
     @Test
     fun `버튼은 양 끝 둥근 부분까지 화면 안쪽에 들어와야 들어온 것으로 본다`() {
         // when & then
-        assertTrue(pillFitsRoundScreen(480f, 4f, pillWidth = 255f, pillHeight = 102f, pillTop = 276f))
-        assertFalse(pillFitsRoundScreen(480f, 4f, pillWidth = 255f, pillHeight = 102f, pillTop = 395f))
+        assertTrue(pillFitsRoundScreen(480f, 4f, pillWidth = 255f, pillHeight = 102f, pillTop = 349f))
+        // 세로로만 재면 들어오지만 둥근 끝이 화면 곡선을 넘는다
+        assertFalse(pillFitsRoundScreen(480f, 4f, pillWidth = 255f, pillHeight = 102f, pillTop = 359f))
     }
 }
