@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
                                 if (finishedRun != null) {
                                     RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
                                 } else {
-                                    IdleScreen()
+                                    IdleScreen(linkState.isPhoneReachable)
                                 }
                             }
                         }
