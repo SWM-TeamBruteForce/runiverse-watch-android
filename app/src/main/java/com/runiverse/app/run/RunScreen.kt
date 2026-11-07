@@ -13,7 +13,6 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.GestureInclusion
 import androidx.wear.compose.foundation.pager.HorizontalPager
-import androidx.wear.compose.foundation.pager.PagerDefaults
 import androidx.wear.compose.foundation.pager.PagerState
 import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
@@ -26,9 +25,10 @@ import com.runiverse.app.phone.RunState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-private const val OVERVIEW_PAGE_INDEX = 0
-private const val MY_RECORD_PAGE_INDEX = 1
-private const val PAGE_COUNT = 2
+private const val CONTROLS_PAGE_INDEX = 0
+private const val OVERVIEW_PAGE_INDEX = 1
+private const val MY_RECORD_PAGE_INDEX = 2
+private const val PAGE_COUNT = 3
 private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
 private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
 private val PAGE_DOT_DIAMETER = 3.dp
@@ -60,6 +60,7 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
             gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
+                CONTROLS_PAGE_INDEX -> ControlsPage(run, isPhoneReachable)
                 OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
                     run,
@@ -101,20 +102,16 @@ private fun OverviewVerticalPager(
 
 // 파티원 장은 첫 화면에서 세로로만 오간다
 // userScrollEnabled로 막으면 첫 화면으로 돌아온 직후 첫 좌우 쓸기가 무시된다 — 라이브러리가 다음 터치에서야 감지를 다시 켠다
+// 러닝 중엔 쓸어 닫기가 꺼져 있어 기본값처럼 첫 장 왼쪽 가장자리를 비우지 않는다 — 비우면 조작 장에서 왼쪽 끝부터 쓸 때 안 넘어간다
 @Composable
 private fun partyPageBlockingGestures(
     horizontalPagerState: PagerState,
     verticalPagerState: PagerState,
-): GestureInclusion {
-    val defaultGestures = PagerDefaults.gestureInclusion(horizontalPagerState)
-    return remember(defaultGestures, horizontalPagerState, verticalPagerState) {
-        object : GestureInclusion {
-            override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean {
-                val isOnPartyPage = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
-                    verticalPagerState.currentPage != OVERVIEW_VERTICAL_PAGE_INDEX
-                return isOnPartyPage || defaultGestures.ignoreGestureStart(offset, layoutCoordinates)
-            }
-        }
+): GestureInclusion = remember(horizontalPagerState, verticalPagerState) {
+    object : GestureInclusion {
+        override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean =
+            horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
+                verticalPagerState.currentPage != OVERVIEW_VERTICAL_PAGE_INDEX
     }
 }
 
