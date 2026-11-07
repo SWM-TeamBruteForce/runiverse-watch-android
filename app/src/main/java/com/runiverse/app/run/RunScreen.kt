@@ -43,6 +43,8 @@ internal fun RunScreen(
     birthday: String?,
     commandState: RunCommandState,
     commands: RunCommands,
+    isComboEffectOn: Boolean,
+    onComboEffectChange: (Boolean) -> Unit,
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
     val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
@@ -67,7 +69,14 @@ internal fun RunScreen(
             gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
-                CONTROLS_PAGE_INDEX -> ControlsPage(run, isPhoneReachable, commandState, commands)
+                CONTROLS_PAGE_INDEX -> ControlsPage(
+                    run,
+                    isPhoneReachable,
+                    commandState,
+                    commands,
+                    isComboEffectOn,
+                    onComboEffectChange,
+                )
                 OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
                     run,

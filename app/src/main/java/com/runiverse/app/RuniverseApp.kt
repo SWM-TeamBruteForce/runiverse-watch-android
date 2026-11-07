@@ -11,6 +11,7 @@ import com.runiverse.app.exercise.HealthServicesHeartRateTracker
 import com.runiverse.app.phone.PhoneChannel
 import com.runiverse.app.phone.PhoneLink
 import com.runiverse.app.phone.goalPendingStarts
+import com.runiverse.app.run.ComboEffectSetting
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
@@ -25,6 +26,7 @@ class RuniverseApp : Application() {
     private val phoneChannel by lazy { PhoneChannel(this) }
     val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
     val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
+    val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(SETTINGS_NAME, MODE_PRIVATE)) }
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +57,7 @@ class RuniverseApp : Application() {
 
     private companion object {
         const val TAG = "RuniverseApp"
+        const val SETTINGS_NAME = "settings"
         // 콤보의 짧은 여러 번과 구분되게 한 번만 세게 울린다
         const val GOAL_PENDING_VIBRATION_MILLIS = 300L
         const val GOAL_PENDING_VIBRATION_AMPLITUDE = 255

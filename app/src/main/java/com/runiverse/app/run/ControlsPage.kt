@@ -116,11 +116,21 @@ internal fun ControlsPage(
     isPhoneReachable: Boolean,
     commandState: RunCommandState,
     commands: RunCommands,
+    isComboEffectOn: Boolean,
+    onComboEffectChange: (Boolean) -> Unit,
 ) {
     val listState = rememberTransformingLazyColumnState()
     // 스크롤 중에도 시계를 남기려고 스크롤 상태를 연결하지 않는다
     ScreenScaffold(scrollIndicator = { ScrollIndicator(listState, Modifier.align(Alignment.CenterEnd)) }) {
-        ControlsPageContent(run, isPhoneReachable, commandState, commands, listState)
+        ControlsPageContent(
+            run,
+            isPhoneReachable,
+            commandState,
+            commands,
+            isComboEffectOn,
+            onComboEffectChange,
+            listState,
+        )
     }
 }
 
@@ -130,6 +140,8 @@ private fun ControlsPageContent(
     isPhoneReachable: Boolean,
     commandState: RunCommandState,
     commands: RunCommands,
+    isComboEffectOn: Boolean,
+    onComboEffectChange: (Boolean) -> Unit,
     listState: TransformingLazyColumnState,
 ) {
     val slots = currentControlsPageSlots()
@@ -153,7 +165,6 @@ private fun ControlsPageContent(
     val pillTopDistanceToBottom = with(LocalDensity.current) {
         screenSize - slots.pillTop - (PILL_HEIGHT + PILL_GAP).toPx()
     }
-    var isComboEffectOn by remember { mutableStateOf(true) }
 
     Box(Modifier.fillMaxSize()) {
         TransformingLazyColumn(
@@ -186,13 +197,12 @@ private fun ControlsPageContent(
                 )
             }
             item {
-                // TODO: 콤보 효과 값 저장 — 켜기·끄기 값을 워치에 저장한다
                 ComboEffectRow(
                     isComboEffectOn,
                     pillWidth,
                     isEnabled = isComboRowReachable,
                     Modifier.alpha(if (isComboRowReachable) 1f else 0f),
-                    onToggle = { isComboEffectOn = it },
+                    onToggle = onComboEffectChange,
                 )
             }
         }
@@ -578,6 +588,8 @@ private fun ControlsPageRunningPreview() = RunPreviewFrame {
         isPhoneReachable = true,
         RunCommandState(),
         PREVIEW_COMMANDS,
+        isComboEffectOn = true,
+        onComboEffectChange = {},
         rememberTransformingLazyColumnState(),
     )
 }
@@ -590,6 +602,8 @@ private fun ControlsPagePausedPreview() = RunPreviewFrame {
         isPhoneReachable = true,
         RunCommandState(),
         PREVIEW_COMMANDS,
+        isComboEffectOn = true,
+        onComboEffectChange = {},
         rememberTransformingLazyColumnState(),
     )
 }
@@ -602,6 +616,8 @@ private fun ControlsPagePhoneLostPreview() = RunPreviewFrame {
         isPhoneReachable = false,
         RunCommandState(),
         PREVIEW_COMMANDS,
+        isComboEffectOn = true,
+        onComboEffectChange = {},
         rememberTransformingLazyColumnState(),
     )
 }
@@ -614,6 +630,8 @@ private fun ControlsPageFinishingPreview() = RunPreviewFrame {
         isPhoneReachable = true,
         RunCommandState(isLocked = true, isFinishPending = true),
         PREVIEW_COMMANDS,
+        isComboEffectOn = true,
+        onComboEffectChange = {},
         rememberTransformingLazyColumnState(),
     )
 }

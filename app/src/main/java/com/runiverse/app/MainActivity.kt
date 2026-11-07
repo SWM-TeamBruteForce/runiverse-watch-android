@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val link by phoneLink.state.collectAsState()
             val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
+            val isComboEffectOn by runiverseApp.comboEffectSetting.isOn.collectAsState()
             val run = link.phoneState?.run?.takeIf { link.isRunActive }
             val commands = remember {
                 RunCommands(
@@ -92,6 +93,8 @@ class MainActivity : ComponentActivity() {
                             link.birthday,
                             RunCommandState(link.isLocked, link.isFinishPending, link.isCommandOverdue),
                             commands,
+                            isComboEffectOn,
+                            runiverseApp.comboEffectSetting::set,
                         )
                     }
                 }
