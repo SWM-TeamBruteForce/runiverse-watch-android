@@ -63,7 +63,7 @@ class PhoneLink(
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
     // TODO: 콤보 진동 — 콤보 효과를 만들 때 앱에서 구독한다. 받는 쪽이 없으면 버린다
-    private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
+    private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER_COUNT)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
     private val awaitedSyncIds = ArrayDeque<String>()
@@ -177,7 +177,7 @@ class PhoneLink(
         syncJob = scope.launch {
             do {
                 val syncId = newId()
-                awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY)
+                awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY_COUNT)
                 scope.launch { sendWithLimit(WatchSync(syncId)) }
                 delay(REPLY_TIMEOUT)
                 _state.update { it.copy(isPhoneReachable = false) }
@@ -233,7 +233,7 @@ class PhoneLink(
 
     private fun onComboTriggered(combo: WatchComboTriggered) {
         if (combo.eventId in seenComboEventIds) return
-        seenComboEventIds.addCapped(combo.eventId, COMBO_ID_MEMORY)
+        seenComboEventIds.addCapped(combo.eventId, COMBO_ID_MEMORY_COUNT)
         _combos.tryEmit(combo)
     }
 
@@ -278,8 +278,8 @@ class PhoneLink(
         val REPLY_TIMEOUT = 3.seconds
         val VISIBILITY_INTERVAL = 10.seconds
         // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
-        const val SYNC_ID_MEMORY = 5
-        const val COMBO_ID_MEMORY = 64
-        const val COMBO_BUFFER = 8
+        const val SYNC_ID_MEMORY_COUNT = 5
+        const val COMBO_ID_MEMORY_COUNT = 64
+        const val COMBO_BUFFER_COUNT = 8
     }
 }

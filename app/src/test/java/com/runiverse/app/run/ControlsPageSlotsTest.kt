@@ -15,7 +15,7 @@ class ControlsPageSlotsTest {
         edgeMargin = 25f,
         lineAdvance = 30f,
         hintStartTop = 70f,
-        hintMaxShift = 50f,
+        maxHintShift = 50f,
         firstButtonTopAtDefaultFont = 157f,
         hintToButtonGap = 10f,
         isFontScaled = isFontScaled,

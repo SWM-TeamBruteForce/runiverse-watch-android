@@ -58,7 +58,7 @@ private const val STATUS_ICON_FRACTION = 0.42f
 private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
 private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
 private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
-private val MIN_SPACE_BESIDE_GAP_LABEL = 4.dp
+private val MIN_LABEL_TO_CELL_GAP = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
 // 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
@@ -186,7 +186,7 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
             } ?: 0.dp
             DIRECTION_INDICATOR_WIDTH + DIRECTION_INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
         }
-        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_SPACE_BESIDE_GAP_LABEL)
+        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_LABEL_TO_CELL_GAP)
     }
 }
 

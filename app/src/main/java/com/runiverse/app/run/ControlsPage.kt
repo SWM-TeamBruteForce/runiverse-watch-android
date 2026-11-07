@@ -97,18 +97,18 @@ private val PILL_FIT_EDGE_MARGIN = 2.dp
 private val LIST_BOTTOM_PADDING = 24.dp
 
 private val HINT_START_TOP = 34.dp
-private val HINT_MAX_SHIFT = 24.dp
+private val MAX_HINT_SHIFT = 24.dp
 private val FIRST_BUTTON_TOP_AT_DEFAULT_FONT = 74.dp
 private val HINT_TO_BUTTON_GAP = 5.dp
 
 private val CLOCK_TOP_PADDING = 2.dp
-private val CLOCK_TO_COVER_END = 2.dp
+private val CLOCK_TO_COVER_END_GAP = 2.dp
 private val CLOCK_FADE_HEIGHT = 12.dp
 
 private val COMBO_ROW_OUTLINE_COLOR = Color(0xFF333333)
 private val COMBO_ROW_OUTLINE_WIDTH = 1.dp
-private val COMBO_LABEL_START = 16.dp
-private val COMBO_SWITCH_END = 14.dp
+private val COMBO_LABEL_START_PADDING = 16.dp
+private val COMBO_SWITCH_END_PADDING = 14.dp
 private val COMBO_SWITCH_WIDTH = 28.dp
 private val COMBO_SWITCH_HEIGHT = 16.dp
 private val COMBO_SWITCH_THUMB_INSET = 3.dp
@@ -235,7 +235,7 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
                 edgeMargin = RunDimensions.TEXT_EDGE_MARGIN.toPx(),
                 lineAdvance = hintLineAdvance(style.fontSize.toPx()),
                 hintStartTop = HINT_START_TOP.toPx(),
-                hintMaxShift = HINT_MAX_SHIFT.toPx(),
+                maxHintShift = MAX_HINT_SHIFT.toPx(),
                 firstButtonTopAtDefaultFont = FIRST_BUTTON_TOP_AT_DEFAULT_FONT.toPx(),
                 hintToButtonGap = HINT_TO_BUTTON_GAP.toPx(),
                 isFontScaled = fontScale > 1f,
@@ -537,7 +537,7 @@ private fun ComboEffectRow(
             .clip(CircleShape)
             .border(COMBO_ROW_OUTLINE_WIDTH, COMBO_ROW_OUTLINE_COLOR, CircleShape)
             .toggleable(value = isOn, enabled = isEnabled, role = Role.Switch, onValueChange = onToggle)
-            .padding(start = COMBO_LABEL_START, end = COMBO_SWITCH_END),
+            .padding(start = COMBO_LABEL_START_PADDING, end = COMBO_SWITCH_END_PADDING),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -570,7 +570,7 @@ private fun ComboSwitch(isOn: Boolean) {
 private fun ClockFade(modifier: Modifier) {
     val background = MaterialTheme.colorScheme.background
     val clockFontSize = with(LocalDensity.current) { MaterialTheme.typography.arcMedium.fontSize.toDp() }
-    val coverHeight = CLOCK_TOP_PADDING + clockFontSize + CLOCK_TO_COVER_END
+    val coverHeight = CLOCK_TOP_PADDING + clockFontSize + CLOCK_TO_COVER_END_GAP
     val height = coverHeight + CLOCK_FADE_HEIGHT
     val coveredFraction = coverHeight / height
     Box(

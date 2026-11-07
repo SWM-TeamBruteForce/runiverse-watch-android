@@ -17,10 +17,10 @@ private val RING_STROKE_WIDTH = 5.dp
 private val RING_CENTER_INSET = 6.dp
 
 // 위쪽 시계와 겹치지 않게 12시 양옆 22.5도씩 비운다(시안에서 잰 값)
-private const val TOP_GAP_DEGREES = 45f
+private const val RING_OPENING_DEGREES = 45f
 private const val TWELVE_O_CLOCK_DEGREES = -90f
-private const val RING_START_DEGREES = TWELVE_O_CLOCK_DEGREES + TOP_GAP_DEGREES / 2
-private const val RING_SWEEP_DEGREES = 360f - TOP_GAP_DEGREES
+private const val RING_START_DEGREES = TWELVE_O_CLOCK_DEGREES + RING_OPENING_DEGREES / 2
+private const val RING_SWEEP_DEGREES = 360f - RING_OPENING_DEGREES
 
 /** 12시 오른쪽 끝에서 시계 방향으로 [progress](0~1)만큼 [color]로 채운다. */
 @Composable

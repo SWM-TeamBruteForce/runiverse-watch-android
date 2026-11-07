@@ -40,14 +40,14 @@ internal fun controlsPageSlots(
     edgeMargin: Float,
     lineAdvance: Float,
     hintStartTop: Float,
-    hintMaxShift: Float,
+    maxHintShift: Float,
     firstButtonTopAtDefaultFont: Float,
     hintToButtonGap: Float,
     isFontScaled: Boolean,
     widthOf: (String) -> Float,
 ): ControlsPageSlots {
     val widthAt = { y: Float -> usableWidthAt(y, screenSize, edgeMargin) }
-    val hintTop = firstTopWhereHintsFit(widestHints, hintStartTop, hintMaxShift, lineAdvance, widthAt, widthOf)
+    val hintTop = firstTopWhereHintsFit(widestHints, hintStartTop, maxHintShift, lineAdvance, widthAt, widthOf)
         ?: topWhereFirstLineFits(widthOf(widestHints.first()), screenSize, edgeMargin, hintStartTop)
     val lines = placeHintLines(widestHints, hintTop, lineAdvance, widthAt, widthOf)
     val hintsEnd = lines.last().top + lineAdvance

@@ -106,9 +106,9 @@ class ExerciseSession(
 
     // 서비스가 내려가면 다시 끌 길이 없어, 끄기가 실패하면 조금 뒤 다시 시도한다
     private suspend fun stopTracker() {
-        for (attempt in 1..STOP_ATTEMPTS) {
+        for (attempt in 1..STOP_ATTEMPT_COUNT) {
             if (tracker.stop()) return
-            if (attempt < STOP_ATTEMPTS) delay(STOP_RETRY_DELAY)
+            if (attempt < STOP_ATTEMPT_COUNT) delay(STOP_RETRY_DELAY)
         }
     }
 
@@ -178,7 +178,7 @@ class ExerciseSession(
         val CHECK_INTERVAL = 1.minutes
         val PROBE_AFTER_MS = 1.minutes.inWholeMilliseconds
         val GIVE_UP_AFTER_MS = 10.minutes.inWholeMilliseconds
-        const val STOP_ATTEMPTS = 3
+        const val STOP_ATTEMPT_COUNT = 3
         val STOP_RETRY_DELAY = 1.seconds
     }
 }
