@@ -23,8 +23,12 @@ private const val SECONDS_PER_HOUR = 3600
 /** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
 fun formatRunDistanceKm(meters: Int): String {
     val km = meters / METERS_PER_KM
-    val rest = meters % METERS_PER_KM
-    return if (meters < ONE_DECIMAL_FROM_METERS) "$km.${(rest / 10).pad2()}" else "$km.${rest / 100}"
+    val remainderMeters = meters % METERS_PER_KM
+    return if (meters < ONE_DECIMAL_FROM_METERS) {
+        "$km.${(remainderMeters / 10).padTwoDigits()}"
+    } else {
+        "$km.${remainderMeters / 100}"
+    }
 }
 
 /**
@@ -60,15 +64,15 @@ fun gapDirection(gapMeters: Int): GapDirection = when {
 /** 위치를 못 잡았거나 60분을 넘으면 낼 페이스가 없다고 본다. */
 fun formatPace(secondsPerKm: Int?): String {
     if (secondsPerKm == null || secondsPerKm >= SECONDS_PER_HOUR) return UNKNOWN_PACE
-    return "${secondsPerKm / 60}'${(secondsPerKm % 60).pad2()}\""
+    return "${secondsPerKm / 60}'${(secondsPerKm % 60).padTwoDigits()}\""
 }
 
 /** 1시간 전엔 폰처럼 `mm:ss`, 넘으면 `h:mm:ss`다. */
 fun formatElapsedTime(seconds: Int): String {
     val minutes = seconds / 60 % 60
-    val rest = (seconds % 60).pad2()
-    if (seconds < SECONDS_PER_HOUR) return "${(seconds / 60).pad2()}:$rest"
-    return "${seconds / SECONDS_PER_HOUR}:${minutes.pad2()}:$rest"
+    val rest = (seconds % 60).padTwoDigits()
+    if (seconds < SECONDS_PER_HOUR) return "${(seconds / 60).padTwoDigits()}:$rest"
+    return "${seconds / SECONDS_PER_HOUR}:${minutes.padTwoDigits()}:$rest"
 }
 
 /** 목표까지 진행률이다. 목표가 없으면(솔로) null — 링을 그리지 않는다. */
@@ -87,4 +91,4 @@ fun Player.shownPaceSecondsPerKm(): Int? = when (status) {
 /** 내가 버튼으로 멈춰도 상대처럼 지금 페이스가 없다. */
 fun RunState.shownMyPaceSecondsPerKm(): Int? = if (status == RunStatus.PAUSED) null else me.currentPaceSecondsPerKm
 
-private fun Int.pad2(): String = toString().padStart(2, '0')
+private fun Int.padTwoDigits(): String = toString().padStart(2, '0')

@@ -42,7 +42,7 @@ class ControlsButtonsTest {
         )
         assertEquals(
             FinishButtonStage.CHECKING,
-            finishButtonStage(running, RunCommandState(isLocked = true, isFinishPending = true, isOverdue = true)),
+            finishButtonStage(running, RunCommandState(isLocked = true, isFinishPending = true, isCommandOverdue = true)),
         )
     }
 
@@ -63,7 +63,7 @@ class ControlsButtonsTest {
         // when & then
         assertEquals(
             FinishButtonStage.HOLD,
-            finishButtonStage(running, RunCommandState(isLocked = true, isOverdue = true)),
+            finishButtonStage(running, RunCommandState(isLocked = true, isCommandOverdue = true)),
         )
     }
 
@@ -90,7 +90,7 @@ class ControlsButtonsTest {
         // when & then
         assertTrue(areControlsLocked(running, isPhoneReachable = true, waiting))
         assertFalse(areControlsDimmed(running, isPhoneReachable = true, waiting))
-        assertTrue(areControlsDimmed(running, isPhoneReachable = true, waiting.copy(isOverdue = true)))
+        assertTrue(areControlsDimmed(running, isPhoneReachable = true, waiting.copy(isCommandOverdue = true)))
     }
 
     @Test

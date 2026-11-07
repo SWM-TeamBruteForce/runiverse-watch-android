@@ -43,13 +43,13 @@ internal fun HeartRateZoneBar(filledZones: Int, modifier: Modifier = Modifier) {
     val filledColor = MaterialTheme.colorScheme.onBackground
     val emptyColor = MaterialTheme.colorScheme.outline
     Canvas(modifier.boxContentBounds().height(RunDimensions.ZONE_BAR_HEIGHT)) {
-        val gap = SEGMENT_GAP.toPx()
-        val segment = (size.width - gap * (ZONE_COUNT - 1)) / ZONE_COUNT
+        val segmentGap = SEGMENT_GAP.toPx()
+        val segment = (size.width - segmentGap * (ZONE_COUNT - 1)) / ZONE_COUNT
         val radius = CornerRadius(size.height / 2)
         repeat(ZONE_COUNT) { index ->
             drawRoundRect(
                 color = if (index < filledZones) filledColor else emptyColor,
-                topLeft = Offset(index * (segment + gap), 0f),
+                topLeft = Offset(index * (segment + segmentGap), 0f),
                 size = Size(segment, size.height),
                 cornerRadius = radius,
             )

@@ -85,7 +85,7 @@ private const val PAUSE_ICON_RIGHT_BAR_FRACTION = 0.62f
 private const val WIDEST_PENALTY_LINE_REMAINING = "4.0km"
 private const val WIDEST_GOAL_REMAINING = "40.0km"
 private const val HOLD_TO_FINISH_MS = 1200
-private val HOLD_LONGER_NOTICE = 1500.milliseconds
+private val HOLD_LONGER_NOTICE_TIMEOUT = 1500.milliseconds
 
 // 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
 private val PILL_WIDTH = 120.dp
@@ -155,12 +155,12 @@ private fun ControlsPageContent(
     val isLocked = areControlsLocked(run, isPhoneReachable, commandState)
     val isDimmed = areControlsDimmed(run, isPhoneReachable, commandState)
     val buttonAlpha = if (isDimmed) RunDimensions.STALE_CONTENT_ALPHA else 1f
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     val isScrolled = listState.canScrollBackward
     val (finishButtonFits, comboRowFits) = with(LocalDensity.current) {
         val step = (PILL_HEIGHT + PILL_GAP).toPx()
         val fits = { top: Float ->
-            pillFitsRoundScreen(screenWidth, PILL_FIT_EDGE_MARGIN.toPx(), pillWidth.toPx(), PILL_HEIGHT.toPx(), top)
+            pillFitsRoundScreen(screenSize, PILL_FIT_EDGE_MARGIN.toPx(), pillWidth.toPx(), PILL_HEIGHT.toPx(), top)
         }
         fits(slots.firstButtonTop + step) to fits(slots.firstButtonTop + step * 2)
     }
@@ -168,7 +168,7 @@ private fun ControlsPageContent(
     val isFinishButtonReachable = finishButtonFits || isScrolled
     val isComboRowReachable = (finishButtonFits && comboRowFits) || isScrolled
     val finishButtonTopToBottom = with(LocalDensity.current) {
-        screenWidth - slots.firstButtonTop - (PILL_HEIGHT + PILL_GAP).toPx()
+        screenSize - slots.firstButtonTop - (PILL_HEIGHT + PILL_GAP).toPx()
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -207,7 +207,7 @@ private fun ControlsPageContent(
                     pillWidth,
                     isEnabled = isComboRowReachable,
                     Modifier.alpha(if (isComboRowReachable) 1f else 0f),
-                    onToggle = onComboEffectChange,
+                    onComboEffectChange,
                 )
             }
         }
@@ -220,18 +220,18 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
     val style = MaterialTheme.typography.bodyMedium
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     val widestFirstHints = listOf(
         stringResource(R.string.controls_to_penalty_line, WIDEST_PENALTY_LINE_REMAINING),
         stringResource(R.string.controls_to_goal, WIDEST_GOAL_REMAINING),
     )
     val widestSecondHint = stringResource(R.string.controls_penalty_if_short)
-    return remember(widestFirstHints, widestSecondHint, style, density, screenWidth) {
+    return remember(widestFirstHints, widestSecondHint, style, density, screenSize) {
         with(density) {
             val widestFirstHint = widestFirstHints.maxBy { measurer.measure(it, style).size.width }
             controlsPageSlots(
                 listOf(widestFirstHint, widestSecondHint),
-                screenWidth,
+                screenSize,
                 edgeMargin = RunDimensions.TEXT_EDGE_MARGIN.toPx(),
                 lineAdvance = hintLineAdvance(style.fontSize.toPx()),
                 hintStartTop = HINT_START_TOP.toPx(),
@@ -255,14 +255,14 @@ private fun ControlsHintLines(run: RunState, isPhoneReachable: Boolean, slots: C
     val style = MaterialTheme.typography.bodyMedium
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
-    val lines = remember(hints, slots, style, density, screenWidth) {
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
+    val lines = remember(hints, slots, style, density, screenSize) {
         with(density) {
             placeHintLines(
                 hints,
                 slots.hintTop,
                 hintLineAdvance(style.fontSize.toPx()),
-                widthAt = { usableWidthAt(it, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx()) },
+                widthAt = { usableWidthAt(it, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx()) },
                 widthOf = { measurer.measure(it, style).size.width.toFloat() },
             )
         }
@@ -389,7 +389,7 @@ private fun HoldToFinishButton(
 ) {
     val currentOnFinish by rememberUpdatedState(onFinish)
     var isPressing by remember { mutableStateOf(false) }
-    var showsHoldLonger by remember { mutableStateOf(false) }
+    var isHoldLongerShown by remember { mutableStateOf(false) }
     val progress = remember { Animatable(0f) }
     val isFilling = isPressing && isEnabled
 
@@ -406,10 +406,10 @@ private fun HoldToFinishButton(
             progress.animateTo(0f, tween(remainingMs(progress.value), easing = LinearEasing))
         }
     }
-    LaunchedEffect(showsHoldLonger) {
-        if (showsHoldLonger) {
-            delay(HOLD_LONGER_NOTICE)
-            showsHoldLonger = false
+    LaunchedEffect(isHoldLongerShown) {
+        if (isHoldLongerShown) {
+            delay(HOLD_LONGER_NOTICE_TIMEOUT)
+            isHoldLongerShown = false
         }
     }
     // 화면이 꺼지면 프레임이 멈춰, 그대로 두면 켜졌을 때 이어서 찬다
@@ -420,11 +420,11 @@ private fun HoldToFinishButton(
     val label = stringResource(
         when {
             isPressing -> R.string.controls_keep_pressing
-            showsHoldLonger -> R.string.controls_hold_longer
+            isHoldLongerShown -> R.string.controls_hold_longer
             else -> R.string.controls_hold_to_finish
         },
     )
-    val icon = if (showsHoldLonger && !isPressing) null else ControlIcon.STOP
+    val icon = if (isHoldLongerShown && !isPressing) null else ControlIcon.STOP
     val holdLabel = stringResource(R.string.controls_hold_to_finish)
     Box(
         modifier
@@ -436,11 +436,11 @@ private fun HoldToFinishButton(
                 if (!isEnabled) return@pointerInput
                 awaitEachGesture {
                     awaitFirstDown()
-                    showsHoldLonger = false
+                    isHoldLongerShown = false
                     isPressing = true
                     try {
                         val up = waitForUpOrCancellation()
-                        if (isPressing && up != null) showsHoldLonger = true
+                        if (isPressing && up != null) isHoldLongerShown = true
                     } finally {
                         isPressing = false
                     }
@@ -527,7 +527,7 @@ private fun ComboEffectRow(
     width: Dp,
     isEnabled: Boolean,
     modifier: Modifier,
-    onToggle: (Boolean) -> Unit,
+    onComboEffectChange: (Boolean) -> Unit,
 ) {
     val style = MaterialTheme.typography.bodyMedium
     val pillCenter = with(LocalDensity.current) { PILL_HEIGHT.toPx() } / 2
@@ -536,7 +536,7 @@ private fun ComboEffectRow(
             .size(width, PILL_HEIGHT)
             .clip(CircleShape)
             .border(COMBO_ROW_OUTLINE_WIDTH, COMBO_ROW_OUTLINE_COLOR, CircleShape)
-            .toggleable(value = isOn, enabled = isEnabled, role = Role.Switch, onValueChange = onToggle)
+            .toggleable(value = isOn, enabled = isEnabled, role = Role.Switch, onValueChange = onComboEffectChange)
             .padding(start = COMBO_LABEL_START_PADDING, end = COMBO_SWITCH_END_PADDING),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

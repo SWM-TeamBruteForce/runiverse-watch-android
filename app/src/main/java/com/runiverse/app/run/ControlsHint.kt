@@ -27,7 +27,7 @@ private const val PENALTY_LINE_PERCENT = 80
 /** 서버가 답한 남은 거리를 화면 거리보다 먼저 쓴다. */
 fun controlsHint(run: RunState, isPhoneReachable: Boolean): ControlsHint {
     val isPaused = run.status == RunStatus.PAUSED
-    val targetMeters = run.targetDistanceMeters
+    val targetDistanceMeters = run.targetDistanceMeters
     val distanceMeters = run.me.distanceMeters
     val serverRemainingMeters = run.finish?.takeIf { it.stage == FinishStage.GOAL_PENDING }?.remainingMeters
     return when {
@@ -36,17 +36,17 @@ fun controlsHint(run: RunState, isPhoneReachable: Boolean): ControlsHint {
         !run.isServerConnected && run.players.isNotEmpty() ->
             ControlsHint(ControlsFirstHint.SERVER_CHECKING, second = ControlsSecondHint.RECORDING)
         serverRemainingMeters != null -> toGoalHint(serverRemainingMeters, isPaused)
-        targetMeters == null -> ControlsHint()
-        distanceMeters >= targetMeters -> ControlsHint(
+        targetDistanceMeters == null -> ControlsHint()
+        distanceMeters >= targetDistanceMeters -> ControlsHint(
             ControlsFirstHint.DISTANCE_CHECKING,
             second = if (isPaused) null else ControlsSecondHint.KEEP_RUNNING_IF_SHORT,
         )
-        run.isPenaltyApplicable && distanceMeters < targetMeters * PENALTY_LINE_PERCENT / 100 -> ControlsHint(
+        run.isPenaltyApplicable && distanceMeters < targetDistanceMeters * PENALTY_LINE_PERCENT / 100 -> ControlsHint(
             ControlsFirstHint.TO_PENALTY_LINE,
-            targetMeters * PENALTY_LINE_PERCENT / 100 - distanceMeters,
+            targetDistanceMeters * PENALTY_LINE_PERCENT / 100 - distanceMeters,
             if (isPaused) ControlsSecondHint.PENALTY_IF_FINISHED else ControlsSecondHint.PENALTY_IF_SHORT,
         )
-        else -> toGoalHint(targetMeters - distanceMeters, isPaused)
+        else -> toGoalHint(targetDistanceMeters - distanceMeters, isPaused)
     }
 }
 

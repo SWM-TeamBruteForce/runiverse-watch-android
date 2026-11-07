@@ -101,7 +101,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             SoloHeartRate(heartRateBpm, heartRateZone, Modifier.contentTopAt(slots.belowRowTop))
         } else {
             // 좁은 화면은 가장 긴 격차가 링과 겹쳐 단위를 줄이고, 글자까지 키우면 km 소수도 뺀다
-            val isNarrowScreen = screenWidthDp() < NARROW_SCREEN_BELOW
+            val isNarrowScreen = currentScreenWidth() < NARROW_SCREEN_BELOW
             val abbreviateGapUnits = abbreviateUnits || isNarrowScreen
             val dropGapKmDecimal = abbreviateUnits && isNarrowScreen
             val cellWidth = playerCellWidth(abbreviateGapUnits, dropGapKmDecimal)
@@ -152,7 +152,7 @@ private fun DistanceTimeRow(me: MyRecord, abbreviateUnits: Boolean, modifier: Mo
 @Composable
 private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
-    ContentBoundsColumn(gap = RunDimensions.VALUE_TO_ZONE_BAR_GAP, modifier = modifier) {
+    ContentBoundsColumn(contentGap = RunDimensions.VALUE_TO_ZONE_BAR_GAP, modifier = modifier) {
         ValueWithUnit(
             heartRateBpm?.toString() ?: stringResource(R.string.run_value_unknown),
             stringResource(R.string.unit_bpm),
@@ -165,7 +165,7 @@ private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Mod
 }
 
 @Composable
-private fun screenWidthDp(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
+private fun currentScreenWidth(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
 
 @Composable
 private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): Dp {
@@ -177,7 +177,7 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
     val unitStyle = MaterialTheme.typography.labelSmall
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = screenWidthDp()
+    val screenWidth = currentScreenWidth()
     return remember(widestLabels, valueStyle, unitStyle, density, screenWidth) {
         val widestLabel = widestLabels.maxOf { (value, unit) ->
             val valueWidth = with(density) { measurer.measure(value, valueStyle).size.width.toDp() }
@@ -390,15 +390,15 @@ private fun DrawScope.drawFinishedIcon(color: Color) {
 private fun DrawScope.drawDisconnectedIcon(color: Color) {
     val stroke = Stroke(size.width * 0.12f, cap = StrokeCap.Round)
     val center = Offset(size.width / 2, size.height * 0.9f)
-    listOf(0.85f, 0.55f).forEach { radius ->
-        val r = size.width * radius
+    listOf(0.85f, 0.55f).forEach { radiusFraction ->
+        val arcRadius = size.width * radiusFraction
         drawArc(
             color,
             startAngle = 225f,
             sweepAngle = 90f,
             useCenter = false,
-            topLeft = Offset(center.x - r, center.y - r),
-            size = Size(r * 2, r * 2),
+            topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+            size = Size(arcRadius * 2, arcRadius * 2),
             style = stroke,
         )
     }

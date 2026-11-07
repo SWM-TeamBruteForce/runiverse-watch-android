@@ -99,7 +99,7 @@ private fun PaceAndComboRows(
             }
         }
     } else {
-        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
+        ContentBoundsColumn(contentGap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
             PlayerPace(player, Modifier.alpha(playerValuesAlpha))
             MyPace(myPaceSecondsPerKm, Modifier.alpha(phoneValuesAlpha))
         }
@@ -257,10 +257,10 @@ private fun widestLabeledPaceWidth(label: String, paceStyle: TextStyle): Dp {
 // 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 바뀐다
 @Composable
 private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRow: Dp): Boolean {
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     return with(LocalDensity.current) {
         val firstBaseline = rowsTop + paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-        widestRow.toPx() <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+        widestRow.toPx() <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
     }
 }
 

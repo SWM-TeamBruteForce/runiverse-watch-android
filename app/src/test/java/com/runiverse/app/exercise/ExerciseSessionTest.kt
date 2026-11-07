@@ -193,11 +193,11 @@ class ExerciseSessionTest {
     fun `운동 시작에 실패하면 다음 시작 요청에서 다시 시작한다`() = runTest {
         // given
         val fixture = Fixture(this)
-        fixture.tracker.startSucceeds = false
+        fixture.tracker.isStartSuccessful = false
         fixture.startSession()
 
         // when
-        fixture.tracker.startSucceeds = true
+        fixture.tracker.isStartSuccessful = true
         fixture.startSession()
 
         // then
@@ -698,7 +698,7 @@ class ExerciseSessionTest {
             scope = testScope.backgroundScope,
             phoneLink = link,
             tracker = tracker,
-            now = { testScope.testScheduler.currentTime + sleptMs },
+            nowMs = { testScope.testScheduler.currentTime + sleptMs },
         )
 
         init {
@@ -735,7 +735,7 @@ class ExerciseSessionTest {
         val calls = mutableListOf<String>()
         var isMeasurable = true
         var owner: ExerciseOwner? = ExerciseOwner.NONE
-        var startSucceeds = true
+        var isStartSuccessful = true
         var ownerDelayMs = 0L
         var startDelayMs = 0L
         var stopDelayMs = 0L
@@ -759,7 +759,7 @@ class ExerciseSessionTest {
         override suspend fun startExercise(): Boolean {
             calls += "start"
             delay(startDelayMs)
-            if (!startSucceeds) return false
+            if (!isStartSuccessful) return false
             owner = ExerciseOwner.ME
             return true
         }
@@ -775,8 +775,8 @@ class ExerciseSessionTest {
             return true
         }
 
-        fun deliver(bpm: Int?) {
-            onHeartRate?.invoke(bpm)
+        fun deliver(heartRateBpm: Int?) {
+            onHeartRate?.invoke(heartRateBpm)
         }
 
         fun endByOtherApp() {

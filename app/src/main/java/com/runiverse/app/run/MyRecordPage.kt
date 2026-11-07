@@ -100,7 +100,7 @@ private fun RecordRows(me: MyRecord, rowsTop: Float, modifier: Modifier) {
             calories()
         }
     } else {
-        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = modifier) {
+        ContentBoundsColumn(contentGap = RunDimensions.LINE_GAP, modifier = modifier) {
             cadence()
             calories()
         }
@@ -112,15 +112,15 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
     val unitStyle = MaterialTheme.typography.labelSmall
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
-    return remember(rowsTop, style, unitStyle, spmUnit, kcalUnit, density, screenWidth) {
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
+    return remember(rowsTop, style, unitStyle, spmUnit, kcalUnit, density, screenSize) {
         with(density) {
             fun width(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
             val widestRow = width(WIDEST_CADENCE, style) + width(spmUnit, unitStyle) +
                 width(WIDEST_CALORIES, style) + width(kcalUnit, unitStyle) +
                 RunDimensions.VALUE_TO_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
             val firstBaseline = rowsTop + style.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-            widestRow <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+            widestRow <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
         }
     }
 }

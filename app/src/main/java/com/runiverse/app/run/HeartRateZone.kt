@@ -8,15 +8,15 @@ import java.time.format.DateTimeParseException
 private val ZONE_LOWER_BOUNDS = listOf(0.5, 0.6, 0.7, 0.8, 0.9)
 
 /** 심박 구간 막대에 채울 칸 수(0~5)다. 최대 심박은 220 − 만 나이로 잡는다. */
-fun calculateHeartRateZone(bpm: Int, birthday: LocalDate, today: LocalDate): Int {
+fun calculateHeartRateZone(heartRateBpm: Int, birthday: LocalDate, today: LocalDate): Int {
     val maxBpm = 220 - Period.between(birthday, today).years
-    return ZONE_LOWER_BOUNDS.count { bpm >= maxBpm * it }
+    return ZONE_LOWER_BOUNDS.count { heartRateBpm >= maxBpm * it }
 }
 
 /** 생일이 없으면 null(막대 숨김), 심박이 아직 없으면 0칸(빈 막대)이다. */
-fun heartRateZoneOrNull(bpm: Int?, birthday: LocalDate?, today: LocalDate): Int? {
+fun heartRateZoneOrNull(heartRateBpm: Int?, birthday: LocalDate?, today: LocalDate): Int? {
     if (birthday == null) return null
-    return bpm?.let { calculateHeartRateZone(it, birthday, today) } ?: 0
+    return heartRateBpm?.let { calculateHeartRateZone(it, birthday, today) } ?: 0
 }
 
 /** 폰이 보낸 생일(`yyyy-MM-dd`)이다. 없거나 못 읽으면 null이다. */

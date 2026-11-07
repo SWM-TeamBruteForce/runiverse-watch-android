@@ -31,7 +31,7 @@ class ExerciseSession(
     private val scope: CoroutineScope,
     private val phoneLink: PhoneLink,
     private val tracker: HeartRateTracker,
-    private val now: () -> Long = SystemClock::elapsedRealtime,
+    private val nowMs: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private val _heartRateBpm = MutableStateFlow<Int?>(null)
     val heartRateBpm: StateFlow<Int?> = _heartRateBpm.asStateFlow()
@@ -46,9 +46,9 @@ class ExerciseSession(
     private var onEnded: (() -> Unit)? = null
     private var phoneWatchJob: Job? = null
     private var heardState: PhoneState? = null
-    private var heardAt = 0L
-    private var probedAt = 0L
-    private var unansweredSince: Long? = null
+    private var heardAtMs = 0L
+    private var probedAtMs = 0L
+    private var unansweredSinceMs: Long? = null
 
     private val isActive get() = phoneWatchJob?.isActive == true
 
@@ -71,9 +71,9 @@ class ExerciseSession(
         this.onEnded = onEnded
         if (!isActive) {
             heardState = phoneLink.state.value.phoneState
-            heardAt = now()
-            probedAt = heardAt
-            unansweredSince = null
+            heardAtMs = nowMs()
+            probedAtMs = heardAtMs
+            unansweredSinceMs = null
             phoneWatchJob = scope.launch {
                 launch { phoneLink.state.collect(::onPhoneLinkChanged) }
                 // 화면이 켜져 있으면 심박이 없어도(권한 거부) 폰을 판단한다
@@ -124,9 +124,9 @@ class ExerciseSession(
         if (owner == ExerciseOwner.NONE && !tracker.startExercise()) isMeasuring = false
     }
 
-    private fun onHeartRate(bpm: Int?) {
+    private fun onHeartRate(heartRateBpm: Int?) {
         if (!isActive) return
-        _heartRateBpm.value = bpm
+        _heartRateBpm.value = heartRateBpm
         checkPhone()
     }
 
@@ -142,8 +142,8 @@ class ExerciseSession(
         }
         if (link.phoneState !== heardState) {
             heardState = link.phoneState
-            heardAt = now()
-            unansweredSince = null
+            heardAtMs = nowMs()
+            unansweredSinceMs = null
         }
     }
 
@@ -153,16 +153,16 @@ class ExerciseSession(
         // 방금 받은 폰 답이 아직 수집기에 안 닿았을 수 있어 최신 상태부터 반영한다
         onPhoneLinkChanged(phoneLink.state.value)
         if (!isActive) return
-        val time = now()
-        if (time - heardAt < PROBE_AFTER_MS) return
-        val since = unansweredSince ?: time.also { unansweredSince = it }
-        if (time - probedAt < PROBE_AFTER_MS) return
+        val currentMs = nowMs()
+        if (currentMs - heardAtMs < PROBE_AFTER_MS) return
+        val sinceMs = unansweredSinceMs ?: currentMs.also { unansweredSinceMs = it }
+        if (currentMs - probedAtMs < PROBE_AFTER_MS) return
         // 오래 잠든 사이 폰이 돌아왔을 수 있어, 10분이 지난 뒤에 보낸 물음에도 답이 없어야 끝낸다
-        if (probedAt - since >= GIVE_UP_AFTER_MS) {
+        if (probedAtMs - sinceMs >= GIVE_UP_AFTER_MS) {
             giveUp()
             return
         }
-        probedAt = time
+        probedAtMs = currentMs
         phoneLink.probeWhileScreenOff()
     }
 

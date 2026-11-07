@@ -7,7 +7,7 @@ import com.runiverse.app.phone.RunStatus
 data class RunCommandState(
     val isLocked: Boolean = false,
     val isFinishPending: Boolean = false,
-    val isOverdue: Boolean = false,
+    val isCommandOverdue: Boolean = false,
 )
 
 class RunCommands(
@@ -20,7 +20,7 @@ enum class FinishButtonStage { HOLD, TAP, FINISHING, CHECKING }
 
 /** 멈췄으면 이미 한 번 멈춘 뜻이라 한 번에 끝낸다. */
 fun finishButtonStage(run: RunState, commandState: RunCommandState): FinishButtonStage = when {
-    commandState.isFinishPending && commandState.isOverdue -> FinishButtonStage.CHECKING
+    commandState.isFinishPending && commandState.isCommandOverdue -> FinishButtonStage.CHECKING
     commandState.isFinishPending || run.finish?.stage == FinishStage.FINISHING -> FinishButtonStage.FINISHING
     run.status == RunStatus.PAUSED -> FinishButtonStage.TAP
     else -> FinishButtonStage.HOLD
@@ -34,11 +34,11 @@ fun areControlsLocked(run: RunState, isPhoneReachable: Boolean, commandState: Ru
 fun areControlsDimmed(run: RunState, isPhoneReachable: Boolean, commandState: RunCommandState): Boolean =
     !isPhoneReachable ||
         commandState.isFinishPending ||
-        commandState.isOverdue ||
+        commandState.isCommandOverdue ||
         run.finish?.stage == FinishStage.FINISHING
 
 /** 폰 종료 버튼과 같은 규칙이다. */
 fun isFinishForced(run: RunState): Boolean {
-    val targetMeters = run.targetDistanceMeters ?: return false
-    return run.me.distanceMeters < targetMeters
+    val targetDistanceMeters = run.targetDistanceMeters ?: return false
+    return run.me.distanceMeters < targetDistanceMeters
 }
