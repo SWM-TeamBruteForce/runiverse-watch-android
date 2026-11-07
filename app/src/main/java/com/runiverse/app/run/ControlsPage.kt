@@ -80,9 +80,9 @@ private const val PAUSE_ICON_BAR_RATIO = 0.28f
 private const val PAUSE_ICON_LEFT_BAR_RATIO = 0.1f
 private const val PAUSE_ICON_RIGHT_BAR_RATIO = 0.62f
 
-// 제재 방은 10km까지, 초대 방은 42.195km까지다 — SUIT 숫자 중 넓은 4로 잰다
-private const val WIDEST_PENALTY_LINE_REMAINING = "4.4km"
-private const val WIDEST_GOAL_REMAINING = "44.4km"
+// 제재 방은 10km, 초대 방은 42.195km까지다 — SUIT 숫자는 0, 4 순으로 넓다
+private const val WIDEST_PENALTY_LINE_REMAINING = "4.0km"
+private const val WIDEST_GOAL_REMAINING = "40.0km"
 private const val HOLD_TO_FINISH_MILLIS = 1200
 private const val HOLD_LONGER_NOTICE_MILLIS = 1500L
 
