@@ -20,12 +20,14 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // 화면이 닫혀도 연결을 이어 가려고 폰 연결은 화면이 아니라 앱에 하나 둔다
-class RuniverseApp : Application() {
+open class RuniverseApp : Application() {
 
     private val scope = MainScope()
     private val phoneChannel by lazy { PhoneChannel(this) }
-    val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
-    val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
+
+    // 테스트가 폰 연결과 심박 측정을 바꿔 끼운다
+    open val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
+    open val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
     val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)) }
 
     override fun onCreate() {
