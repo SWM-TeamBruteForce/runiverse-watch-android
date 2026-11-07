@@ -40,22 +40,24 @@ class RuniverseApp : Application() {
                 }
                 .collect(phoneLink::onReceived)
         }
-        // 폰은 화면이 꺼져 있어도 종료 단계를 바로 보낸다 — 화면 코드에 두면 꺼진 동안엔 안 울린다
+        // 화면이 꺼져 있어도 울리게 화면 코드 밖에서 받는다
         scope.launch {
             phoneLink.state.goalPendingStarts().collect { vibrateOnce() }
         }
     }
 
-    // 용도를 안 정하면 터치 반응으로 분류돼 터치 진동을 끈 사람에겐 안 울리고, 알림 용도는 워치8에서 앱이 뒤에 있을 때 막힌다
+    // 기본 용도는 터치 진동 설정에 막히고, 알림 용도는 앱이 뒤에 있으면 막힌다
     private fun vibrateOnce() {
-        val effect = VibrationEffect.createOneShot(GOAL_PENDING_VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE)
+        val effect = VibrationEffect.createOneShot(GOAL_PENDING_VIBRATION_MILLIS, GOAL_PENDING_VIBRATION_AMPLITUDE)
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build()
         getSystemService(Vibrator::class.java).vibrate(effect, attributes)
     }
 
     private companion object {
         const val TAG = "RuniverseApp"
-        const val GOAL_PENDING_VIBRATION_MILLIS = 400L
+        // 콤보의 짧은 여러 번과 구분되게 한 번만 세게 울린다
+        const val GOAL_PENDING_VIBRATION_MILLIS = 300L
+        const val GOAL_PENDING_VIBRATION_AMPLITUDE = 255
         val RETRY_DELAY = 3.seconds
         val MAX_RETRY_DELAY = 1.minutes
     }
