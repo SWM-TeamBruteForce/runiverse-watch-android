@@ -6,15 +6,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
+import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
+import com.runiverse.app.run.RunPreviewFrame
 
-// TODO: 결과 요약 — 끝난 러닝(FINISHED)도 결과 화면을 만들 때까지 여기로 온다
 @Composable
-internal fun IdleScreen() {
+internal fun IdleScreen(isPhoneReachable: Boolean) {
     ScreenScaffold {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = stringResource(R.string.app_name))
+            if (isPhoneReachable) {
+                Text(text = stringResource(R.string.app_name))
+            } else {
+                Text(
+                    text = stringResource(R.string.run_phone_checking),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
     }
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun IdleScreenPhoneLostPreview() = RunPreviewFrame {
+    IdleScreen(isPhoneReachable = false)
 }

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -34,11 +33,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -76,10 +72,6 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val FADED_BUTTON_ALPHA = 0.55f
-private const val ICON_TO_FONT_RATIO = 0.62f
-private const val PAUSE_ICON_BAR_FRACTION = 0.28f
-private const val PAUSE_ICON_LEFT_BAR_FRACTION = 0.1f
-private const val PAUSE_ICON_RIGHT_BAR_FRACTION = 0.62f
 
 // 제재 방은 10km, 초대 방은 42.195km까지다 — SUIT 숫자는 0, 4 순으로 넓다
 private const val WIDEST_PENALTY_LINE_REMAINING = "4.0km"
@@ -90,9 +82,7 @@ private val HOLD_LONGER_NOTICE_TIMEOUT = 1500.milliseconds
 // 한 값으로 합치면 192dp에서 버튼이 화면 끝에 닿는다
 private val PILL_WIDTH = 120.dp
 private val PILL_WIDTH_SCALED_FONT = 140.dp
-private val PILL_HEIGHT = 48.dp
 private val PILL_GAP = 8.dp
-private val ICON_TO_LABEL_GAP = 6.dp
 private val PILL_FIT_EDGE_MARGIN = 2.dp
 private val LIST_BOTTOM_PADDING = 24.dp
 
@@ -112,8 +102,6 @@ private val COMBO_SWITCH_END_PADDING = 14.dp
 private val COMBO_SWITCH_WIDTH = 28.dp
 private val COMBO_SWITCH_HEIGHT = 16.dp
 private val COMBO_SWITCH_THUMB_INSET = 3.dp
-
-private enum class ControlIcon { PAUSE, PLAY, STOP }
 
 @Composable
 internal fun ControlsPage(
@@ -362,27 +350,6 @@ private fun FinishButton(
     }
 }
 
-@Composable
-private fun ControlButton(
-    label: String,
-    icon: ControlIcon?,
-    background: Color,
-    width: Dp,
-    isEnabled: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier
-            .size(width, PILL_HEIGHT)
-            .clip(CircleShape)
-            .background(background)
-            .clickable(enabled = isEnabled, role = Role.Button, onClick = onClick),
-    ) {
-        ButtonContent(label, icon, MaterialTheme.colorScheme.onBackground)
-    }
-}
-
 // 달리는 중에 손가락이 스쳐 기록이 끝나지 않게 한다
 @Composable
 private fun HoldToFinishButton(
@@ -480,44 +447,6 @@ private fun HoldToFinishButton(
 }
 
 private fun remainingMs(remainingFraction: Float): Int = (HOLD_TO_FINISH_MS * remainingFraction).toInt()
-
-@Composable
-private fun ButtonContent(label: String, icon: ControlIcon?, color: Color) {
-    val style = MaterialTheme.typography.bodyMedium
-    val density = LocalDensity.current
-    val iconSize = with(density) { style.fontSize.toDp() } * ICON_TO_FONT_RATIO
-    val pillCenter = with(density) { PILL_HEIGHT.toPx() } / 2
-    Row(
-        Modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(ICON_TO_LABEL_GAP, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (icon != null) Canvas(Modifier.size(iconSize)) { drawControlIcon(icon, color) }
-        AlignedText(label, style, color, Modifier.contentCenterAt(pillCenter))
-    }
-}
-
-private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
-    when (icon) {
-        ControlIcon.PAUSE -> {
-            val barSize = Size(size.width * PAUSE_ICON_BAR_FRACTION, size.height)
-            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_LEFT_BAR_FRACTION, 0f), size = barSize)
-            drawRect(color, topLeft = Offset(size.width * PAUSE_ICON_RIGHT_BAR_FRACTION, 0f), size = barSize)
-        }
-
-        ControlIcon.PLAY -> drawPath(
-            Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, size.height / 2)
-                lineTo(0f, size.height)
-                close()
-            },
-            color,
-        )
-
-        ControlIcon.STOP -> drawRect(color)
-    }
-}
 
 // 종료 버튼을 찾을 수 있게 숨기지 않고 흐리게 보여 준다
 private fun Modifier.fadedTowardScreenBottom(

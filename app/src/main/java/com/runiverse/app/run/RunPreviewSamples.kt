@@ -3,6 +3,7 @@ package com.runiverse.app.run
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RoomType
+import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 
@@ -43,6 +44,20 @@ internal object RunPreviewSamples {
         targetDistanceMeters = 42_195,
         me = me.copy(distanceMeters = 42_100, elapsedSeconds = 17_999, currentPaceSecondsPerKm = 605),
         players = players.map { it.copy(gapMeters = 9_999) },
+    )
+
+    val result = RunResult(
+        isServerConfirmed = true,
+        totalDistanceMeters = 5_020,
+        averagePaceSecondsPerKm = 343,
+        elapsedSeconds = 1_721,
+    )
+
+    val longResult = RunResult(
+        isServerConfirmed = true,
+        totalDistanceMeters = 42_100,
+        averagePaceSecondsPerKm = 426,
+        elapsedSeconds = 17_999,
     )
 
     val finishedPlayer = player("u1", "콩나물", 2, gapMeters = 1_579, status = RunStatus.FINISHED)

@@ -29,7 +29,6 @@ import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
@@ -163,9 +162,6 @@ private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Mod
         }
     }
 }
-
-@Composable
-private fun currentScreenWidth(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
 
 @Composable
 private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): Dp {

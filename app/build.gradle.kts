@@ -31,6 +31,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        // 버전은 IntelliJ에서 열리는 값으로 고정해 둔다
+        disable += setOf("GradleDependency", "AndroidGradlePluginVersion")
+    }
 }
 
 dependencies {

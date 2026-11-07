@@ -16,6 +16,8 @@
     <string name="run_pace_me">나</string>
     <string name="run_combo_current">%d콤보</string>
     <string name="run_combo_max">최고 %d</string>
+    <string name="run_summary_completed">러닝 완료</string>
+    <string name="run_summary_close">닫기</string>
     <string name="controls_pause">일시정지</string>
     <string name="controls_resume">계속 달리기</string>
     <string name="controls_hold_to_finish">길게 눌러 종료</string>

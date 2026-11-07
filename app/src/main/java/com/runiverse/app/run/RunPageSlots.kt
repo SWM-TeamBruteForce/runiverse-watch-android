@@ -8,6 +8,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import kotlin.math.abs
@@ -74,6 +75,11 @@ internal fun currentRunPageSlots(): RunPageSlots {
                 RunDimensions.AVATAR_TO_BOTTOM_ROW_GAP).toPx(),
         )
     }
+}
+
+@Composable
+internal fun currentScreenWidth(): Dp = with(LocalDensity.current) {
+    LocalWindowInfo.current.containerSize.width.toDp()
 }
 
 internal fun Modifier.contentBottomAt(y: Float): Modifier = placedAt { y - it.contentBottom() }
