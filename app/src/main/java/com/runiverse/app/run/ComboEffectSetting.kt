@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** 큰 순간 터짐을 켜고 끄는 값이다. 서버 설정이 아니라 워치에만 저장한다. */
+// TODO: 콤보 효과 — 효과를 만들 때 이 값으로 큰 순간 터짐을 켜고 끈다
+/** 서버 설정이 아니라 워치에만 저장한다. */
 class ComboEffectSetting(private val preferences: SharedPreferences) {
     private val _isOn = MutableStateFlow(preferences.getBoolean(KEY_IS_ON, true))
     val isOn: StateFlow<Boolean> = _isOn.asStateFlow()
