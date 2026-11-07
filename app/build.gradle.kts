@@ -66,4 +66,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.compose.ui.test.junit4)
+    // 화면 하나만 띄우는 테스트의 빈 액티비티를 manifest에 넣는다
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
