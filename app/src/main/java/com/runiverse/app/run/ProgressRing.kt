@@ -16,7 +16,7 @@ import kotlin.math.asin
 private val RING_STROKE_WIDTH = 5.dp
 private val RING_CENTER_INSET = 6.dp
 
-// 위쪽 시계와 겹치지 않게 12시 양옆 22.5도씩 비운다(시안에서 잰 값)
+// 시안에서 잰 값으로, 위쪽 시계와 겹치지 않게 12시 양옆 22.5도씩 비운다
 private const val RING_OPENING_DEGREES = 45f
 private const val TWELVE_O_CLOCK_DEGREES = -90f
 private const val RING_START_DEGREES = TWELVE_O_CLOCK_DEGREES + RING_OPENING_DEGREES / 2

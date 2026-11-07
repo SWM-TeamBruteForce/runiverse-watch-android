@@ -171,6 +171,8 @@ private fun ControlsPageContent(
         screenSize - slots.firstButtonTop - (PILL_HEIGHT + PILL_GAP).toPx()
     }
 
+    val background = MaterialTheme.colorScheme.background
+
     Box(Modifier.fillMaxSize()) {
         TransformingLazyColumn(
             Modifier.fillMaxSize(),
@@ -196,7 +198,7 @@ private fun ControlsPageContent(
                     pillWidth,
                     isEnabled = !isLocked && isFinishButtonReachable,
                     Modifier
-                        .fadedTowardScreenBottom(!isFinishButtonReachable, finishButtonTopToBottom)
+                        .fadedTowardScreenBottom(!isFinishButtonReachable, finishButtonTopToBottom, background)
                         .alpha(buttonAlpha),
                     onFinish = { commands.finish(isFinishForced(run)) },
                 )
@@ -513,11 +515,15 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
 }
 
 // 종료 버튼을 찾을 수 있게 숨기지 않고 흐리게 보여 준다
-private fun Modifier.fadedTowardScreenBottom(isFaded: Boolean, distanceToScreenBottom: Float): Modifier {
+private fun Modifier.fadedTowardScreenBottom(
+    isFaded: Boolean,
+    distanceToScreenBottom: Float,
+    background: Color,
+): Modifier {
     if (!isFaded) return this
     return drawWithContent {
         drawContent()
-        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black), endY = distanceToScreenBottom))
+        drawRect(Brush.verticalGradient(listOf(Color.Transparent, background), endY = distanceToScreenBottom))
     }.alpha(FADED_BUTTON_ALPHA)
 }
 

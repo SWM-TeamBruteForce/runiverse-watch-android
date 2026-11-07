@@ -27,7 +27,7 @@ fun formatRunDistanceKm(meters: Int): String {
     return if (meters < EXTRA_DECIMAL_BELOW_METERS) {
         "$km.${(remainderMeters / 10).padTwoDigits()}"
     } else {
-        "$km.${remainderMeters / 100}"
+        "$km.${remainderMeters / METERS_PER_TENTH_KM}"
     }
 }
 
@@ -41,8 +41,10 @@ fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: B
     return when {
         meters < METERS_PER_KM -> FormattedDistance("$meters", if (abbreviateUnits) null else DistanceUnitLabel.METER)
         dropKmDecimal -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
-        meters < EXTRA_DECIMAL_BELOW_METERS ->
-            FormattedDistance("${meters / METERS_PER_KM}.${meters % METERS_PER_KM / 100}", kilometerLabel)
+        meters < EXTRA_DECIMAL_BELOW_METERS -> {
+            val tenthsOfKm = meters % METERS_PER_KM / METERS_PER_TENTH_KM
+            FormattedDistance("${meters / METERS_PER_KM}.$tenthsOfKm", kilometerLabel)
+        }
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
     }
 }
