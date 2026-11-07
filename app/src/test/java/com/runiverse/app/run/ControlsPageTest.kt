@@ -1,6 +1,7 @@
 package com.runiverse.app.run
 
 import android.app.Application
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -25,6 +26,8 @@ import org.robolectric.annotation.Config
 private const val HOLD_PAST_FINISH_MS = 1_300L
 private const val HOLD_SHORT_OF_FINISH_MS = 500L
 private const val AFTER_RELEASE_MS = 100L
+private const val HOLD_LONGER_NOTICE_PASSED_MS = 1_600L
+private const val SCROLL_AWAY_PX = 200f
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
@@ -134,15 +137,53 @@ class ControlsPageTest {
         press(R.string.controls_hold_to_finish, HOLD_SHORT_OF_FINISH_MS)
 
         // then
-        assertEquals(emptyList<String>(), calls)
         composeRule.onNodeWithText(text(R.string.controls_hold_longer)).assertExists()
+
+        // when -> 손을 떼면 타이머도 멈춰 끝낼 시간이 지나도 안 끝난다
+        composeRule.mainClock.advanceTimeBy(HOLD_PAST_FINISH_MS)
+
+        // then
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun `길게 누르라는 안내는 잠시 뒤 사라진다`() {
+        // given
+        show()
+        press(R.string.controls_hold_to_finish, HOLD_SHORT_OF_FINISH_MS)
+
+        // when
+        composeRule.mainClock.advanceTimeBy(HOLD_LONGER_NOTICE_PASSED_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_hold_to_finish)).assertExists()
+    }
+
+    @Test
+    fun `종료를 누른 채 쓸어 넘기면 끝내지 않고 안내도 띄우지 않는다`() {
+        // given
+        show()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithText(text(R.string.controls_hold_to_finish)).performTouchInput { down(center) }
+        composeRule.waitForIdle()
+
+        // when
+        composeRule.onRoot().performTouchInput {
+            moveBy(Offset(0f, -SCROLL_AWAY_PX))
+            up()
+        }
+        composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeBy(HOLD_PAST_FINISH_MS)
+
+        // then
+        assertEquals(emptyList<String>(), calls)
+        composeRule.onNodeWithText(text(R.string.controls_hold_longer)).assertDoesNotExist()
     }
 
     @Test
     fun `종료를 누르는 동안 계속 누르기를 보인다`() {
         // given
         show()
-
         composeRule.mainClock.autoAdvance = false
 
         // when
@@ -213,7 +254,54 @@ class ControlsPageTest {
         show(party)
 
         // then
+        composeRule.onNodeWithText("579", substring = true).assertExists()
         composeRule.onNodeWithText(text(R.string.controls_penalty_if_short)).assertExists()
+    }
+
+    @Test
+    fun `멈춘 동안 벌칙 거리 전이면 끝내면 벌칙이라고 안내한다`() {
+        // when
+        show(party.copy(status = RunStatus.PAUSED))
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_penalty_if_finished)).assertExists()
+    }
+
+    @Test
+    fun `벌칙 거리를 넘기면 목표까지 남은 거리를 안내한다`() {
+        // when
+        show(party.copy(me = party.me.copy(distanceMeters = 4_500)))
+
+        // then
+        composeRule.onNodeWithText("500", substring = true).assertExists()
+    }
+
+    @Test
+    fun `멈춘 동안 목표 전이면 끝내면 미완주일 수 있다고 안내한다`() {
+        // when
+        show(party.copy(status = RunStatus.PAUSED, me = party.me.copy(distanceMeters = 4_500)))
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_may_not_complete)).assertExists()
+    }
+
+    @Test
+    fun `목표 거리를 넘기면 거리 확인 중과 계속 달리라는 안내를 보인다`() {
+        // when
+        show(party.copy(me = party.me.copy(distanceMeters = 5_000)))
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_distance_checking)).assertExists()
+        composeRule.onNodeWithText(text(R.string.controls_keep_running_if_short)).assertExists()
+    }
+
+    @Test
+    fun `종료 보류면 서버가 알려 준 남은 거리를 안내한다`() {
+        // when
+        show(party.copy(finish = FinishProgress(FinishStage.GOAL_PENDING, remainingMeters = 420)))
+
+        // then
+        composeRule.onNodeWithText("420", substring = true).assertExists()
     }
 
     @Test

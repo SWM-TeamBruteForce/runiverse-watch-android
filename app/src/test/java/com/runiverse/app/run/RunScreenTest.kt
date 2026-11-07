@@ -99,6 +99,32 @@ class RunScreenTest {
     }
 
     @Test
+    fun `조작 장에서 왼쪽으로 쓸면 첫 화면으로 돌아온다`() {
+        // given
+        show(solo)
+        swipe { swipeRight() }
+
+        // when
+        swipe { swipeLeft() }
+
+        // then
+        composeRule.onNodeWithText(elapsedTime).assertIsDisplayed()
+    }
+
+    @Test
+    fun `내 기록 장에서 오른쪽으로 쓸면 첫 화면으로 돌아온다`() {
+        // given
+        show(solo)
+        swipe { swipeLeft() }
+
+        // when
+        swipe { swipeRight() }
+
+        // then
+        composeRule.onNodeWithText(elapsedTime).assertIsDisplayed()
+    }
+
+    @Test
     fun `위로 쓸면 파티원 장으로 가고 아래로 쓸면 돌아온다`() {
         // given
         show(party)

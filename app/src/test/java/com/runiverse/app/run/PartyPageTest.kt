@@ -23,7 +23,7 @@ class PartyPageTest {
     private val run = RunPreviewSamples.party
     private val player = run.players.first()
 
-    private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
+    private fun text(id: Int, vararg args: Any) = RuntimeEnvironment.getApplication().getString(id, *args)
 
     private fun show(shownPlayer: Player = player, isPhoneReachable: Boolean = true, isServerConnected: Boolean = true) {
         composeRule.setContent {
@@ -69,6 +69,7 @@ class PartyPageTest {
         show(player.copy(gapMeters = 0))
 
         // then
+        composeRule.onNodeWithText("0").assertExists()
         composeRule.onNodeWithText(text(R.string.run_gap_ahead)).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.run_gap_behind)).assertDoesNotExist()
     }
@@ -116,7 +117,7 @@ class PartyPageTest {
         show(player.copy(comboCount = 12))
 
         // then
-        composeRule.onNodeWithText("12콤보").assertExists()
+        composeRule.onNodeWithText(text(R.string.run_combo_current, 12)).assertExists()
     }
 
     @Test
@@ -125,7 +126,7 @@ class PartyPageTest {
         show(player.copy(comboCount = 0, maxComboCount = 20))
 
         // then
-        composeRule.onNodeWithText("최고 20").assertExists()
+        composeRule.onNodeWithText(text(R.string.run_combo_max, 20)).assertExists()
     }
 
     @Test
@@ -135,7 +136,19 @@ class PartyPageTest {
 
         // then
         composeRule.onNodeWithText(text(R.string.run_pace_player)).assertExists()
+        composeRule.onNodeWithText(formatPace(player.currentPaceSecondsPerKm)).assertExists()
         composeRule.onNodeWithText(text(R.string.run_pace_me)).assertExists()
+        composeRule.onNodeWithText(formatPace(run.me.currentPaceSecondsPerKm)).assertExists()
+    }
+
+    @Test
+    fun `멈춘 파티원은 페이스를 모름으로 보인다`() {
+        // when
+        show(player.copy(status = RunStatus.PAUSED))
+
+        // then
+        composeRule.onNodeWithText(formatPace(null)).assertExists()
+        composeRule.onNodeWithText(formatPace(player.currentPaceSecondsPerKm)).assertDoesNotExist()
     }
 
     @Test
@@ -146,7 +159,8 @@ class PartyPageTest {
         // then
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
         composeRule.onNodeWithText(text(R.string.run_pace_player)).assertDoesNotExist()
-        composeRule.onNodeWithText("12콤보").assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_combo_current, 12)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_pace_me)).assertExists()
     }
 
     @Test

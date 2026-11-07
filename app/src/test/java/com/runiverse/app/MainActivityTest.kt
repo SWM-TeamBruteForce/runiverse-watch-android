@@ -40,7 +40,8 @@ private const val SWIPE_SETTLE_MS = 1_000L
 private const val SWIPE_SETTLE_FRAME_COUNT = 60
 private const val REPLY_TIMEOUT_PASSED_MS = 3_500L
 private const val RESULT_REPLY_TIMEOUT_PASSED_MS = 13_500L
-private const val PHONE_LOST_PASSED_MINUTES = 13L
+private const val PHONE_LOST_NOT_YET_MS = 9 * 60_000L
+private const val PHONE_LOST_PASSED_MS = 4 * 60_000L
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = FakeRuniverseApp::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
@@ -65,8 +66,9 @@ class MainActivityTest {
     fun `러닝이 없으면 대기 화면을 보인다`() {
         // when
         answerSync(run = null)
+        idleFor(REPLY_TIMEOUT_PASSED_MS)
 
-        // then
+        // then -> SYNCED를 못 받았으면 3초 뒤 폰 연결 확인 중으로 바뀐다
         composeRule.onNodeWithText(appName).assertExists()
     }
 
@@ -252,8 +254,7 @@ class MainActivityTest {
         composeRule.waitForIdle()
 
         // when
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(REPLY_TIMEOUT_PASSED_MS))
-        composeRule.waitForIdle()
+        idleFor(REPLY_TIMEOUT_PASSED_MS)
 
         // then
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
@@ -264,12 +265,34 @@ class MainActivityTest {
         // given
         answerSync(soloRun.copy(status = RunStatus.FINISHED, result = null))
 
+        // when -> 끝난 뒤엔 3초 조용해도 정상이다
+        idleFor(REPLY_TIMEOUT_PASSED_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+
         // when
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(RESULT_REPLY_TIMEOUT_PASSED_MS))
-        composeRule.waitForIdle()
+        idleFor(RESULT_REPLY_TIMEOUT_PASSED_MS - REPLY_TIMEOUT_PASSED_MS)
 
         // then
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
+    }
+
+    @Test
+    fun `폰에서 결과를 닫는 동안 어느 프레임에도 대기 화면이 보이지 않는다`() {
+        // given
+        showFinishedRun()
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveState(run = null)
+        val lefts = List(SWIPE_SETTLE_FRAME_COUNT) {
+            composeRule.mainClock.advanceTimeByFrame()
+            appNameLeftOrNull()
+        }
+
+        // then
+        assertTrue(lefts.all { it == null })
     }
 
     @Test
@@ -279,13 +302,28 @@ class MainActivityTest {
         composeRule.runOnUiThread { app.exerciseSession.start(onEnded = {}) }
 
         // when
-        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMinutes(PHONE_LOST_PASSED_MINUTES))
-        composeRule.waitForIdle()
+        idleFor(PHONE_LOST_NOT_YET_MS)
+
+        // then
+        assertFalse(composeRule.activity.isFinishing)
+
+        // when
+        composeRule.mainClock.autoAdvance = false
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(PHONE_LOST_PASSED_MS))
+        val lefts = List(SWIPE_SETTLE_FRAME_COUNT) {
+            composeRule.mainClock.advanceTimeByFrame()
+            appNameLeftOrNull()
+        }
 
         // then
         assertTrue(composeRule.activity.isFinishing)
-        composeRule.onNodeWithText(appName).assertDoesNotExist()
+        assertTrue(lefts.all { it == null })
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+    }
+
+    private fun idleFor(ms: Long) {
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
+        composeRule.waitForIdle()
     }
 
     private fun showFinishedRun() {

@@ -108,6 +108,16 @@ class RunOverviewPageTest {
     }
 
     @Test
+    fun `솔로에서 폰이 끊기면 폰 연결 확인 중을 보이고 심박은 그대로 보인다`() {
+        // when
+        show(solo, isPhoneReachable = false)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
+        composeRule.onNodeWithText("150").assertExists()
+    }
+
+    @Test
     fun `파티에서 서버가 끊기면 서버 연결 확인 중을 보인다`() {
         // when
         show(party.copy(isServerConnected = false))
