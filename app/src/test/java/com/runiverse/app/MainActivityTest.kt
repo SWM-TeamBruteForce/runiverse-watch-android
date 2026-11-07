@@ -1,9 +1,11 @@
 package com.runiverse.app
 
+import android.os.Looper
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import com.runiverse.app.phone.PhoneLink
@@ -12,6 +14,7 @@ import com.runiverse.app.phone.PhoneState
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.phone.WatchMessage
+import com.runiverse.app.phone.WatchPause
 import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
@@ -22,16 +25,22 @@ import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 
 // 닫기 애니메이션 200ms보다 넉넉히 돌린다
 private const val SWIPE_SETTLE_MS = 1_000L
 private const val SWIPE_SETTLE_FRAME_COUNT = 60
+private const val REPLY_TIMEOUT_PASSED_MS = 3_500L
+private const val RESULT_REPLY_TIMEOUT_PASSED_MS = 13_500L
+private const val PHONE_LOST_PASSED_MINUTES = 13L
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = FakeRuniverseApp::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
@@ -162,36 +171,136 @@ class MainActivityTest {
     }
 
     @Test
-    fun `러닝 첫 화면에서는 뒤로가기를 가로채지 않는다`() {
+    fun `결과에서 닫기를 누르면 대기 화면 없이 닫고 결과를 기억한다`() {
         // given
-        answerSync(run = null)
-        receiveState(soloRun)
+        showFinishedRun()
 
         // when
+        composeRule.onNodeWithText(text(R.string.run_summary_close)).performClick()
         composeRule.waitForIdle()
 
-        // then -> 가로채지 않아야 시계 화면으로 나간다
-        assertFalse(composeRule.activity.onBackPressedDispatcher.hasEnabledCallbacks())
+        // then
+        assertClosedWithoutIdleScreen()
     }
 
     @Test
-    fun `조작 장에서 뒤로가면 러닝 첫 화면으로 돌아온다`() {
+    fun `결과에서 뒤로가면 대기 화면 없이 닫고 결과를 기억한다`() {
         // given
-        answerSync(run = null)
-        receiveState(soloRun)
-        composeRule.waitForIdle()
-        composeRule.onRoot().performTouchInput { swipeRight() }
-        composeRule.waitForIdle()
-        assertTrue(composeRule.activity.onBackPressedDispatcher.hasEnabledCallbacks())
+        showFinishedRun()
 
         // when
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
 
         // then
-        assertFalse(composeRule.activity.onBackPressedDispatcher.hasEnabledCallbacks())
-        assertFalse(composeRule.activity.isFinishing)
+        assertClosedWithoutIdleScreen()
     }
+
+    @Test
+    fun `결과를 쓸어 닫으면 대기 화면 없이 닫고 결과를 기억한다`() {
+        // given
+        showFinishedRun()
+
+        // when
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+
+        // then
+        assertClosedWithoutIdleScreen()
+    }
+
+    @Test
+    fun `결과에서 새 러닝이 시작되면 앱을 닫지 않고 러닝 화면을 보인다`() {
+        // given
+        showFinishedRun()
+
+        // when
+        receiveState(soloRun)
+        composeRule.waitForIdle()
+
+        // then
+        assertFalse(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(formatElapsedTime(soloRun.me.elapsedSeconds)).assertExists()
+    }
+
+    @Test
+    fun `조작 장에서 일시정지를 누르면 폰에 보내고 폰 답을 받아야 화면이 바뀐다`() {
+        // given
+        answerSync(soloRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+
+        // when
+        composeRule.onNodeWithText(text(R.string.controls_pause)).performClick()
+        composeRule.waitForIdle()
+
+        // then
+        val pause = app.sent.filterIsInstance<WatchPause>().single()
+        composeRule.onNodeWithText(text(R.string.controls_pause)).assertExists()
+
+        // when -> 폰이 멈춘 상태로 답한다
+        receiveState(soloRun.copy(status = RunStatus.PAUSED), lastRequestId = pause.requestId)
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_resume)).assertExists()
+    }
+
+    @Test
+    fun `폰 답이 3초 없으면 대기 화면에 폰 연결 확인 중을 보인다`() {
+        // given
+        composeRule.waitForIdle()
+
+        // when
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(REPLY_TIMEOUT_PASSED_MS))
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
+    }
+
+    @Test
+    fun `결과를 받는 중 13초 소식이 없으면 폰 연결 확인 중을 보인다`() {
+        // given
+        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = null))
+
+        // when
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(RESULT_REPLY_TIMEOUT_PASSED_MS))
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
+    }
+
+    @Test
+    fun `러닝 중 폰이 10분 넘게 돌아오지 않으면 대기 화면 없이 닫는다`() {
+        // given
+        answerSync(soloRun)
+        composeRule.runOnUiThread { app.exerciseSession.start(onEnded = {}) }
+
+        // when
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMinutes(PHONE_LOST_PASSED_MINUTES))
+        composeRule.waitForIdle()
+
+        // then
+        assertTrue(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(appName).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+    }
+
+    private fun showFinishedRun() {
+        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertExists()
+    }
+
+    private fun assertClosedWithoutIdleScreen() {
+        assertTrue(composeRule.activity.isFinishing)
+        assertNull(app.phoneLink.state.value.finishedRun)
+        composeRule.onNodeWithText(appName).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
+    }
+
+    private fun text(id: Int) = composeRule.activity.getString(id)
 
     private fun appNameLeftOrNull(): Float? =
         composeRule.onAllNodesWithText(appName).fetchSemanticsNodes().firstOrNull()?.boundsInRoot?.left
@@ -204,19 +313,20 @@ class MainActivityTest {
     }
 
     // SYNC 중에 받은 상태는 조용히 버려져, 시험이 엉뚱한 이유로 통과하거나 실패하지 않게 막는다
-    private fun receiveState(run: RunState?) {
+    private fun receiveState(run: RunState?, lastRequestId: String? = null) {
         check(!app.phoneLink.state.value.isSyncing) { "SYNC 중이라 상태를 버린다" }
-        receive(WatchStateUpdated(phoneState(run)))
+        receive(WatchStateUpdated(phoneState(run, lastRequestId)))
     }
 
     private fun receive(message: PhoneMessage) {
         composeRule.runOnUiThread { app.phoneLink.onReceived(message) }
     }
 
-    private fun phoneState(run: RunState?) = PhoneState(
+    private fun phoneState(run: RunState?, lastRequestId: String? = null) = PhoneState(
         phoneInstanceId = "phone",
         stateSequence = nextStateSequence++,
         statusVersion = 1,
+        lastRequestId = lastRequestId,
         run = run,
     )
 }
