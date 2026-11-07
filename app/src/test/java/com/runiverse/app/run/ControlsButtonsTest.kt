@@ -42,7 +42,10 @@ class ControlsButtonsTest {
         )
         assertEquals(
             FinishButtonStage.CHECKING,
-            finishButtonStage(running, RunCommandState(isLocked = true, isFinishPending = true, isCommandOverdue = true)),
+            finishButtonStage(
+                running,
+                RunCommandState(isLocked = true, isFinishPending = true, isCommandOverdue = true),
+            ),
         )
     }
 

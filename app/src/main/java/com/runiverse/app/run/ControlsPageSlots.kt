@@ -69,7 +69,9 @@ private fun firstTopWhereHintsFit(
 ): Float? {
     var top = startTop
     while (top <= startTop + maxShift) {
-        val everyHintFits = hints.withIndex().all { (index, hint) -> widthOf(hint) <= widthAt(top + index * lineAdvance) }
+        val everyHintFits = hints.withIndex().all { (index, hint) ->
+            widthOf(hint) <= widthAt(top + index * lineAdvance)
+        }
         if (everyHintFits) return top
         top += 1f
     }

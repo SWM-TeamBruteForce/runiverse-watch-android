@@ -576,8 +576,12 @@ class PhoneLinkTest {
         fixture.phoneLink.pause()
 
         // when
-        fixture.phoneLink.onReceived(PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = null))
-        fixture.phoneLink.onReceived(PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = "다른-명령"))
+        fixture.phoneLink.onReceived(
+            PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = null),
+        )
+        fixture.phoneLink.onReceived(
+            PhoneError(code = "X", message = "m", sourceType = "WATCH_PAUSE", requestId = "다른-명령"),
+        )
 
         // then
         assertTrue(fixture.phoneLink.state.value.isLocked)
