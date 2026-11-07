@@ -3,6 +3,8 @@ package com.runiverse.app.phone
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -638,6 +640,42 @@ class PhoneLinkTest {
 
         // then
         assertEquals(listOf(combo), received)
+    }
+
+    @Test
+    fun `서버 보류로 들어갈 때마다 한 번씩만 알린다`() = runTest {
+        // given
+        val pending = FinishProgress(FinishStage.GOAL_PENDING, remainingMeters = 40)
+        val finishing = FinishProgress(FinishStage.FINISHING)
+        val linkStates = listOf(null, pending, pending, finishing, pending, null).mapIndexed { index, finish ->
+            val base = state(sequence = index.toLong())
+            PhoneLinkState(phoneState = base.copy(run = base.run?.copy(finish = finish)))
+        }
+
+        // when
+        val starts = linkStates.asFlow().goalPendingStarts().toList()
+
+        // then
+        assertEquals(2, starts.size)
+    }
+
+    @Test
+    fun `연결 상태가 바뀌어도 같은 보류는 다시 알리지 않고 상태가 없으면 알리지 않는다`() = runTest {
+        // given
+        val base = state(sequence = 1)
+        val pending = base.copy(run = base.run?.copy(finish = FinishProgress(FinishStage.GOAL_PENDING, 40)))
+        val linkStates = listOf(
+            PhoneLinkState(),
+            PhoneLinkState(phoneState = pending),
+            PhoneLinkState(phoneState = pending, isPhoneReachable = false, isSyncing = true),
+            PhoneLinkState(phoneState = pending),
+        )
+
+        // when
+        val starts = linkStates.asFlow().goalPendingStarts().toList()
+
+        // then
+        assertEquals(1, starts.size)
     }
 
     @Test
