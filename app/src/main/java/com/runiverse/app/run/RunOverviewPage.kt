@@ -45,7 +45,7 @@ import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
@@ -55,9 +55,9 @@ import kotlin.math.roundToInt
 private const val MIN_PLAYER_CELL_WIDTH_FRACTION = 110f / 480f
 private const val STATUS_OVERLAY_ALPHA = 0.45f
 private const val STATUS_ICON_FRACTION = 0.42f
-private val GAP_INDICATOR_WIDTH = 7.5.dp
-private val GAP_INDICATOR_HEIGHT = 6.6.dp
-private val INDICATOR_TO_VALUE_GAP = 2.dp
+private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
+private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
+private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
 private val MIN_SPACE_BESIDE_GAP_LABEL = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
@@ -74,7 +74,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
     val notice = connectionNotice(run, isPhoneReachable)
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
+            ProgressRing(it, laneColor(MY_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
         DistanceTimeRow(
             run.me,
@@ -184,7 +184,7 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
             val unitWidth = unit?.let {
                 with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_TO_UNIT_GAP
             } ?: 0.dp
-            GAP_INDICATOR_WIDTH + INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
+            DIRECTION_INDICATOR_WIDTH + DIRECTION_INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
         }
         maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_SPACE_BESIDE_GAP_LABEL)
     }
@@ -241,7 +241,7 @@ private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecim
     // 그 사람 통지가 아직 없으면 폰도 격차 줄을 그리지 않는다
     val gapMeters = player.gapMeters ?: return
     val gap = formatGapDistance(gapMeters, abbreviateUnits, dropKmDecimal)
-    Row(horizontalArrangement = Arrangement.spacedBy(INDICATOR_TO_VALUE_GAP)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(DIRECTION_INDICATOR_TO_VALUE_GAP)) {
         when (gapDirection(gapMeters)) {
             GapDirection.AHEAD -> GapDirectionIndicator(pointsUp = true, Modifier.alignByBaseline())
             GapDirection.BEHIND -> GapDirectionIndicator(pointsUp = false, Modifier.alignByBaseline())
@@ -284,14 +284,14 @@ internal fun playerStatusWord(status: RunStatus): String? = when (status) {
 internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
     DistanceUnitLabel.METER -> stringResource(R.string.unit_m)
     DistanceUnitLabel.KILOMETER -> stringResource(R.string.unit_km)
-    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_kilo)
+    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_short_km)
 }
 
 // 앞/뒤에 색을 주면 레인 색과 겹치고 좋다/나쁘다로 읽혀서 흰색으로 둔다
 @Composable
 private fun GapDirectionIndicator(pointsUp: Boolean, modifier: Modifier) {
     val color = MaterialTheme.colorScheme.onSurface
-    Canvas(modifier.bottomAsBaseline().size(GAP_INDICATOR_WIDTH, GAP_INDICATOR_HEIGHT)) {
+    Canvas(modifier.bottomAsBaseline().size(DIRECTION_INDICATOR_WIDTH, DIRECTION_INDICATOR_HEIGHT)) {
         val path = Path().apply {
             if (pointsUp) {
                 moveTo(size.width / 2, 0f)
@@ -320,7 +320,7 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
 @Composable
 private fun PlayerAvatar(player: Player, modifier: Modifier) {
     val lane = laneColor(player.colorSlot)
-    val selfLane = laneColor(SELF_LANE_COLOR_SLOT)
+    val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
     Box(
         modifier
@@ -330,7 +330,7 @@ private fun PlayerAvatar(player: Player, modifier: Modifier) {
                     // 나와 상대의 레인 색을 섞어 누구와 붙었는지 알 수 있게 한다
                     val border = RunDimensions.COMBO_BORDER_WIDTH.toPx()
                     drawCircle(
-                        Brush.linearGradient(listOf(selfLane, lane)),
+                        Brush.linearGradient(listOf(myLane, lane)),
                         radius = RunDimensions.AVATAR_SIZE.toPx() / 2 + border / 2,
                         style = Stroke(border),
                     )

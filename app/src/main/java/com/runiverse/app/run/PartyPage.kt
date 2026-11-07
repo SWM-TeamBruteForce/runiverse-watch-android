@@ -117,7 +117,7 @@ private fun PaceAndComboRows(
         if (player.comboCount > 0) {
             stringResource(R.string.run_combo_current, player.comboCount)
         } else {
-            stringResource(R.string.run_combo_best, player.maxComboCount)
+            stringResource(R.string.run_combo_max, player.maxComboCount)
         },
         MaterialTheme.typography.labelSmall,
         MaterialTheme.colorScheme.onSurfaceVariant,

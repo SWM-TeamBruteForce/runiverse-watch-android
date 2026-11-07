@@ -15,7 +15,7 @@
     <string name="run_pace_player">상대</string>
     <string name="run_pace_me">나</string>
     <string name="run_combo_current">%d콤보</string>
-    <string name="run_combo_best">최고 %d</string>
+    <string name="run_combo_max">최고 %d</string>
     <string name="controls_pause">일시정지</string>
     <string name="controls_resume">계속 달리기</string>
     <string name="controls_hold_to_finish">길게 눌러 종료</string>
@@ -36,7 +36,7 @@
     <string name="controls_may_not_complete">끝내면 미완주 가능</string>
     <string name="unit_km">km</string>
     <string name="unit_m">m</string>
-    <string name="unit_kilo">k</string>
+    <string name="unit_short_km">k</string>
     <string name="unit_bpm">bpm</string>
     <string name="unit_spm">spm</string>
     <string name="unit_kcal">kcal</string>

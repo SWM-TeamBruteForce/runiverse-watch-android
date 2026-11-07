@@ -60,7 +60,7 @@ internal fun RunScreen(
     }
 
     val birthDate = remember(birthday) { parseBirthday(birthday) }
-    val zone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
+    val heartRateZone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
 
     // 장 사이는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
     HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
@@ -82,9 +82,11 @@ internal fun RunScreen(
                     run,
                     isPhoneReachable,
                     heartRateBpm,
-                    zone,
+                    heartRateZone,
                 )
-                MY_RECORD_PAGE_INDEX -> ScreenScaffold { MyRecordPage(run, isPhoneReachable, heartRateBpm, zone) }
+                MY_RECORD_PAGE_INDEX -> ScreenScaffold {
+                    MyRecordPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
+                }
             }
         }
     }

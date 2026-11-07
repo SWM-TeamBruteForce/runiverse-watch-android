@@ -68,7 +68,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
 import kotlinx.coroutines.delay
@@ -225,12 +225,12 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
         stringResource(R.string.controls_to_penalty_line, WIDEST_PENALTY_LINE_REMAINING),
         stringResource(R.string.controls_to_goal, WIDEST_GOAL_REMAINING),
     )
-    val longestSecondHint = stringResource(R.string.controls_penalty_if_short)
-    return remember(widestFirstHints, longestSecondHint, style, density, screenWidth) {
+    val widestSecondHint = stringResource(R.string.controls_penalty_if_short)
+    return remember(widestFirstHints, widestSecondHint, style, density, screenWidth) {
         with(density) {
             val widestFirstHint = widestFirstHints.maxBy { measurer.measure(it, style).size.width }
             controlsPageSlots(
-                listOf(widestFirstHint, longestSecondHint),
+                listOf(widestFirstHint, widestSecondHint),
                 screenWidth,
                 edgeMargin = RunDimensions.TEXT_EDGE_MARGIN.toPx(),
                 lineAdvance = hintLineAdvance(style.fontSize.toPx()),
@@ -324,7 +324,7 @@ private fun FinishButton(
     modifier: Modifier,
     onFinish: () -> Unit,
 ) {
-    val background = laneColor(SELF_LANE_COLOR_SLOT)
+    val background = laneColor(MY_LANE_COLOR_SLOT)
     when (stage) {
         FinishButtonStage.HOLD -> HoldToFinishButton(background, width, isEnabled, modifier, onFinish)
         FinishButtonStage.TAP -> ControlButton(
@@ -553,7 +553,7 @@ private fun ComboEffectRow(
 
 @Composable
 private fun ComboSwitch(isOn: Boolean) {
-    val trackColor = if (isOn) laneColor(SELF_LANE_COLOR_SLOT) else MaterialTheme.colorScheme.outlineVariant
+    val trackColor = if (isOn) laneColor(MY_LANE_COLOR_SLOT) else MaterialTheme.colorScheme.outlineVariant
     val thumbColor = MaterialTheme.colorScheme.onBackground
     Canvas(Modifier.size(COMBO_SWITCH_WIDTH, COMBO_SWITCH_HEIGHT).clip(CircleShape).background(trackColor)) {
         val center = size.height / 2

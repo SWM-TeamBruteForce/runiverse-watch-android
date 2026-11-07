@@ -9,8 +9,8 @@ class ControlsPageSlotsTest {
 
     private val widthOf = { text: String -> text.length * 10f }
 
-    private fun slots(longestHints: List<String>, isFontScaled: Boolean) = controlsPageSlots(
-        longestHints,
+    private fun slots(widestHints: List<String>, isFontScaled: Boolean) = controlsPageSlots(
+        widestHints,
         screenSize = 480f,
         edgeMargin = 25f,
         lineAdvance = 30f,

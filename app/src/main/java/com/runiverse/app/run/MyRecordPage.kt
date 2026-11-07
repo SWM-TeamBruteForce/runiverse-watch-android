@@ -22,7 +22,7 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_DESCENDER_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -52,7 +52,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
+            ProgressRing(it, laneColor(MY_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
         // 같은 자리라 끊김 안내가 멈춤보다 먼저다
         val topNotice = when {

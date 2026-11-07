@@ -33,9 +33,9 @@ internal fun placeHintLines(
     }
 }
 
-/** 가장 긴 안내 기준으로 자리를 정한다. 첫 버튼은 키운 글자에서만 밀린다. */
+/** 가장 넓은 안내 기준으로 자리를 정한다. 첫 버튼은 키운 글자에서만 밀린다. */
 internal fun controlsPageSlots(
-    longestHints: List<String>,
+    widestHints: List<String>,
     screenSize: Float,
     edgeMargin: Float,
     lineAdvance: Float,
@@ -47,9 +47,9 @@ internal fun controlsPageSlots(
     widthOf: (String) -> Float,
 ): ControlsPageSlots {
     val widthAt = { y: Float -> usableWidthAt(y, screenSize, edgeMargin) }
-    val hintTop = firstTopWhereHintsFit(longestHints, hintStartTop, hintMaxShift, lineAdvance, widthAt, widthOf)
-        ?: topWhereFirstLineFits(widthOf(longestHints.first()), screenSize, edgeMargin, hintStartTop)
-    val lines = placeHintLines(longestHints, hintTop, lineAdvance, widthAt, widthOf)
+    val hintTop = firstTopWhereHintsFit(widestHints, hintStartTop, hintMaxShift, lineAdvance, widthAt, widthOf)
+        ?: topWhereFirstLineFits(widthOf(widestHints.first()), screenSize, edgeMargin, hintStartTop)
+    val lines = placeHintLines(widestHints, hintTop, lineAdvance, widthAt, widthOf)
     val hintsEnd = lines.last().top + lineAdvance
     val firstButtonTop = if (isFontScaled) {
         maxOf(firstButtonTopAtDefaultFont, hintsEnd + hintToButtonGap)
