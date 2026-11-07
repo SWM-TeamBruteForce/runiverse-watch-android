@@ -25,7 +25,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   IdleScreen     러닝이 없을 때 보이는 대기 화면
   phone/         폰과 메시지 주고받기·연결 상태
   exercise/      러닝 중 앱을 살려 두는 서비스·심박 측정
-  run/           러닝 중 화면(첫 화면·파티원 장·내 기록 장)과 표기 규칙
+  run/           러닝 중 화면(첫 화면·파티원 장·내 기록 장·조작 장)과 표기 규칙
   ui/theme/      여러 기능이 같이 쓰는 색·글자. 화면은 MaterialTheme으로 읽는다
   ui/component/  두 기능 이상이 쓰는 부품
   ```
