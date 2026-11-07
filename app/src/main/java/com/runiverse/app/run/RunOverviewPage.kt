@@ -51,6 +51,7 @@ import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.ValueWithUnit
 import com.runiverse.app.run.component.boxContentBounds
 import com.runiverse.app.run.component.widestHeartRateBlockWidth
+import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -412,25 +413,25 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun RunOverviewPagePartyPreview() = RunPreviewFrame {
+private fun RunOverviewPagePartyPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageLongValuesPreview() = RunPreviewFrame {
+private fun RunOverviewPageLongValuesPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPagePhoneLostPreview() = RunPreviewFrame {
+private fun RunOverviewPagePhoneLostPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
+private fun RunOverviewPageServerLostPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.party.copy(isServerConnected = false),
         isPhoneReachable = true,
@@ -442,14 +443,14 @@ private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
 @WearPreviewLargeRound
 @WearPreviewFontScales
 @Composable
-private fun RunOverviewPageSoloPreview() = RunPreviewFrame {
+private fun RunOverviewPageSoloPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
+private fun RunOverviewPagePausedPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
@@ -460,7 +461,7 @@ private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageSoloPausedPreview() = RunPreviewFrame {
+private fun RunOverviewPageSoloPausedPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,

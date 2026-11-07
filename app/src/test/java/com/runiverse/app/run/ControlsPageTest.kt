@@ -13,6 +13,7 @@ import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -316,7 +317,7 @@ class ControlsPageTest {
         commandState: RunCommandState = RunCommandState(),
     ) {
         composeRule.setContent {
-            RunPreviewFrame {
+            PreviewFrame {
                 ControlsPage(run, isPhoneReachable, commandState, commands, isComboEffectOn = true) {
                     comboChanges += it
                 }

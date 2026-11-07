@@ -7,6 +7,7 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -78,7 +79,7 @@ class MyRecordPageTest {
 
     private fun show(shownRun: RunState = run, isPhoneReachable: Boolean = true, heartRateBpm: Int? = 150) {
         composeRule.setContent {
-            RunPreviewFrame { MyRecordPage(shownRun, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
+            PreviewFrame { MyRecordPage(shownRun, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
         }
     }
 }

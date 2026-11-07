@@ -28,6 +28,7 @@ import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.ControlButton
 import com.runiverse.app.run.component.ControlIcon
 import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.ui.component.PreviewFrame
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
 private const val CLOSE_BUTTON_WIDTH_FRACTION = 204f / 480f
@@ -115,7 +116,7 @@ private fun closeButtonWidth(): Dp = maxOf(currentScreenWidth() * CLOSE_BUTTON_W
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
+private fun RunSummaryScreenConfirmedPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = true, onClose = {})
 }
 
@@ -123,24 +124,24 @@ private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryScreenLongValuesPreview() = RunPreviewFrame {
+private fun RunSummaryScreenLongValuesPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.longResult, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenConfirmedPhoneLostPreview() = RunPreviewFrame {
+private fun RunSummaryScreenConfirmedPhoneLostPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = false, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenPendingPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPendingPreview() = PreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenPhoneLostPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPhoneLostPreview() = PreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = false, onClose = {})
 }

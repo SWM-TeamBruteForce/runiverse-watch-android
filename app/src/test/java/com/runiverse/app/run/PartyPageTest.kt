@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -163,7 +164,7 @@ class PartyPageTest {
 
     private fun show(shownPlayer: Player = player, isPhoneReachable: Boolean = true, isServerConnected: Boolean = true) {
         composeRule.setContent {
-            RunPreviewFrame {
+            PreviewFrame {
                 PartyPage(run.copy(isServerConnected = isServerConnected), shownPlayer, isPhoneReachable)
             }
         }

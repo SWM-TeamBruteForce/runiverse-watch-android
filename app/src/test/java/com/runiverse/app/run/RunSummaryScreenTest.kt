@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -127,7 +128,7 @@ class RunSummaryScreenTest {
     private fun show(shownResult: RunResult? = result, isPhoneReachable: Boolean = true) {
         val run = RunPreviewSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
         composeRule.setContent {
-            RunPreviewFrame { RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }) }
+            PreviewFrame { RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }) }
         }
     }
 }

@@ -11,7 +11,7 @@ import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
 import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
-import com.runiverse.app.run.RunPreviewFrame
+import com.runiverse.app.ui.component.PreviewFrame
 
 @Composable
 internal fun IdleScreen(isPhoneReachable: Boolean) {
@@ -33,6 +33,6 @@ internal fun IdleScreen(isPhoneReachable: Boolean) {
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun IdleScreenPhoneLostPreview() = RunPreviewFrame {
+private fun IdleScreenPhoneLostPreview() = PreviewFrame {
     IdleScreen(isPhoneReachable = false)
 }

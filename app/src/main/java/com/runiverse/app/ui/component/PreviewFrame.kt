@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -9,7 +9,7 @@ import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.ui.theme.RuniverseTheme
 
 @Composable
-internal fun RunPreviewFrame(content: @Composable () -> Unit) {
+internal fun PreviewFrame(content: @Composable () -> Unit) {
     RuniverseTheme {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) { content() }
     }

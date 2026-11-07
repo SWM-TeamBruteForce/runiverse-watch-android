@@ -28,6 +28,7 @@ import com.runiverse.app.run.component.HeartRateZoneBar
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.ValueWithUnit
 import com.runiverse.app.run.component.widestHeartRateBlockWidth
+import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_DESCENDER_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
@@ -134,20 +135,20 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun MyRecordPageRunningPreview() = RunPreviewFrame {
+private fun MyRecordPageRunningPreview() = PreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun MyRecordPagePhoneLostPreview() = RunPreviewFrame {
+private fun MyRecordPagePhoneLostPreview() = PreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun MyRecordPagePausedPreview() = RunPreviewFrame {
+private fun MyRecordPagePausedPreview() = PreviewFrame {
     MyRecordPage(
         RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
@@ -158,7 +159,7 @@ private fun MyRecordPagePausedPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun MyRecordPageNoHeartRatePreview() = RunPreviewFrame {
+private fun MyRecordPageNoHeartRatePreview() = PreviewFrame {
     MyRecordPage(
         RunPreviewSamples.party.copy(me = RunPreviewSamples.party.me.copy(cadenceSpm = null, caloriesKcal = null)),
         isPhoneReachable = true,

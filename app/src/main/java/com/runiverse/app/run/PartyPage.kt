@@ -35,6 +35,7 @@ import com.runiverse.app.run.component.CONTENT_TOP
 import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -273,51 +274,51 @@ private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRowWidth
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageAheadPreview() = RunPreviewFrame {
+private fun PartyPageAheadPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageBehindComboPreview() = RunPreviewFrame {
+private fun PartyPageBehindComboPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[1], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPagePausedPreview() = RunPreviewFrame {
+private fun PartyPagePausedPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageMePausedPreview() = RunPreviewFrame {
+private fun PartyPageMePausedPreview() = PreviewFrame {
     val run = RunPreviewSamples.party.copy(status = RunStatus.PAUSED)
     PartyPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageFinishedPreview() = RunPreviewFrame {
+private fun PartyPageFinishedPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.finishedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageNotNotifiedPreview() = RunPreviewFrame {
+private fun PartyPageNotNotifiedPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.notNotifiedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageLongestPreview() = RunPreviewFrame {
+private fun PartyPageLongestPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.longValues, RunPreviewSamples.longestPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageStalePreview() = RunPreviewFrame {
+private fun PartyPageStalePreview() = PreviewFrame {
     val player = RunPreviewSamples.party.players[0].copy(isStale = true)
     PartyPage(RunPreviewSamples.party, player, isPhoneReachable = true)
 }
@@ -325,13 +326,13 @@ private fun PartyPageStalePreview() = RunPreviewFrame {
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageServerLostPreview() = RunPreviewFrame {
+private fun PartyPageServerLostPreview() = PreviewFrame {
     val run = RunPreviewSamples.party.copy(isServerConnected = false)
     PartyPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPagePhoneLostPreview() = RunPreviewFrame {
+private fun PartyPagePhoneLostPreview() = PreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = false)
 }
