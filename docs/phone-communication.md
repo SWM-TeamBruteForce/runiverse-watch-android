@@ -42,7 +42,7 @@
 
 ## 상태
 
-`WATCH_STATE_UPDATED`의 data다. `WATCH_SYNCED`는 여기에 `syncId`·`birthday`·`photos`를 더한다.
+`WATCH_STATE_UPDATED`의 data다.
 
 ```json
 {
@@ -113,21 +113,21 @@
 
 ## 보내는 규칙 — 폰
 
-- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면(일시정지 포함) 1초마다 보낸다. 앞 전송이 안 끝났으면 건너뛰고 최신 하나만.
+- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면(일시정지 포함) 1초마다 보낸다. 앞 전송이 안 끝났으면 건너뛰고 최신 하나만 보낸다.
 - 일시정지·재개·종료 단계·결과 확정은 화면이 꺼져 있어도 바로 보낸다.
 - 러닝이 사라지면(폰에서 요약을 닫음·서버 종료·강퇴) 화면이 꺼져 있어도 바로 `run: null`을 보낸다 — 워치 결과 화면도 같이 닫힌다.
 - 워치 명령을 반영하면 1초를 기다리지 않고 바로 보낸다(`statusVersion` +1, `lastRequestId`).
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
-- 거절(`ERROR`)은 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 러닝 존재 여부와 `phoneInstanceId`·`statusVersion` 검사는 그대로 한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`이다.
-- 폰에서 러닝을 시작하면 워치 앱을 켠다(메시지가 아니라 플랫폼 기능).
+- 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
 
 ## 받는 규칙 — 워치
 
 - SYNC를 보내면 SYNCED를 받을 때까지 버튼을 잠근다. 그사이 오는 상태는 버리고, 화면이 켜져 있으면 3초마다 SYNC를 다시 보낸다.
-- 러닝 중 화면이 켜져 있는데 상태를 3초 넘게 못 받으면 `폰 연결 확인 중` — 받은 값 전부(시간 포함) 마지막 값에서 멈추고, 버튼을 잠그고, SYNC를 보낸다.
+- 러닝 중 화면이 켜져 있는데 상태를 3초 넘게 못 받으면 `폰 연결 확인 중`을 띄우고, 받은 값 전부(시간 포함) 마지막 값에서 멈추고, 버튼을 잠그고, SYNC를 보낸다.
 - 화면이 다시 켜지면 러닝이 없어도 3초 안에 상태가 와야 한다. 안 오면 위와 같이 `폰 연결 확인 중`으로 바꾸고 SYNC를 보낸다.
 - `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC. `null`은 모르는 번호로 보지 않는다.
 - 러닝 중 SYNC를 보낸 뒤로 10분 넘게 답이 없으면 운동을 끝내고 마지막 값을 지운 뒤 앱을 닫는다(화면이 꺼져 있으면 더 늦어질 수 있다). 폰이 돌아와도 워치가 스스로 다시 켜지 않는다.
