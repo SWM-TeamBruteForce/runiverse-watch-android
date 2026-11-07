@@ -62,7 +62,7 @@ private val MIN_LABEL_TO_CELL_GAP = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
 // 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
-private val WIDEST_GAPS_METERS = listOf(888, 9_900)
+private val WIDEST_GAPS_METERS = listOf(400, 4_000)
 
 @Composable
 internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, heartRateZone: Int?) {
