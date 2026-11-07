@@ -31,7 +31,10 @@ private val MIN_TIME_TO_PACE_GAP = 10.dp
 
 // 작은 화면에서 알약이 동그래지지 않게 한다
 private val MIN_CLOSE_BUTTON_WIDTH = 96.dp
-private val CLOSE_BUTTON_TO_SCREEN_BOTTOM_GAP = 8.dp
+private val CLOSE_BUTTON_BOTTOM_PADDING = 8.dp
+
+/** 받은 결과는 더 안 바뀌어 폰이 끊겨도 멈춘 것으로 보지 않는다. */
+fun isResultStuck(result: RunResult?, isPhoneReachable: Boolean): Boolean = result == null && !isPhoneReachable
 
 @Composable
 internal fun RunSummaryScreen(run: RunState, isPhoneReachable: Boolean, onClose: () -> Unit) {
@@ -45,11 +48,10 @@ internal fun RunSummaryScreen(run: RunState, isPhoneReachable: Boolean, onClose:
 private fun RunSummaryContent(result: RunResult?, isPhoneReachable: Boolean, onClose: () -> Unit) {
     val slots = currentRunPageSlots()
     val unknown = stringResource(R.string.run_value_unknown)
-    // 받은 결과는 더 안 바뀌어 폰이 끊겨도 그대로 둔다
-    val isResultStuck = result == null && !isPhoneReachable
-    val valuesAlpha = if (isResultStuck) RunDimensions.STALE_CONTENT_ALPHA else 1f
+    val isStuck = isResultStuck(result, isPhoneReachable)
+    val valuesAlpha = if (isStuck) RunDimensions.STALE_CONTENT_ALPHA else 1f
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        if (isResultStuck) {
+        if (isStuck) {
             AlignedText(
                 stringResource(R.string.run_phone_checking),
                 MaterialTheme.typography.bodyMedium,
@@ -82,7 +84,7 @@ private fun RunSummaryContent(result: RunResult?, isPhoneReachable: Boolean, onC
             MaterialTheme.colorScheme.outlineVariant,
             closeButtonWidth(),
             isEnabled = true,
-            Modifier.align(Alignment.BottomCenter).padding(bottom = CLOSE_BUTTON_TO_SCREEN_BOTTOM_GAP),
+            Modifier.align(Alignment.BottomCenter).padding(bottom = CLOSE_BUTTON_BOTTOM_PADDING),
             onClick = onClose,
         )
     }
@@ -119,6 +121,12 @@ private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
 @Composable
 private fun RunSummaryScreenLongValuesPreview() = RunPreviewFrame {
     RunSummaryContent(RunPreviewSamples.longResult, isPhoneReachable = true, onClose = {})
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun RunSummaryScreenConfirmedPhoneLostPreview() = RunPreviewFrame {
+    RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = false, onClose = {})
 }
 
 @WearPreviewLargeRound
