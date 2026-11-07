@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
+import com.runiverse.app.run.contentCenterAt
 
 private const val ICON_TO_FONT_RATIO = 0.62f
 private const val PAUSE_ICON_BAR_FRACTION = 0.28f

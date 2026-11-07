@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.R
+import com.runiverse.app.run.RunDimensions
 
 private const val ZONE_COUNT = 5
 private val ZONE_GAP = 3.dp

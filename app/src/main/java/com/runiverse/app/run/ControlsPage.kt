@@ -64,6 +64,11 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ButtonContent
+import com.runiverse.app.run.component.ControlButton
+import com.runiverse.app.run.component.ControlIcon
+import com.runiverse.app.run.component.PILL_HEIGHT
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor

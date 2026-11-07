@@ -44,6 +44,13 @@ import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ContentBoundsColumn
+import com.runiverse.app.run.component.HeartRateZoneBar
+import com.runiverse.app.run.component.ProgressRing
+import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.boxContentBounds
+import com.runiverse.app.run.component.widestHeartRateBlockWidth
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor

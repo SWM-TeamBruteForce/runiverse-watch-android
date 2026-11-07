@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.AlignmentLine

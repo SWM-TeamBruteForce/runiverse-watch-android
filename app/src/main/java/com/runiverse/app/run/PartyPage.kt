@@ -29,6 +29,12 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.CONTENT_BOTTOM
+import com.runiverse.app.run.component.CONTENT_TOP
+import com.runiverse.app.run.component.ContentBoundsColumn
+import com.runiverse.app.run.component.ProgressRing
+import com.runiverse.app.run.component.ValueWithUnit
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor

@@ -24,6 +24,10 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ControlButton
+import com.runiverse.app.run.component.ControlIcon
+import com.runiverse.app.run.component.ValueWithUnit
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
 private const val CLOSE_BUTTON_WIDTH_FRACTION = 204f / 480f
