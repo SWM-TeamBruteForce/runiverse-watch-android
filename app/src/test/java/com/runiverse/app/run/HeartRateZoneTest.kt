@@ -27,7 +27,7 @@ class HeartRateZoneTest {
 
     @Test
     fun `경계는 반올림하지 않는다`() {
-        // given -> 만 29세, 최대 심박 191이라 60% 경계는 114.6
+        // given -> 만 29세, 최대 심박 191이라 60% 경계는 114.6이다
         val beforeBirthday = LocalDate.of(2025, 3, 9)
 
         // when & then

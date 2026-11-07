@@ -31,7 +31,7 @@ object PhoneMessageCodec {
         return json.encodeToString(JsonElement.serializer(), envelope).encodeToByteArray()
     }
 
-    /** 모르는 event면 null을 돌려준다 — 폰 앱이 먼저 업데이트돼 새 메시지를 보내는 경우다. */
+    /** 모르는 event면 null이다 — 폰 앱이 먼저 업데이트된 경우다. */
     fun decode(bytes: ByteArray): PhoneMessage? {
         val envelope = json.parseToJsonElement(bytes.decodeToString()).jsonObject
         val event = requireNotNull(envelope["event"]) { "event 없음" }.jsonPrimitive.content
@@ -46,6 +46,7 @@ object PhoneMessageCodec {
                     photos = extras.photos,
                 )
             }
+
             "WATCH_STATE_UPDATED" -> WatchStateUpdated(json.decodeFromJsonElement(PhoneState.serializer(), data))
             "WATCH_COMBO_TRIGGERED" -> json.decodeFromJsonElement(WatchComboTriggered.serializer(), data)
             "ERROR" -> json.decodeFromJsonElement(PhoneError.serializer(), data)

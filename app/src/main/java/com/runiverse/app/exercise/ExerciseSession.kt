@@ -31,7 +31,7 @@ class ExerciseSession(
     private val scope: CoroutineScope,
     private val phoneLink: PhoneLink,
     private val tracker: HeartRateTracker,
-    private val now: () -> Long = SystemClock::elapsedRealtime,
+    private val nowMs: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private val _heartRateBpm = MutableStateFlow<Int?>(null)
     val heartRateBpm: StateFlow<Int?> = _heartRateBpm.asStateFlow()
@@ -46,14 +46,14 @@ class ExerciseSession(
     private var onEnded: (() -> Unit)? = null
     private var phoneWatchJob: Job? = null
     private var heardState: PhoneState? = null
-    private var heardAt = 0L
-    private var probedAt = 0L
-    private var unansweredSince: Long? = null
+    private var heardAtMs = 0L
+    private var probedAtMs = 0L
+    private var unansweredSinceMs: Long? = null
 
     private val isActive get() = phoneWatchJob?.isActive == true
 
     init {
-        // 앱이 죽으면 운동은 남는다 — 이 프로세스에서 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
+        // 앱이 죽어도 운동은 남는다 — 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
         scope.launch {
             phoneLink.state
                 .map { it.phoneState != null && !it.isRunActive }
@@ -66,14 +66,14 @@ class ExerciseSession(
         }
     }
 
-    /** 서비스가 시작 요청을 받을 때마다 부른다 — 다른 앱에 밀렸던 심박을 화면이 켜질 때 다시 잰다. */
+    /** 시작 요청마다 부른다 — 다른 앱에 밀렸던 심박을 화면이 켜질 때 다시 잰다. */
     fun start(onEnded: () -> Unit) {
         this.onEnded = onEnded
         if (!isActive) {
             heardState = phoneLink.state.value.phoneState
-            heardAt = now()
-            probedAt = heardAt
-            unansweredSince = null
+            heardAtMs = nowMs()
+            probedAtMs = heardAtMs
+            unansweredSinceMs = null
             phoneWatchJob = scope.launch {
                 launch { phoneLink.state.collect(::onPhoneLinkChanged) }
                 // 화면이 켜져 있으면 심박이 없어도(권한 거부) 폰을 판단한다
@@ -106,9 +106,9 @@ class ExerciseSession(
 
     // 서비스가 내려가면 다시 끌 길이 없어, 끄기가 실패하면 조금 뒤 다시 시도한다
     private suspend fun stopTracker() {
-        for (attempt in 1..STOP_ATTEMPTS) {
+        for (attempt in 1..STOP_ATTEMPT_COUNT) {
             if (tracker.stop()) return
-            if (attempt < STOP_ATTEMPTS) delay(STOP_RETRY_DELAY)
+            if (attempt < STOP_ATTEMPT_COUNT) delay(STOP_RETRY_DELAY)
         }
     }
 
@@ -124,9 +124,9 @@ class ExerciseSession(
         if (owner == ExerciseOwner.NONE && !tracker.startExercise()) isMeasuring = false
     }
 
-    private fun onHeartRate(bpm: Int?) {
+    private fun onHeartRate(heartRateBpm: Int?) {
         if (!isActive) return
-        _heartRateBpm.value = bpm
+        _heartRateBpm.value = heartRateBpm
         checkPhone()
     }
 
@@ -135,34 +135,34 @@ class ExerciseSession(
         _heartRateBpm.value = null
     }
 
-    private fun onPhoneLinkChanged(link: PhoneLinkState) {
-        if (!link.isRunActive) {
+    private fun onPhoneLinkChanged(linkState: PhoneLinkState) {
+        if (!linkState.isRunActive) {
             end()
             return
         }
-        if (link.phoneState !== heardState) {
-            heardState = link.phoneState
-            heardAt = now()
-            unansweredSince = null
+        if (linkState.phoneState !== heardState) {
+            heardState = linkState.phoneState
+            heardAtMs = nowMs()
+            unansweredSinceMs = null
         }
     }
 
-    // 화면이 꺼지면 CPU가 잠들어 delay가 밀린다 — 깨어날 때마다 잠든 시간까지 세는 시계로 잰다
+    // 화면이 꺼지면 delay가 밀린다 — 깨어날 때마다 잠든 시간까지 세는 시계로 잰다
     // 화면이 꺼진 동안 폰이 조용한 건 정상이라, 물어본 뒤에도 답이 없는 시간만 센다
     private fun checkPhone() {
         // 방금 받은 폰 답이 아직 수집기에 안 닿았을 수 있어 최신 상태부터 반영한다
         onPhoneLinkChanged(phoneLink.state.value)
         if (!isActive) return
-        val time = now()
-        if (time - heardAt < PROBE_AFTER_MS) return
-        val since = unansweredSince ?: time.also { unansweredSince = it }
-        if (time - probedAt < PROBE_AFTER_MS) return
+        val currentMs = nowMs()
+        if (currentMs - heardAtMs < PROBE_AFTER_MS) return
+        val sinceMs = unansweredSinceMs ?: currentMs.also { unansweredSinceMs = it }
+        if (currentMs - probedAtMs < PROBE_AFTER_MS) return
         // 오래 잠든 사이 폰이 돌아왔을 수 있어, 10분이 지난 뒤에 보낸 물음에도 답이 없어야 끝낸다
-        if (probedAt - since >= GIVE_UP_AFTER_MS) {
+        if (probedAtMs - sinceMs >= GIVE_UP_AFTER_MS) {
             giveUp()
             return
         }
-        probedAt = time
+        probedAtMs = currentMs
         phoneLink.probeWhileScreenOff()
     }
 
@@ -178,7 +178,7 @@ class ExerciseSession(
         val CHECK_INTERVAL = 1.minutes
         val PROBE_AFTER_MS = 1.minutes.inWholeMilliseconds
         val GIVE_UP_AFTER_MS = 10.minutes.inWholeMilliseconds
-        const val STOP_ATTEMPTS = 3
+        const val STOP_ATTEMPT_COUNT = 3
         val STOP_RETRY_DELAY = 1.seconds
     }
 }

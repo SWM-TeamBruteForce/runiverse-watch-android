@@ -45,7 +45,7 @@ import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
@@ -55,14 +55,14 @@ import kotlin.math.roundToInt
 private const val MIN_PLAYER_CELL_WIDTH_FRACTION = 110f / 480f
 private const val STATUS_OVERLAY_ALPHA = 0.45f
 private const val STATUS_ICON_FRACTION = 0.42f
-private val GAP_INDICATOR_WIDTH = 7.5.dp
-private val GAP_INDICATOR_HEIGHT = 6.6.dp
-private val GAP_INDICATOR_TO_VALUE = 2.dp
-private val MIN_SPACE_BESIDE_GAP_LABEL = 4.dp
+private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
+private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
+private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
+private val MIN_LABEL_TO_CELL_GAP = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
 // 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
-private val WIDEST_GAPS_METERS = listOf(888, 9_900)
+private val WIDEST_GAPS_METERS = listOf(400, 4_000)
 
 @Composable
 internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, heartRateZone: Int?) {
@@ -74,31 +74,41 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
     val notice = connectionNotice(run, isPhoneReachable)
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
+            ProgressRing(it, laneColor(MY_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
         DistanceTimeRow(
             run.me,
             abbreviateUnits,
             Modifier.contentBottomAt(slots.topRowBottom).alpha(phoneValuesAlpha),
         )
-        AlignedText(
-            formatPace(run.me.currentPaceSecondsPerKm),
-            MaterialTheme.typography.numeralExtraLarge.tabularNumerals(),
-            MaterialTheme.colorScheme.onBackground,
-            Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
-        )
+        // 멈춘 동안은 지금 페이스가 없다
+        if (run.status == RunStatus.PAUSED) {
+            AlignedText(
+                stringResource(R.string.run_status_paused),
+                MaterialTheme.typography.numeralLarge,
+                MaterialTheme.colorScheme.onBackground,
+                Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
+            )
+        } else {
+            AlignedText(
+                formatPace(run.me.currentPaceSecondsPerKm),
+                MaterialTheme.typography.numeralExtraLarge.tabularNumerals(),
+                MaterialTheme.colorScheme.onBackground,
+                Modifier.contentCenterAt(slots.center).alpha(phoneValuesAlpha),
+            )
+        }
         if (run.players.isEmpty()) {
             SoloHeartRate(heartRateBpm, heartRateZone, Modifier.contentTopAt(slots.belowRowTop))
         } else {
             // 좁은 화면은 가장 긴 격차가 링과 겹쳐 단위를 줄이고, 글자까지 키우면 km 소수도 뺀다
-            val isNarrowScreen = screenWidthDp() < NARROW_SCREEN_BELOW
+            val isNarrowScreen = currentScreenWidth() < NARROW_SCREEN_BELOW
             val abbreviateGapUnits = abbreviateUnits || isNarrowScreen
             val dropGapKmDecimal = abbreviateUnits && isNarrowScreen
             val cellWidth = playerCellWidth(abbreviateGapUnits, dropGapKmDecimal)
             AvatarRow(run, isPhoneReachable, cellWidth, Modifier.contentTopAt(slots.belowRowTop))
             // 끊긴 동안의 격차는 오래된 값이라 숨기고 그 자리에 안내를 띄운다
             if (notice == null) {
-                // 상태 글자는 숫자보다 윗변이 높아 윗변으로 맞추면 누가 멈출 때 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
+                // 상태 글자는 윗변이 높아 윗변으로 맞추면 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
                 val gapInkHeight = with(LocalDensity.current) {
                     MaterialTheme.typography.numeralExtraSmall.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
                 }
@@ -142,7 +152,7 @@ private fun DistanceTimeRow(me: MyRecord, abbreviateUnits: Boolean, modifier: Mo
 @Composable
 private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
-    ContentBoundsColumn(gap = RunDimensions.ZONE_BAR_GAP, modifier = modifier) {
+    ContentBoundsColumn(contentGap = RunDimensions.VALUE_TO_ZONE_BAR_GAP, modifier = modifier) {
         ValueWithUnit(
             heartRateBpm?.toString() ?: stringResource(R.string.run_value_unknown),
             stringResource(R.string.unit_bpm),
@@ -155,7 +165,7 @@ private fun SoloHeartRate(heartRateBpm: Int?, heartRateZone: Int?, modifier: Mod
 }
 
 @Composable
-private fun screenWidthDp(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
+private fun currentScreenWidth(): Dp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
 
 @Composable
 private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): Dp {
@@ -167,16 +177,16 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
     val unitStyle = MaterialTheme.typography.labelSmall
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = screenWidthDp()
+    val screenWidth = currentScreenWidth()
     return remember(widestLabels, valueStyle, unitStyle, density, screenWidth) {
-        val widestLabel = widestLabels.maxOf { (value, unit) ->
+        val widestLabelWidth = widestLabels.maxOf { (value, unit) ->
             val valueWidth = with(density) { measurer.measure(value, valueStyle).size.width.toDp() }
             val unitWidth = unit?.let {
-                with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_UNIT_GAP
+                with(density) { measurer.measure(it, unitStyle).size.width.toDp() } + RunDimensions.VALUE_TO_UNIT_GAP
             } ?: 0.dp
-            GAP_INDICATOR_WIDTH + GAP_INDICATOR_TO_VALUE + valueWidth + unitWidth
+            DIRECTION_INDICATOR_WIDTH + DIRECTION_INDICATOR_TO_VALUE_GAP + valueWidth + unitWidth
         }
-        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabel + MIN_SPACE_BESIDE_GAP_LABEL)
+        maxOf(screenWidth * MIN_PLAYER_CELL_WIDTH_FRACTION, widestLabelWidth + MIN_LABEL_TO_CELL_GAP)
     }
 }
 
@@ -184,9 +194,9 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
 private fun AvatarRow(run: RunState, isPhoneReachable: Boolean, cellWidth: Dp, modifier: Modifier) {
     Row(modifier) {
         run.players.forEach { player ->
-            val isStale = player.hasStaleValues(run, isPhoneReachable)
+            val hasStaleValues = player.hasStaleValues(run, isPhoneReachable)
             Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
-                PlayerAvatar(player, Modifier.alpha(if (isStale) RunDimensions.STALE_CONTENT_ALPHA else 1f))
+                PlayerAvatar(player, Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f))
             }
         }
     }
@@ -231,7 +241,7 @@ private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecim
     // 그 사람 통지가 아직 없으면 폰도 격차 줄을 그리지 않는다
     val gapMeters = player.gapMeters ?: return
     val gap = formatGapDistance(gapMeters, abbreviateUnits, dropKmDecimal)
-    Row(horizontalArrangement = Arrangement.spacedBy(GAP_INDICATOR_TO_VALUE)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(DIRECTION_INDICATOR_TO_VALUE_GAP)) {
         when (gapDirection(gapMeters)) {
             GapDirection.AHEAD -> GapDirectionIndicator(pointsUp = true, Modifier.alignByBaseline())
             GapDirection.BEHIND -> GapDirectionIndicator(pointsUp = false, Modifier.alignByBaseline())
@@ -246,7 +256,7 @@ private fun PlayerGapLabel(player: Player, abbreviateUnits: Boolean, dropKmDecim
     }
 }
 
-// 칸마다 기준선을 맞춘 채 상태 글자의 세로 가운데만 옆 숫자에 맞춘다 — 기준선을 그만큼 낮춰 알려 위로 올라가게 한다
+// 상태 글자의 세로 가운데를 옆 숫자에 맞춘다 — 기준선을 그만큼 낮춰 알려 위로 올린다
 private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: TextUnit): Modifier =
     layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
@@ -264,9 +274,9 @@ internal fun connectionNotice(run: RunState, isPhoneReachable: Boolean): String?
 
 @Composable
 internal fun playerStatusWord(status: RunStatus): String? = when (status) {
-    RunStatus.PAUSED -> stringResource(R.string.run_player_paused)
-    RunStatus.DISCONNECTED -> stringResource(R.string.run_player_disconnected)
-    RunStatus.FINISHED -> stringResource(R.string.run_player_finished)
+    RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
+    RunStatus.DISCONNECTED -> stringResource(R.string.run_status_disconnected)
+    RunStatus.FINISHED -> stringResource(R.string.run_status_finished)
     RunStatus.RUNNING -> null
 }
 
@@ -274,14 +284,14 @@ internal fun playerStatusWord(status: RunStatus): String? = when (status) {
 internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
     DistanceUnitLabel.METER -> stringResource(R.string.unit_m)
     DistanceUnitLabel.KILOMETER -> stringResource(R.string.unit_km)
-    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_kilo)
+    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_short_km)
 }
 
-// 앞/뒤에 색을 주면 레인 색·콤보 테두리와 겹치고 좋다/나쁘다로 읽혀서 숫자와 같은 흰색으로 둔다
+// 앞/뒤에 색을 주면 레인 색과 겹치고 좋다/나쁘다로 읽혀서 흰색으로 둔다
 @Composable
 private fun GapDirectionIndicator(pointsUp: Boolean, modifier: Modifier) {
     val color = MaterialTheme.colorScheme.onSurface
-    Canvas(modifier.bottomAsBaseline().size(GAP_INDICATOR_WIDTH, GAP_INDICATOR_HEIGHT)) {
+    Canvas(modifier.bottomAsBaseline().size(DIRECTION_INDICATOR_WIDTH, DIRECTION_INDICATOR_HEIGHT)) {
         val path = Path().apply {
             if (pointsUp) {
                 moveTo(size.width / 2, 0f)
@@ -305,12 +315,12 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
     }
 }
 
-// TODO: 파티원 사진 — 폰이 사진을 보내기 시작하면 photos로 그린다. 그 전엔 레인 색 원에 이름 첫 글자를 쓴다
+// TODO: 파티원 사진 — 폰이 사진을 보내면 photos로 그린다. 그 전엔 색 원에 첫 글자를 쓴다
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
 private fun PlayerAvatar(player: Player, modifier: Modifier) {
     val lane = laneColor(player.colorSlot)
-    val selfLane = laneColor(SELF_LANE_COLOR_SLOT)
+    val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
     Box(
         modifier
@@ -320,7 +330,7 @@ private fun PlayerAvatar(player: Player, modifier: Modifier) {
                     // 나와 상대의 레인 색을 섞어 누구와 붙었는지 알 수 있게 한다
                     val border = RunDimensions.COMBO_BORDER_WIDTH.toPx()
                     drawCircle(
-                        Brush.linearGradient(listOf(selfLane, lane)),
+                        Brush.linearGradient(listOf(myLane, lane)),
                         radius = RunDimensions.AVATAR_SIZE.toPx() / 2 + border / 2,
                         style = Stroke(border),
                     )
@@ -380,15 +390,15 @@ private fun DrawScope.drawFinishedIcon(color: Color) {
 private fun DrawScope.drawDisconnectedIcon(color: Color) {
     val stroke = Stroke(size.width * 0.12f, cap = StrokeCap.Round)
     val center = Offset(size.width / 2, size.height * 0.9f)
-    listOf(0.85f, 0.55f).forEach { radius ->
-        val r = size.width * radius
+    listOf(0.85f, 0.55f).forEach { radiusFraction ->
+        val arcRadius = size.width * radiusFraction
         drawArc(
             color,
             startAngle = 225f,
             sweepAngle = 90f,
             useCenter = false,
-            topLeft = Offset(center.x - r, center.y - r),
-            size = Size(r * 2, r * 2),
+            topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+            size = Size(arcRadius * 2, arcRadius * 2),
             style = stroke,
         )
     }
@@ -431,4 +441,27 @@ private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
 @Composable
 private fun RunOverviewPageSoloPreview() = RunPreviewFrame {
     RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun RunOverviewPageSoloPausedPreview() = RunPreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
 }

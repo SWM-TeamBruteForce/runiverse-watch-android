@@ -19,6 +19,8 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.run.RunCommandState
+import com.runiverse.app.run.RunCommands
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,9 +60,17 @@ class MainActivity : ComponentActivity() {
             runiverseApp.exerciseSession.phoneLost.collect { finish() }
         }
         setContent {
-            val link by phoneLink.state.collectAsState()
+            val linkState by phoneLink.state.collectAsState()
             val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
-            val run = link.phoneState?.run?.takeIf { link.isRunActive }
+            val isComboEffectOn by runiverseApp.comboEffectSetting.isOn.collectAsState()
+            val run = linkState.phoneState?.run?.takeIf { linkState.isRunActive }
+            val commands = remember {
+                RunCommands(
+                    pause = { phoneLink.pause() },
+                    resume = { phoneLink.resume() },
+                    finish = { forced -> phoneLink.finish(forced) },
+                )
+            }
             RuniverseTheme {
                 AppScaffold {
                     if (run == null) {
@@ -76,7 +86,16 @@ class MainActivity : ComponentActivity() {
                             if (!isBackground && !isDismissed) IdleScreen()
                         }
                     } else {
-                        RunScreen(run, link.isPhoneReachable, heartRateBpm, link.birthday)
+                        RunScreen(
+                            run,
+                            linkState.isPhoneReachable,
+                            heartRateBpm,
+                            linkState.birthday,
+                            RunCommandState(linkState.isLocked, linkState.isFinishPending, linkState.isCommandOverdue),
+                            commands,
+                            isComboEffectOn,
+                            runiverseApp.comboEffectSetting::set,
+                        )
                     }
                 }
             }

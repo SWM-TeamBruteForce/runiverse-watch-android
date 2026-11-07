@@ -28,6 +28,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -35,7 +36,7 @@ import com.runiverse.app.ui.theme.tabularNumerals
 
 private const val WIDEST_PACE = "88'88\""
 private val LABEL_TO_PACE_GAP = 3.dp
-private val BETWEEN_PACES_GAP = 8.dp
+private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
@@ -52,9 +53,9 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
         DistanceNameRow(player, Modifier.contentBottomAt(slots.topRowBottom).alpha(playerValuesAlpha))
         GapOrStatus(player, slots, playerValuesAlpha)
         if (notice != null) {
-            // 끊긴 동안은 첫 화면이 오래된 격차를 숨기듯 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
+            // 끊긴 동안은 오래된 상대 페이스를 숨기고, 콤보 자리는 안내가 대신한다
             MyPace(
-                run.me.currentPaceSecondsPerKm,
+                run.shownMyPaceSecondsPerKm(),
                 Modifier.contentTopAt(slots.belowRowTop).alpha(phoneValuesAlpha),
             )
             AlignedText(
@@ -64,7 +65,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 Modifier.contentTopAt(slots.bottomRowTop),
             )
         } else {
-            PaceAndComboRows(player, run.me.currentPaceSecondsPerKm, slots, playerValuesAlpha, phoneValuesAlpha)
+            PaceAndComboRows(player, run.shownMyPaceSecondsPerKm(), slots, playerValuesAlpha, phoneValuesAlpha)
         }
     }
 }
@@ -81,13 +82,13 @@ private fun PaceAndComboRows(
     val paceStyle = MaterialTheme.typography.numeralSmall
     val playerCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_player), paceStyle)
     val myCellWidth = widestLabeledPaceWidth(stringResource(R.string.run_pace_me), paceStyle)
-    val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + BETWEEN_PACES_GAP + myCellWidth)
+    val fitsOneLine = paceFitsOneLine(slots.belowRowTop, paceStyle, playerCellWidth + PACE_GAP + myCellWidth)
     val paceRowsModifier = Modifier.contentTopAt(slots.belowRowTop)
     if (fitsOneLine) {
-        // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭은 지금 값이 아니라 가장 넓은 페이스로 잡는다
-        Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(BETWEEN_PACES_GAP)) {
+        // 상대 값이 바뀌어도 내 페이스가 안 움직이게 칸 폭을 가장 넓은 페이스로 잡는다
+        Row(paceRowsModifier, horizontalArrangement = Arrangement.spacedBy(PACE_GAP)) {
             Box(Modifier.width(playerCellWidth), contentAlignment = Alignment.CenterEnd) {
-                // 상대는 같은 폭 숫자가 아니라 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 잘리지 않게 왼쪽으로 넘긴다
+                // 상대는 `40'00"`처럼 칸보다 넓을 수 있다 — 끝 글자가 안 잘리게 왼쪽으로 넘긴다
                 PlayerPace(
                     player,
                     Modifier.wrapContentWidth(Alignment.End, unbounded = true).alpha(playerValuesAlpha),
@@ -98,12 +99,12 @@ private fun PaceAndComboRows(
             }
         }
     } else {
-        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
+        ContentBoundsColumn(contentGap = RunDimensions.LINE_GAP, modifier = paceRowsModifier) {
             PlayerPace(player, Modifier.alpha(playerValuesAlpha))
             MyPace(myPaceSecondsPerKm, Modifier.alpha(phoneValuesAlpha))
         }
     }
-    val comboTop = with(LocalDensity.current) {
+    val comboRowTop = with(LocalDensity.current) {
         partyComboRowTop(
             slots,
             paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
@@ -116,11 +117,11 @@ private fun PaceAndComboRows(
         if (player.comboCount > 0) {
             stringResource(R.string.run_combo_current, player.comboCount)
         } else {
-            stringResource(R.string.run_combo_best, player.maxComboCount)
+            stringResource(R.string.run_combo_max, player.maxComboCount)
         },
         MaterialTheme.typography.labelSmall,
         MaterialTheme.colorScheme.onSurfaceVariant,
-        Modifier.contentTopAt(comboTop).alpha(playerValuesAlpha),
+        Modifier.contentTopAt(comboRowTop).alpha(playerValuesAlpha),
     )
 }
 
@@ -186,7 +187,7 @@ private fun GapOrStatus(player: Player, slots: RunPageSlots, alpha: Float) {
     }
     Row(
         Modifier.baselineAt(slots.bigNumberBaseline).alpha(alpha),
-        horizontalArrangement = Arrangement.spacedBy(RunDimensions.VALUE_UNIT_GAP),
+        horizontalArrangement = Arrangement.spacedBy(RunDimensions.VALUE_TO_UNIT_GAP),
     ) {
         if (directionWord != null) {
             AlignedText(
@@ -253,13 +254,13 @@ private fun widestLabeledPaceWidth(label: String, paceStyle: TextStyle): Dp {
     }
 }
 
-// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 흔들린다
+// 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 페이스가 바뀌어도 모양이 안 바뀐다
 @Composable
-private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRow: Dp): Boolean {
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRowWidth: Dp): Boolean {
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
     return with(LocalDensity.current) {
         val firstBaseline = rowsTop + paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-        widestRow.toPx() <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+        widestRowWidth.toPx() <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
     }
 }
 
@@ -280,6 +281,13 @@ private fun PartyPageBehindComboPreview() = RunPreviewFrame {
 @Composable
 private fun PartyPagePausedPreview() = RunPreviewFrame {
     PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun PartyPageMePausedPreview() = RunPreviewFrame {
+    val run = RunPreviewSamples.party.copy(status = RunStatus.PAUSED)
+    PartyPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound

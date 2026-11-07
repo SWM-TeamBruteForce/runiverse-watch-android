@@ -4,12 +4,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -17,7 +21,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 data class PhoneLinkState(
-    /** 마지막으로 받은 폰 상태다. 연결이 끊겨도 러닝을 접기 전까지는 지우지 않는다 — 화면은 이 값에서 멈춘다. */
+    /** 연결이 끊겨도 러닝을 접기 전까지 지우지 않는다 — 화면은 이 값에서 멈춘다. */
     val phoneState: PhoneState? = null,
     val birthday: String? = null,
     val photos: List<PlayerPhoto> = emptyList(),
@@ -27,6 +31,8 @@ data class PhoneLinkState(
     val isSyncing: Boolean = false,
     /** 보내고 아직 결과를 못 받은 명령이다. */
     val pendingRequestId: String? = null,
+    /** 보내고 아직 결과를 못 받은 명령이 종료다. */
+    val isFinishPending: Boolean = false,
     /** 명령을 보낸 지 3초가 넘었다 — 종료면 `종료 확인 중`을 띄운다. */
     val isCommandOverdue: Boolean = false,
 ) {
@@ -35,6 +41,13 @@ data class PhoneLinkState(
     /** 마지막으로 받은 상태에 아직 끝나지 않은 러닝이 있다. */
     val isRunActive: Boolean get() = phoneState?.run?.let { it.status != RunStatus.FINISHED } ?: false
 }
+
+/** 같은 보류가 1초마다 다시 와도 들어갈 때 한 번만 낸다. */
+fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
+    map { it.phoneState?.run?.finish?.stage == FinishStage.GOAL_PENDING }
+        .distinctUntilChanged()
+        .filter { it }
+        .map { }
 
 /**
  * 폰에서 받은 메시지로 연결 상태를 판정하고, 명령·SYNC·화면 켜짐 신호를 보낸다.
@@ -50,7 +63,7 @@ class PhoneLink(
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
     // TODO: 콤보 진동 — 콤보 효과를 만들 때 앱에서 구독한다. 받는 쪽이 없으면 버린다
-    private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER)
+    private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER_COUNT)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
     private val awaitedSyncIds = ArrayDeque<String>()
@@ -74,7 +87,7 @@ class PhoneLink(
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() = requestSync()
 
-    /** 화면이 꺼진 동안 폰이 아직 있는지 묻는다. 화면이 켜져 있으면 3초 감시가 이미 묻고 있다. */
+    /** 화면이 꺼진 동안 폰이 있는지 묻는다. 켜져 있으면 3초 감시가 이미 묻고 있다. */
     fun probeWhileScreenOff() {
         if (!isScreenVisible) requestSync()
     }
@@ -125,22 +138,23 @@ class PhoneLink(
     }
 
     /** 잠겨 있거나 러닝이 없으면 보내지 않고 false를 돌려준다. 아래 셋 모두 같다. */
-    fun pause(): Boolean = sendCommand(::WatchPause)
+    fun pause(): Boolean = sendCommand(isFinish = false, ::WatchPause)
 
-    fun resume(): Boolean = sendCommand(::WatchResume)
+    fun resume(): Boolean = sendCommand(isFinish = false, ::WatchResume)
 
-    fun finish(forced: Boolean): Boolean = sendCommand { requestId, phoneInstanceId, runningRoomId, statusVersion ->
-        WatchFinish(requestId, phoneInstanceId, runningRoomId, statusVersion, forced)
-    }
+    fun finish(forced: Boolean): Boolean =
+        sendCommand(isFinish = true) { requestId, phoneInstanceId, runningRoomId, statusVersion ->
+            WatchFinish(requestId, phoneInstanceId, runningRoomId, statusVersion, forced)
+        }
 
-    private fun sendCommand(build: (String, String, Long?, Int) -> WatchMessage): Boolean {
+    private fun sendCommand(isFinish: Boolean, build: (String, String, Long?, Int) -> WatchMessage): Boolean {
         val current = _state.value
         val phoneState = current.phoneState ?: return false
         val run = phoneState.run ?: return false
         if (current.isLocked) return false
 
         val requestId = newId()
-        _state.update { it.copy(pendingRequestId = requestId, isCommandOverdue = false) }
+        _state.update { it.copy(pendingRequestId = requestId, isFinishPending = isFinish, isCommandOverdue = false) }
         scope.launch {
             sendWithLimit(build(requestId, phoneState.phoneInstanceId, run.runningRoomId, phoneState.statusVersion))
         }
@@ -163,7 +177,7 @@ class PhoneLink(
         syncJob = scope.launch {
             do {
                 val syncId = newId()
-                awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY)
+                awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY_COUNT)
                 scope.launch { sendWithLimit(WatchSync(syncId)) }
                 delay(REPLY_TIMEOUT)
                 _state.update { it.copy(isPhoneReachable = false) }
@@ -204,7 +218,12 @@ class PhoneLink(
         if (isCommandDone) commandJob?.cancel()
         _state.update {
             if (isCommandDone) {
-                it.copy(phoneState = incoming, pendingRequestId = null, isCommandOverdue = false)
+                it.copy(
+                    phoneState = incoming,
+                    pendingRequestId = null,
+                    isFinishPending = false,
+                    isCommandOverdue = false,
+                )
             } else {
                 it.copy(phoneState = incoming)
             }
@@ -214,17 +233,17 @@ class PhoneLink(
 
     private fun onComboTriggered(combo: WatchComboTriggered) {
         if (combo.eventId in seenComboEventIds) return
-        seenComboEventIds.addCapped(combo.eventId, COMBO_ID_MEMORY)
+        seenComboEventIds.addCapped(combo.eventId, COMBO_EVENT_ID_MEMORY_COUNT)
         _combos.tryEmit(combo)
     }
 
     private fun onError(error: PhoneError) {
         if (error.requestId == null || error.requestId != _state.value.pendingRequestId) return
         commandJob?.cancel()
-        _state.update { it.copy(pendingRequestId = null, isCommandOverdue = false) }
+        _state.update { it.copy(pendingRequestId = null, isFinishPending = false, isCommandOverdue = false) }
     }
 
-    // 폰은 켜짐 신호를 받으면 러닝이 없어도 지금 상태를 바로 보낸다 — 그 답이 없으면 끊긴 것이다
+    // 폰은 켜짐 신호를 받으면 러닝이 없어도 바로 답한다 — 답이 없으면 끊긴 것이다
     private fun awaitVisibleReply() {
         silenceJob?.cancel()
         silenceJob = scope.launch {
@@ -234,7 +253,7 @@ class PhoneLink(
         }
     }
 
-    // 폰은 화면이 켜져 있고 러닝이 끝나기 전일 때만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
+    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 1초마다 보낸다 — 그 밖엔 조용한 게 정상이다
     private fun awaitNextState() {
         silenceJob?.cancel()
         if (!isScreenVisible || !_state.value.isRunActive) return
@@ -258,9 +277,10 @@ class PhoneLink(
     private companion object {
         val REPLY_TIMEOUT = 3.seconds
         val VISIBILITY_INTERVAL = 10.seconds
+
         // 늦게 온 SYNCED도 받되, 화면을 켜 둔 채 폰이 사라져도 끝없이 쌓이지 않게 한다
-        const val SYNC_ID_MEMORY = 5
-        const val COMBO_ID_MEMORY = 64
-        const val COMBO_BUFFER = 8
+        const val SYNC_ID_MEMORY_COUNT = 5
+        const val COMBO_EVENT_ID_MEMORY_COUNT = 64
+        const val COMBO_BUFFER_COUNT = 8
     }
 }

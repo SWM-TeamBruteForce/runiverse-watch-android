@@ -12,7 +12,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 
 ## 문서 인덱스 — 구현 전 해당 문서를 읽을 것
 
-- `docs/code-convention.md` — 네이밍·화면·주석·테스트 규칙
+- `docs/code-convention.md` — 네이밍·화면·물리량 단위·주석·테스트 규칙
 - `docs/git-convention.md` — 커밋·브랜치·PR 규칙
 - `docs/phone-communication.md` — 폰↔워치 메시지·번호·상태 모양·보내고 받는 규칙
 
@@ -25,7 +25,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   IdleScreen     러닝이 없을 때 보이는 대기 화면
   phone/         폰과 메시지 주고받기·연결 상태
   exercise/      러닝 중 앱을 살려 두는 서비스·심박 측정
-  run/           러닝 중 화면(첫 화면·파티원 장·내 기록 장)과 표기 규칙
+  run/           러닝 중 화면(첫 화면·파티원 장·내 기록 장·조작 장)과 표기 규칙
   ui/theme/      여러 기능이 같이 쓰는 색·글자. 화면은 MaterialTheme으로 읽는다
   ui/component/  두 기능 이상이 쓰는 부품
   ```
@@ -37,11 +37,11 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 
 - 1차는 폰 경유 러닝 화면과 끝난 직후 결과 요약뿐이다. 워치가 서버를 직접 부르는 기능(매칭·기록 보기)은 넣지 않는다.
 - 심박은 워치가 재서 워치에만 보여 준다. 폰에 보내지도 저장하지도 않는다.
-- 러닝 중 화면은 스와이프로 닫히지 않는다. 종료는 종료 버튼으로만 한다. 폰 소식이 10분 넘게 없을 때만 앱이 스스로 닫힌다(화면이 꺼져 있으면 더 늦어질 수 있다).
+- 러닝 중 화면은 스와이프로 닫히지 않는다. 종료는 종료 버튼으로만 한다. 폰 소식이 10분 넘게 없을 때만 앱이 스스로 닫힌다.
 
 ## 주의사항
 
-- 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play에서 받은 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
+- 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
 - 러닝 중엔 `ExerciseService`(포그라운드 서비스)가 앱을 살려 둔다. 심박을 쓰는 서비스라 화면이 보일 때만 시작할 수 있다.
 - 화면이 꺼지면 CPU가 잠들어 `delay`가 밀린다. 꺼진 동안의 시간은 `elapsedRealtime`으로 잰다.
 - 키스토어·`key.properties`는 커밋하지 않는다.

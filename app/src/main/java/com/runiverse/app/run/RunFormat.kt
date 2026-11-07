@@ -16,14 +16,19 @@ enum class GapDirection { AHEAD, BEHIND, LEVEL }
 const val UNKNOWN_PACE = "--'--\""
 
 private const val METERS_PER_KM = 1000
-private const val ONE_DECIMAL_FROM_METERS = 10_000
+private const val METERS_PER_TENTH_KM = 100
+private const val EXTRA_DECIMAL_BELOW_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
-/** 러닝 거리(km)다. 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
+/** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
 fun formatRunDistanceKm(meters: Int): String {
     val km = meters / METERS_PER_KM
-    val rest = meters % METERS_PER_KM
-    return if (meters < ONE_DECIMAL_FROM_METERS) "$km.${(rest / 10).pad2()}" else "$km.${rest / 100}"
+    val remainderMeters = meters % METERS_PER_KM
+    return if (meters < EXTRA_DECIMAL_BELOW_METERS) {
+        "$km.${(remainderMeters / 10).padTwoDigits()}"
+    } else {
+        "$km.${remainderMeters / METERS_PER_TENTH_KM}"
+    }
 }
 
 /**
@@ -36,10 +41,20 @@ fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: B
     return when {
         meters < METERS_PER_KM -> FormattedDistance("$meters", if (abbreviateUnits) null else DistanceUnitLabel.METER)
         dropKmDecimal -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
-        meters < ONE_DECIMAL_FROM_METERS ->
-            FormattedDistance("${meters / METERS_PER_KM}.${meters % METERS_PER_KM / 100}", kilometerLabel)
+        meters < EXTRA_DECIMAL_BELOW_METERS -> {
+            val tenthsOfKm = meters % METERS_PER_KM / METERS_PER_TENTH_KM
+            FormattedDistance("${meters / METERS_PER_KM}.$tenthsOfKm", kilometerLabel)
+        }
+
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
     }
+}
+
+/** 남은 거리를 적게 말하지 않게 폰처럼 올린다. */
+fun formatRemainingDistance(meters: Int): FormattedDistance {
+    if (meters < METERS_PER_KM) return FormattedDistance("$meters", DistanceUnitLabel.METER)
+    val tenthsOfKm = (meters + METERS_PER_TENTH_KM - 1) / METERS_PER_TENTH_KM
+    return FormattedDistance("${tenthsOfKm / 10}.${tenthsOfKm % 10}", DistanceUnitLabel.KILOMETER)
 }
 
 /** `gapMeters`는 상대 − 나라서 양수면 상대가 앞이다. */
@@ -52,15 +67,15 @@ fun gapDirection(gapMeters: Int): GapDirection = when {
 /** 위치를 못 잡았거나 60분을 넘으면 낼 페이스가 없다고 본다. */
 fun formatPace(secondsPerKm: Int?): String {
     if (secondsPerKm == null || secondsPerKm >= SECONDS_PER_HOUR) return UNKNOWN_PACE
-    return "${secondsPerKm / 60}'${(secondsPerKm % 60).pad2()}\""
+    return "${secondsPerKm / 60}'${(secondsPerKm % 60).padTwoDigits()}\""
 }
 
 /** 1시간 전엔 폰처럼 `mm:ss`, 넘으면 `h:mm:ss`다. */
 fun formatElapsedTime(seconds: Int): String {
     val minutes = seconds / 60 % 60
-    val rest = (seconds % 60).pad2()
-    if (seconds < SECONDS_PER_HOUR) return "${(seconds / 60).pad2()}:$rest"
-    return "${seconds / SECONDS_PER_HOUR}:${minutes.pad2()}:$rest"
+    val rest = (seconds % 60).padTwoDigits()
+    if (seconds < SECONDS_PER_HOUR) return "${(seconds / 60).padTwoDigits()}:$rest"
+    return "${seconds / SECONDS_PER_HOUR}:${minutes.padTwoDigits()}:$rest"
 }
 
 /** 목표까지 진행률이다. 목표가 없으면(솔로) null — 링을 그리지 않는다. */
@@ -76,4 +91,7 @@ fun Player.shownPaceSecondsPerKm(): Int? = when (status) {
     RunStatus.RUNNING, RunStatus.FINISHED -> currentPaceSecondsPerKm
 }
 
-private fun Int.pad2(): String = toString().padStart(2, '0')
+/** 내가 버튼으로 멈춰도 상대처럼 지금 페이스가 없다. */
+fun RunState.shownMyPaceSecondsPerKm(): Int? = if (status == RunStatus.PAUSED) null else me.currentPaceSecondsPerKm
+
+private fun Int.padTwoDigits(): String = toString().padStart(2, '0')

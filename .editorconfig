@@ -20,6 +20,7 @@ ij_kotlin_packages_to_use_import_on_demand = none.*
 [*.xml]
 indent_style = space
 indent_size = 4
+ij_xml_space_inside_empty_tag = true
 
 [*.bat]
 # 전역 규칙 예외 — Windows 배치 파일은 CRLF 필수

@@ -166,7 +166,7 @@ class ExerciseSessionTest {
         fixture.tracker.endByOtherApp()
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
 
         // then
@@ -178,7 +178,7 @@ class ExerciseSessionTest {
         // given
         val fixture = Fixture(this)
         fixture.startSession()
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
 
         // when
@@ -193,11 +193,11 @@ class ExerciseSessionTest {
     fun `운동 시작에 실패하면 다음 시작 요청에서 다시 시작한다`() = runTest {
         // given
         val fixture = Fixture(this)
-        fixture.tracker.startSucceeds = false
+        fixture.tracker.isStartSuccessful = false
         fixture.startSession()
 
         // when
-        fixture.tracker.startSucceeds = true
+        fixture.tracker.isStartSuccessful = true
         fixture.startSession()
 
         // then
@@ -226,7 +226,7 @@ class ExerciseSessionTest {
         fixture.startSession()
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
         advanceTimeBy(1_001)
         runCurrent()
@@ -243,7 +243,7 @@ class ExerciseSessionTest {
         fixture.tracker.stopDelayMs = 1_000
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
 
         // then -> 운동을 끄는 동안엔 서비스를 내리지 않는다
@@ -265,7 +265,7 @@ class ExerciseSessionTest {
         fixture.tracker.stopFailures = 1
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
 
         // then -> 다시 시도하기 전엔 서비스를 내리지 않는다
@@ -309,7 +309,7 @@ class ExerciseSessionTest {
         fixture.tracker.stopFailures = 5
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         advanceTimeBy(2_001)
         runCurrent()
 
@@ -324,8 +324,8 @@ class ExerciseSessionTest {
         val fixture = Fixture(this)
 
         // when
-        fixture.receiveState(sequence = 2, run = run(RunStatus.FINISHED))
-        fixture.receiveState(sequence = 3, run = null)
+        fixture.receiveState(stateSequence = 2, run = run(RunStatus.FINISHED))
+        fixture.receiveState(stateSequence = 3, run = null)
         runCurrent()
 
         // then
@@ -338,7 +338,7 @@ class ExerciseSessionTest {
         val fixture = Fixture(this)
 
         // when
-        fixture.receiveState(sequence = 2, run = run(RunStatus.PAUSED))
+        fixture.receiveState(stateSequence = 2, run = run(RunStatus.PAUSED))
         runCurrent()
 
         // then
@@ -352,7 +352,7 @@ class ExerciseSessionTest {
         fixture.startSession()
 
         // when
-        fixture.receiveState(sequence = 2, run = null)
+        fixture.receiveState(stateSequence = 2, run = null)
         runCurrent()
 
         // then
@@ -368,7 +368,7 @@ class ExerciseSessionTest {
         fixture.startSession()
 
         // when
-        fixture.receiveState(sequence = 2, run = run(RunStatus.FINISHED))
+        fixture.receiveState(stateSequence = 2, run = run(RunStatus.FINISHED))
         runCurrent()
 
         // then
@@ -383,7 +383,7 @@ class ExerciseSessionTest {
         fixture.startSession()
 
         // when
-        fixture.receiveState(sequence = 2, run = run(RunStatus.PAUSED))
+        fixture.receiveState(stateSequence = 2, run = run(RunStatus.PAUSED))
         runCurrent()
 
         // then
@@ -445,7 +445,7 @@ class ExerciseSessionTest {
         // given
         val fixture = Fixture(this)
         fixture.startSession()
-        fixture.link.onScreenStarted()
+        fixture.phoneLink.onScreenStarted()
         runCurrent()
         fixture.sent.clear()
         fixture.sleptMs += 60_001
@@ -504,7 +504,7 @@ class ExerciseSessionTest {
         runCurrent()
 
         // then
-        assertNull(fixture.link.state.value.phoneState)
+        assertNull(fixture.phoneLink.state.value.phoneState)
         assertEquals("stop", fixture.tracker.calls.last())
         assertTrue(fixture.isEnded)
         assertTrue(fixture.isPhoneLost)
@@ -625,9 +625,9 @@ class ExerciseSessionTest {
         fixture.startSession()
         advanceTimeBy(720_001)
         runCurrent()
-        fixture.link.start()
+        fixture.phoneLink.start()
         runCurrent()
-        fixture.answerSync(sequence = 3)
+        fixture.answerSync(stateSequence = 3)
         fixture.isEnded = false
         fixture.isPhoneLost = false
 
@@ -650,7 +650,7 @@ class ExerciseSessionTest {
         runCurrent()
 
         // when -> 9분째 폰이 답한다
-        fixture.answerSync(sequence = 2)
+        fixture.answerSync(stateSequence = 2)
         advanceTimeBy(240_000)
         runCurrent()
 
@@ -672,14 +672,14 @@ class ExerciseSessionTest {
         fixture.sleptMs += 60_000
 
         // when -> 수집기가 돌기 전에 심박이 먼저 배달된다
-        fixture.answerSync(sequence = 2)
+        fixture.answerSync(stateSequence = 2)
         fixture.tracker.deliver(148)
         runCurrent()
 
         // then
         assertFalse(fixture.isEnded)
         assertFalse(fixture.isPhoneLost)
-        assertEquals(2L, fixture.link.state.value.phoneState?.stateSequence)
+        assertEquals(2L, fixture.phoneLink.state.value.phoneState?.stateSequence)
     }
 
     private class Fixture(private val testScope: TestScope) {
@@ -689,22 +689,22 @@ class ExerciseSessionTest {
         var isEnded = false
         var isPhoneLost = false
         private var nextId = 0
-        val link = PhoneLink(
+        val phoneLink = PhoneLink(
             scope = testScope.backgroundScope,
             send = { sent += it },
             newId = { "id-${++nextId}" },
         )
         val session = ExerciseSession(
             scope = testScope.backgroundScope,
-            phoneLink = link,
+            phoneLink = phoneLink,
             tracker = tracker,
-            now = { testScope.testScheduler.currentTime + sleptMs },
+            nowMs = { testScope.testScheduler.currentTime + sleptMs },
         )
 
         init {
-            link.start()
+            phoneLink.start()
             testScope.runCurrent()
-            answerSync(sequence = 1)
+            answerSync(stateSequence = 1)
             testScope.backgroundScope.launch { session.phoneLost.collect { isPhoneLost = true } }
             testScope.runCurrent()
         }
@@ -714,20 +714,20 @@ class ExerciseSessionTest {
             testScope.runCurrent()
         }
 
-        fun answerSync(sequence: Long) {
+        fun answerSync(stateSequence: Long) {
             val sync = sent.last { it is WatchSync } as WatchSync
-            link.onReceived(
+            phoneLink.onReceived(
                 WatchSynced(
                     syncId = sync.syncId,
-                    state = state(sequence, run(RunStatus.RUNNING)),
+                    state = state(stateSequence, run(RunStatus.RUNNING)),
                     birthday = null,
                     photos = emptyList(),
                 ),
             )
         }
 
-        fun receiveState(sequence: Long, run: RunState?) {
-            link.onReceived(WatchStateUpdated(state(sequence, run)))
+        fun receiveState(stateSequence: Long, run: RunState?) {
+            phoneLink.onReceived(WatchStateUpdated(state(stateSequence, run)))
         }
     }
 
@@ -735,7 +735,7 @@ class ExerciseSessionTest {
         val calls = mutableListOf<String>()
         var isMeasurable = true
         var owner: ExerciseOwner? = ExerciseOwner.NONE
-        var startSucceeds = true
+        var isStartSuccessful = true
         var ownerDelayMs = 0L
         var startDelayMs = 0L
         var stopDelayMs = 0L
@@ -759,7 +759,7 @@ class ExerciseSessionTest {
         override suspend fun startExercise(): Boolean {
             calls += "start"
             delay(startDelayMs)
-            if (!startSucceeds) return false
+            if (!isStartSuccessful) return false
             owner = ExerciseOwner.ME
             return true
         }
@@ -775,8 +775,8 @@ class ExerciseSessionTest {
             return true
         }
 
-        fun deliver(bpm: Int?) {
-            onHeartRate?.invoke(bpm)
+        fun deliver(heartRateBpm: Int?) {
+            onHeartRate?.invoke(heartRateBpm)
         }
 
         fun endByOtherApp() {
@@ -785,9 +785,9 @@ class ExerciseSessionTest {
     }
 
     private companion object {
-        fun state(sequence: Long, run: RunState?) = PhoneState(
+        fun state(stateSequence: Long, run: RunState?) = PhoneState(
             phoneInstanceId = "p1",
-            stateSequence = sequence,
+            stateSequence = stateSequence,
             statusVersion = 0,
             run = run,
         )

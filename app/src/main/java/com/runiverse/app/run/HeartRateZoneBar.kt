@@ -18,9 +18,9 @@ import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.R
 
 private const val ZONE_COUNT = 5
-private val SEGMENT_GAP = 3.dp
+private val ZONE_GAP = 3.dp
 
-// 심박은 세 자리가 가장 길다 — 막대를 이 폭으로 고정해 100을 넘는 순간 길이가 바뀌지 않게 한다
+// 막대를 가장 긴 심박 폭으로 고정해 100을 넘어도 길이가 안 바뀌게 한다
 private const val WIDEST_HEART_RATE = "888"
 
 /** 가장 넓은 심박 덩어리(세 자리 숫자 + `bpm`) 폭이다. 구간 막대 길이로 쓴다. */
@@ -33,7 +33,7 @@ internal fun widestHeartRateBlockWidth(valueStyle: TextStyle): Dp {
     return remember(valueStyle, unitStyle, unit, density) {
         val valueWidth = measurer.measure(WIDEST_HEART_RATE, valueStyle).size.width
         val unitWidth = measurer.measure(unit, unitStyle).size.width
-        with(density) { valueWidth.toDp() + RunDimensions.VALUE_UNIT_GAP + unitWidth.toDp() }
+        with(density) { valueWidth.toDp() + RunDimensions.VALUE_TO_UNIT_GAP + unitWidth.toDp() }
     }
 }
 
@@ -43,14 +43,14 @@ internal fun HeartRateZoneBar(filledZones: Int, modifier: Modifier = Modifier) {
     val filledColor = MaterialTheme.colorScheme.onBackground
     val emptyColor = MaterialTheme.colorScheme.outline
     Canvas(modifier.boxContentBounds().height(RunDimensions.ZONE_BAR_HEIGHT)) {
-        val gap = SEGMENT_GAP.toPx()
-        val segment = (size.width - gap * (ZONE_COUNT - 1)) / ZONE_COUNT
+        val zoneGap = ZONE_GAP.toPx()
+        val zoneWidth = (size.width - zoneGap * (ZONE_COUNT - 1)) / ZONE_COUNT
         val radius = CornerRadius(size.height / 2)
         repeat(ZONE_COUNT) { index ->
             drawRoundRect(
                 color = if (index < filledZones) filledColor else emptyColor,
-                topLeft = Offset(index * (segment + gap), 0f),
-                size = Size(segment, size.height),
+                topLeft = Offset(index * (zoneWidth + zoneGap), 0f),
+                size = Size(zoneWidth, size.height),
                 cornerRadius = radius,
             )
         }

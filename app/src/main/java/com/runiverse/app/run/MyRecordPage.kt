@@ -21,7 +21,8 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.RunState
-import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
+import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_DESCENDER_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -40,7 +41,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     val (barTop, rowsTop) = with(LocalDensity.current) {
         // 막대는 숫자가 아니라 `bpm`의 p 꼬리 아래에서 잰다
         val heartRateBottom = slots.bigNumberBaseline + unitSize.toPx() * SUIT_DESCENDER_INK.belowBaselineEm
-        val barTop = heartRateBottom + RunDimensions.ZONE_BAR_GAP.toPx()
+        val barTop = heartRateBottom + RunDimensions.VALUE_TO_ZONE_BAR_GAP.toPx()
         val groupGap = RunDimensions.GROUP_GAP.toPx()
         val rowsTop = if (heartRateZone != null) {
             barTop + RunDimensions.ZONE_BAR_HEIGHT.toPx() + groupGap
@@ -51,11 +52,17 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         distanceProgress(run.me.distanceMeters, run.targetDistanceMeters)?.let {
-            ProgressRing(it, laneColor(SELF_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
+            ProgressRing(it, laneColor(MY_LANE_COLOR_SLOT), Modifier.alpha(phoneValuesAlpha))
         }
-        if (!isPhoneReachable) {
+        // 같은 자리라 끊김 안내가 멈춤보다 먼저다
+        val topNotice = when {
+            !isPhoneReachable -> stringResource(R.string.run_phone_checking)
+            run.status == RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
+            else -> null
+        }
+        if (topNotice != null) {
             AlignedText(
-                stringResource(R.string.run_phone_checking),
+                topNotice,
                 MaterialTheme.typography.bodyMedium,
                 MaterialTheme.colorScheme.onSurface,
                 Modifier.contentBottomAt(slots.topRowBottom),
@@ -78,7 +85,7 @@ internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm
     }
 }
 
-// 줄 수는 지금 값이 아니라 가장 넓은 값으로 정한다 — 달리는 중 칼로리가 늘어도 모양이 안 바뀐다
+// 줄 수는 가장 넓은 값으로 정한다 — 달리는 중 칼로리가 늘어도 모양이 안 바뀐다
 @Composable
 private fun RecordRows(me: MyRecord, rowsTop: Float, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
@@ -93,7 +100,7 @@ private fun RecordRows(me: MyRecord, rowsTop: Float, modifier: Modifier) {
             calories()
         }
     } else {
-        ContentBoundsColumn(gap = RunDimensions.LINE_GAP, modifier = modifier) {
+        ContentBoundsColumn(contentGap = RunDimensions.LINE_GAP, modifier = modifier) {
             cadence()
             calories()
         }
@@ -105,15 +112,15 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
     val unitStyle = MaterialTheme.typography.labelSmall
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val screenWidth = LocalWindowInfo.current.containerSize.width.toFloat()
-    return remember(rowsTop, style, unitStyle, spmUnit, kcalUnit, density, screenWidth) {
+    val screenSize = LocalWindowInfo.current.containerSize.width.toFloat()
+    return remember(rowsTop, style, unitStyle, spmUnit, kcalUnit, density, screenSize) {
         with(density) {
-            fun width(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
-            val widestRow = width(WIDEST_CADENCE, style) + width(spmUnit, unitStyle) +
-                width(WIDEST_CALORIES, style) + width(kcalUnit, unitStyle) +
-                RunDimensions.VALUE_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
+            fun widthOf(text: String, textStyle: TextStyle) = measurer.measure(text, textStyle).size.width
+            val widestRowWidth = widthOf(WIDEST_CADENCE, style) + widthOf(spmUnit, unitStyle) +
+                widthOf(WIDEST_CALORIES, style) + widthOf(kcalUnit, unitStyle) +
+                RunDimensions.VALUE_TO_UNIT_GAP.toPx() * 2 + RunDimensions.GROUP_GAP.toPx()
             val firstBaseline = rowsTop + style.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm
-            widestRow <= usableWidthAt(firstBaseline, screenWidth, RunDimensions.TEXT_EDGE_MARGIN.toPx())
+            widestRowWidth <= usableWidthAt(firstBaseline, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx())
         }
     }
 }
@@ -121,7 +128,7 @@ private fun fitsOneLine(rowsTop: Float, style: TextStyle, spmUnit: String, kcalU
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun MyRecordPagePreview() = RunPreviewFrame {
+private fun MyRecordPageRunningPreview() = RunPreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
@@ -129,6 +136,18 @@ private fun MyRecordPagePreview() = RunPreviewFrame {
 @Composable
 private fun MyRecordPagePhoneLostPreview() = RunPreviewFrame {
     MyRecordPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun MyRecordPagePausedPreview() = RunPreviewFrame {
+    MyRecordPage(
+        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        isPhoneReachable = true,
+        heartRateBpm = 92,
+        heartRateZone = 1,
+    )
 }
 
 @WearPreviewLargeRound

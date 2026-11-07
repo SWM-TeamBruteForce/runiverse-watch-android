@@ -13,7 +13,6 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.GestureInclusion
 import androidx.wear.compose.foundation.pager.HorizontalPager
-import androidx.wear.compose.foundation.pager.PagerDefaults
 import androidx.wear.compose.foundation.pager.PagerState
 import androidx.wear.compose.foundation.pager.VerticalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
@@ -26,23 +25,33 @@ import com.runiverse.app.phone.RunState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-private const val OVERVIEW_PAGE_INDEX = 0
-private const val MY_RECORD_PAGE_INDEX = 1
-private const val PAGE_COUNT = 2
+private const val CONTROLS_PAGE_INDEX = 0
+private const val OVERVIEW_PAGE_INDEX = 1
+private const val MY_RECORD_PAGE_INDEX = 2
+private const val PAGE_COUNT = 3
 private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
 private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
 private val PAGE_DOT_DIAMETER = 3.dp
 private val PAGE_DOT_SPACING = 6.dp
-private val PAGE_DOTS_END_INSET = 12.5.dp
+private val PAGE_DOTS_END_PADDING = 12.5.dp
 
 @Composable
-internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, birthday: String?) {
+internal fun RunScreen(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    heartRateBpm: Int?,
+    birthday: String?,
+    commandState: RunCommandState,
+    commands: RunCommands,
+    isComboEffectOn: Boolean,
+    onComboEffectChange: (Boolean) -> Unit,
+) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
     val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
     val scope = rememberCoroutineScope()
     val isOnOverview = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
         verticalPagerState.currentPage == OVERVIEW_VERTICAL_PAGE_INDEX
-    // 첫 화면에서 뒤로가면 러닝을 끝내지 않고 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
+    // 첫 화면에서 뒤로가면 시계 화면으로 나가기만 한다 — 끝내는 길은 종료 버튼 하나다
     BackHandler(enabled = !isOnOverview) {
         scope.launch {
             horizontalPagerState.animateScrollToPage(OVERVIEW_PAGE_INDEX)
@@ -51,23 +60,35 @@ internal fun RunScreen(run: RunState, isPhoneReachable: Boolean, heartRateBpm: I
     }
 
     val birthDate = remember(birthday) { parseBirthday(birthday) }
-    val zone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
+    val heartRateZone = heartRateZoneOrNull(heartRateBpm, birthDate, LocalDate.now())
 
-    // 장 사이는 화면이 통째로 밀리는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
+    // 장 사이는 보통 넘기기다 — AnimatedPage의 확대·축소는 쓰지 않는다
     HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
         HorizontalPager(
             horizontalPagerState,
             gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
+                CONTROLS_PAGE_INDEX -> ControlsPage(
+                    run,
+                    isPhoneReachable,
+                    commandState,
+                    commands,
+                    isComboEffectOn,
+                    onComboEffectChange,
+                )
+
                 OVERVIEW_PAGE_INDEX -> OverviewVerticalPager(
                     verticalPagerState,
                     run,
                     isPhoneReachable,
                     heartRateBpm,
-                    zone,
+                    heartRateZone,
                 )
-                MY_RECORD_PAGE_INDEX -> ScreenScaffold { MyRecordPage(run, isPhoneReachable, heartRateBpm, zone) }
+
+                MY_RECORD_PAGE_INDEX -> ScreenScaffold {
+                    MyRecordPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
+                }
             }
         }
     }
@@ -99,22 +120,17 @@ private fun OverviewVerticalPager(
     }
 }
 
-// 파티원 장은 첫 화면에서 세로로만 오간다
-// userScrollEnabled로 막으면 첫 화면으로 돌아온 직후 첫 좌우 쓸기가 무시된다 — 라이브러리가 다음 터치에서야 감지를 다시 켠다
+// 파티원 장은 세로로만 오간다 — userScrollEnabled로 막으면 돌아온 직후 첫 좌우 쓸기가 무시된다
+// 쓸어 닫기가 꺼져 있어 첫 장 가장자리를 안 비운다 — 비우면 조작 장에서 왼쪽 끝 쓸기가 막힌다
 @Composable
 private fun partyPageBlockingGestures(
     horizontalPagerState: PagerState,
     verticalPagerState: PagerState,
-): GestureInclusion {
-    val defaultGestures = PagerDefaults.gestureInclusion(horizontalPagerState)
-    return remember(defaultGestures, horizontalPagerState, verticalPagerState) {
-        object : GestureInclusion {
-            override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean {
-                val isOnPartyPage = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
-                    verticalPagerState.currentPage != OVERVIEW_VERTICAL_PAGE_INDEX
-                return isOnPartyPage || defaultGestures.ignoreGestureStart(offset, layoutCoordinates)
-            }
-        }
+): GestureInclusion = remember(horizontalPagerState, verticalPagerState) {
+    object : GestureInclusion {
+        override fun ignoreGestureStart(offset: Offset, layoutCoordinates: LayoutCoordinates): Boolean =
+            horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
+                verticalPagerState.currentPage != OVERVIEW_VERTICAL_PAGE_INDEX
     }
 }
 
@@ -124,7 +140,7 @@ private fun VerticalPageDots(pagerState: PagerState) {
     val color = MaterialTheme.colorScheme.onBackground
     val count = pagerState.pageCount
     Canvas(
-        Modifier.padding(end = PAGE_DOTS_END_INSET)
+        Modifier.padding(end = PAGE_DOTS_END_PADDING)
             .size(PAGE_DOT_DIAMETER, PAGE_DOT_SPACING * (count - 1) + PAGE_DOT_DIAMETER),
     ) {
         val radius = size.width / 2

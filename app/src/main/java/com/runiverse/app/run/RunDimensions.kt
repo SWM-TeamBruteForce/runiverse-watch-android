@@ -2,7 +2,7 @@ package com.runiverse.app.run
 
 import androidx.compose.ui.unit.dp
 
-/** 러닝 장들이 같이 쓰는 치수다. 간격은 보이는 글자 사이로 잰다. 부품 하나만 쓰는 크기는 그 부품 파일에 둔다. */
+/** 간격은 보이는 글자 사이로 잰다. 부품 하나만 쓰는 크기는 그 부품 파일에 둔다. */
 internal object RunDimensions {
     // 큰 숫자의 가운데 높이와 위 줄 양끝 여백은 화면 크기에 대한 비율로 둔다
     const val CENTER_Y_FRACTION = 207f / 480f
@@ -13,8 +13,8 @@ internal object RunDimensions {
 
     val GROUP_GAP = 13.dp
     val LINE_GAP = 7.dp
-    val VALUE_UNIT_GAP = 2.dp
-    val ZONE_BAR_GAP = 4.dp
+    val VALUE_TO_UNIT_GAP = 2.dp
+    val VALUE_TO_ZONE_BAR_GAP = 4.dp
     val ZONE_BAR_HEIGHT = 3.dp
     val AVATAR_SIZE = 24.5.dp
     val COMBO_BORDER_WIDTH = 2.dp

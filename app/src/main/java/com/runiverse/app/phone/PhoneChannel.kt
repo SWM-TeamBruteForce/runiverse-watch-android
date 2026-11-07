@@ -25,7 +25,7 @@ class PhoneChannel(context: Context) {
             }
         }
         // 등록이 실패하면 아무것도 못 받은 채 조용히 남지 않게, 받는 쪽에 예외로 넘긴다
-        // 등록을 기다리는 중에 취소돼도 등록 자체는 끝까지 진행된다 — 등록이 끝난 뒤에 해제해야 남지 않는다
+        // 기다리는 중에 취소돼도 등록은 끝까지 진행된다 — 끝난 뒤에 해제해야 남지 않는다
         val registration = messageClient.addListener(listener)
         try {
             registration.await()
