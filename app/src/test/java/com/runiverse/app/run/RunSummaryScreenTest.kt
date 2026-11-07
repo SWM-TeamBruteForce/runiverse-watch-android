@@ -1,6 +1,5 @@
 package com.runiverse.app.run
 
-import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -16,10 +15,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
 class RunSummaryScreenTest {
 
     @get:Rule
@@ -27,15 +24,6 @@ class RunSummaryScreenTest {
 
     private val result = RunPreviewSamples.result
     private var closeCount = 0
-
-    private fun text(id: Int) = composeRule.activity.getString(id)
-
-    private fun show(shownResult: RunResult? = result, isPhoneReachable: Boolean = true) {
-        val run = RunPreviewSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
-        composeRule.setContent {
-            RunPreviewFrame { RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }) }
-        }
-    }
 
     @Test
     fun `받은 결과는 폰이 끊겨도 멈춘 것으로 보지 않는다`() {
@@ -132,5 +120,14 @@ class RunSummaryScreenTest {
 
         // then
         assertEquals(1, closeCount)
+    }
+
+    private fun text(id: Int) = composeRule.activity.getString(id)
+
+    private fun show(shownResult: RunResult? = result, isPhoneReachable: Boolean = true) {
+        val run = RunPreviewSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
+        composeRule.setContent {
+            RunPreviewFrame { RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }) }
+        }
     }
 }

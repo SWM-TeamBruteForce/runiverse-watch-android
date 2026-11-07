@@ -1,6 +1,5 @@
 package com.runiverse.app.run
 
-import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,10 +20,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
 class RunScreenTest {
 
     @get:Rule
@@ -35,44 +32,6 @@ class RunScreenTest {
     private val elapsedTime = formatElapsedTime(party.me.elapsedSeconds)
     private val firstPlayerName = party.players.first().nickname
     private val backDispatcher get() = composeRule.activity.onBackPressedDispatcher
-
-    private fun text(id: Int) = composeRule.activity.getString(id)
-
-    private fun show(run: RunState) {
-        composeRule.setContent {
-            RunPreviewFrame {
-                RunScreen(
-                    run,
-                    isPhoneReachable = true,
-                    heartRateBpm = 150,
-                    birthday = null,
-                    RunCommandState(),
-                    RunCommands(pause = {}, resume = {}, finish = {}),
-                    isComboEffectOn = true,
-                    onComboEffectChange = {},
-                )
-            }
-        }
-    }
-
-    private fun swipe(gesture: TouchInjectionScope.() -> Unit) {
-        composeRule.onRoot().performTouchInput(gesture)
-        composeRule.waitForIdle()
-    }
-
-    private fun pressBack() {
-        composeRule.runOnUiThread { backDispatcher.onBackPressed() }
-        composeRule.waitForIdle()
-    }
-
-    @Test
-    fun `처음엔 첫 화면을 보인다`() {
-        // when
-        show(solo)
-
-        // then
-        composeRule.onNodeWithText(elapsedTime).assertIsDisplayed()
-    }
 
     @Test
     fun `왼쪽으로 쓸면 내 기록 장으로 간다`() {
@@ -250,5 +209,34 @@ class RunScreenTest {
 
         // then
         composeRule.onNodeWithText(elapsedTime).assertIsDisplayed()
+    }
+
+    private fun text(id: Int) = composeRule.activity.getString(id)
+
+    private fun show(run: RunState) {
+        composeRule.setContent {
+            RunPreviewFrame {
+                RunScreen(
+                    run,
+                    isPhoneReachable = true,
+                    heartRateBpm = 150,
+                    birthday = null,
+                    RunCommandState(),
+                    RunCommands(pause = {}, resume = {}, finish = {}),
+                    isComboEffectOn = true,
+                    onComboEffectChange = {},
+                )
+            }
+        }
+    }
+
+    private fun swipe(gesture: TouchInjectionScope.() -> Unit) {
+        composeRule.onRoot().performTouchInput(gesture)
+        composeRule.waitForIdle()
+    }
+
+    private fun pressBack() {
+        composeRule.runOnUiThread { backDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
     }
 }

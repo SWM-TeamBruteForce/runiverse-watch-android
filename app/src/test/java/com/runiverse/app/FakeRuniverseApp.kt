@@ -6,7 +6,7 @@ import com.runiverse.app.phone.PhoneLink
 import com.runiverse.app.phone.WatchMessage
 import kotlinx.coroutines.MainScope
 
-// 수신 등록·진동을 돌리지 않고, 실제 PhoneLink·ExerciseSession으로 보낸 메시지와 측정 호출만 기록한다
+// 수신 등록·진동 없이, 보낸 메시지와 측정 호출만 기록한다
 // Android가 리플렉션으로 만들어 private로 둘 수 없다
 class FakeRuniverseApp : RuniverseApp() {
     val testScope = MainScope()

@@ -1,6 +1,5 @@
 package com.runiverse.app.run
 
-import android.app.Application
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -20,9 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
-// 눌러 끝내는 시간 1.2초를 넘긴다
 private const val HOLD_PAST_FINISH_MS = 1_300L
 private const val HOLD_SHORT_OF_FINISH_MS = 500L
 private const val AFTER_RELEASE_MS = 100L
@@ -30,7 +27,6 @@ private const val HOLD_LONGER_NOTICE_PASSED_MS = 1_600L
 private const val SCROLL_AWAY_PX = 200f
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
 class ControlsPageTest {
 
     @get:Rule
@@ -45,32 +41,6 @@ class ControlsPageTest {
     )
     private val solo = RunPreviewSamples.solo
     private val party = RunPreviewSamples.party
-
-    private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
-
-    private fun show(
-        run: RunState = solo,
-        isPhoneReachable: Boolean = true,
-        commandState: RunCommandState = RunCommandState(),
-    ) {
-        composeRule.setContent {
-            RunPreviewFrame {
-                ControlsPage(run, isPhoneReachable, commandState, commands, isComboEffectOn = true) {
-                    comboChanges += it
-                }
-            }
-        }
-    }
-
-    // 시계를 멈추지 않으면 누르자마자 시간이 흘러 끝까지 누른 것이 된다
-    private fun press(textId: Int, heldMs: Long) {
-        composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithText(text(textId)).performTouchInput { down(center) }
-        composeRule.waitForIdle()
-        composeRule.mainClock.advanceTimeBy(heldMs)
-        composeRule.onRoot().performTouchInput { up() }
-        composeRule.mainClock.advanceTimeBy(AFTER_RELEASE_MS)
-    }
 
     @Test
     fun `일시정지를 누르면 일시정지 명령을 부른다`() {
@@ -139,7 +109,7 @@ class ControlsPageTest {
         // then
         composeRule.onNodeWithText(text(R.string.controls_hold_longer)).assertExists()
 
-        // when -> 손을 떼면 타이머도 멈춰 끝낼 시간이 지나도 안 끝난다
+        // when
         composeRule.mainClock.advanceTimeBy(HOLD_PAST_FINISH_MS)
 
         // then
@@ -336,5 +306,31 @@ class ControlsPageTest {
 
         // then
         assertEquals(listOf(false), comboChanges)
+    }
+
+    private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
+
+    private fun show(
+        run: RunState = solo,
+        isPhoneReachable: Boolean = true,
+        commandState: RunCommandState = RunCommandState(),
+    ) {
+        composeRule.setContent {
+            RunPreviewFrame {
+                ControlsPage(run, isPhoneReachable, commandState, commands, isComboEffectOn = true) {
+                    comboChanges += it
+                }
+            }
+        }
+    }
+
+    // 시계를 멈추지 않으면 누르자마자 시간이 흘러 끝까지 누른 것이 된다
+    private fun press(textId: Int, heldMs: Long) {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithText(text(textId)).performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeBy(heldMs)
+        composeRule.onRoot().performTouchInput { up() }
+        composeRule.mainClock.advanceTimeBy(AFTER_RELEASE_MS)
     }
 }

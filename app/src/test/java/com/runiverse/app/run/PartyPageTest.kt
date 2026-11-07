@@ -1,6 +1,5 @@
 package com.runiverse.app.run
 
-import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
@@ -11,10 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
 class PartyPageTest {
 
     @get:Rule
@@ -22,16 +19,6 @@ class PartyPageTest {
 
     private val run = RunPreviewSamples.party
     private val player = run.players.first()
-
-    private fun text(id: Int, vararg args: Any) = RuntimeEnvironment.getApplication().getString(id, *args)
-
-    private fun show(shownPlayer: Player = player, isPhoneReachable: Boolean = true, isServerConnected: Boolean = true) {
-        composeRule.setContent {
-            RunPreviewFrame {
-                PartyPage(run.copy(isServerConnected = isServerConnected), shownPlayer, isPhoneReachable)
-            }
-        }
-    }
 
     @Test
     fun `파티원 이름과 거리를 보인다`() {
@@ -170,5 +157,15 @@ class PartyPageTest {
 
         // then
         composeRule.onNodeWithText(text(R.string.run_server_checking)).assertExists()
+    }
+
+    private fun text(id: Int, vararg args: Any) = RuntimeEnvironment.getApplication().getString(id, *args)
+
+    private fun show(shownPlayer: Player = player, isPhoneReachable: Boolean = true, isServerConnected: Boolean = true) {
+        composeRule.setContent {
+            RunPreviewFrame {
+                PartyPage(run.copy(isServerConnected = isServerConnected), shownPlayer, isPhoneReachable)
+            }
+        }
     }
 }

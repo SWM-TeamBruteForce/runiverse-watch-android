@@ -1,6 +1,5 @@
 package com.runiverse.app.run
 
-import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -13,10 +12,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, qualifiers = "w226dp-h226dp-round-watch-xhdpi")
 class RunOverviewPageTest {
 
     @get:Rule
@@ -24,14 +21,6 @@ class RunOverviewPageTest {
 
     private val solo = RunPreviewSamples.solo
     private val party = RunPreviewSamples.party
-
-    private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
-
-    private fun show(run: RunState, isPhoneReachable: Boolean = true, heartRateBpm: Int? = 150) {
-        composeRule.setContent {
-            RunPreviewFrame { RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
-        }
-    }
 
     @Test
     fun `내 거리·시간·페이스와 심박을 보인다`() {
@@ -143,5 +132,13 @@ class RunOverviewPageTest {
         // then
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertExists()
         composeRule.onNodeWithText(text(R.string.run_server_checking)).assertDoesNotExist()
+    }
+
+    private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
+
+    private fun show(run: RunState, isPhoneReachable: Boolean = true, heartRateBpm: Int? = 150) {
+        composeRule.setContent {
+            RunPreviewFrame { RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
+        }
     }
 }

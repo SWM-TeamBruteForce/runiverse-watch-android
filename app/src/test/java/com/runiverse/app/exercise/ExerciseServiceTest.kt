@@ -12,6 +12,7 @@ import com.runiverse.app.phone.WatchSynced
 import com.runiverse.app.run.RunPreviewSamples
 import kotlinx.coroutines.cancel
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,21 +33,6 @@ class ExerciseServiceTest {
     fun cancelTestScope() {
         app.testScope.cancel()
     }
-
-    private fun startService() = Robolectric.buildService(ExerciseService::class.java).create().startCommand(0, 1)
-
-    private fun runLooper() = shadowOf(Looper.getMainLooper()).idle()
-
-    private fun answerSync(run: RunState) {
-        app.phoneLink.start()
-        runLooper()
-        val syncId = app.sent.filterIsInstance<WatchSync>().last().syncId
-        app.phoneLink.onReceived(WatchSynced(syncId, phoneState(1, run), birthday = null, photos = emptyList()))
-        runLooper()
-    }
-
-    private fun phoneState(stateSequence: Long, run: RunState) =
-        PhoneState(phoneInstanceId = "phone", stateSequence = stateSequence, statusVersion = 1, run = run)
 
     @Test
     fun `시작하면 포그라운드 알림을 띄우고 심박 측정을 시작한다`() {
@@ -77,7 +63,7 @@ class ExerciseServiceTest {
 
         // then
         assertTrue(shadowOf(service).isStoppedBySelf)
-        assertTrue(app.heartRateTracker.calls.last() == "stop")
+        assertEquals("stop", app.heartRateTracker.calls.last())
     }
 
     @Test
@@ -92,6 +78,21 @@ class ExerciseServiceTest {
         runLooper()
 
         // then
-        assertTrue(app.heartRateTracker.calls.last() == "stop")
+        assertEquals("stop", app.heartRateTracker.calls.last())
     }
+
+    private fun startService() = Robolectric.buildService(ExerciseService::class.java).create().startCommand(0, 1)
+
+    private fun runLooper() = shadowOf(Looper.getMainLooper()).idle()
+
+    private fun answerSync(run: RunState) {
+        app.phoneLink.start()
+        runLooper()
+        val syncId = app.sent.filterIsInstance<WatchSync>().last().syncId
+        app.phoneLink.onReceived(WatchSynced(syncId, phoneState(1, run), birthday = null, photos = emptyList()))
+        runLooper()
+    }
+
+    private fun phoneState(stateSequence: Long, run: RunState) =
+        PhoneState(phoneInstanceId = "phone", stateSequence = stateSequence, statusVersion = 1, run = run)
 }
