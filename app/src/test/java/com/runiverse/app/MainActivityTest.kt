@@ -1,5 +1,7 @@
 package com.runiverse.app
 
+import android.content.Context
+import android.content.Intent
 import android.os.Looper
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -8,19 +10,20 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
-import com.runiverse.app.phone.PhoneLink
+import androidx.compose.ui.test.swipeUp
+import androidx.lifecycle.Lifecycle
+import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.PhoneMessage
 import com.runiverse.app.phone.PhoneState
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.phone.WatchMessage
 import com.runiverse.app.phone.WatchPause
 import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
+import com.runiverse.app.phone.WatchVisibilityUpdate
 import com.runiverse.app.run.RunPreviewSamples
 import com.runiverse.app.run.formatElapsedTime
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -326,6 +329,203 @@ class MainActivityTest {
         composeRule.waitForIdle()
     }
 
+    @Test
+    fun `앱을 열면 폰에 SYNC와 화면 켜짐을 보낸다`() {
+        // when
+        composeRule.waitForIdle()
+
+        // then
+        assertTrue(app.sent.any { it is WatchSync })
+        assertEquals(WatchVisibilityUpdate(isVisible = true), app.sent.last { it is WatchVisibilityUpdate })
+    }
+
+    @Test
+    fun `화면이 안 보이면 폰에 화면 꺼짐을 보낸다`() {
+        // given
+        composeRule.waitForIdle()
+
+        // when
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.waitForIdle()
+
+        // then
+        assertEquals(WatchVisibilityUpdate(isVisible = false), app.sent.last { it is WatchVisibilityUpdate })
+    }
+
+    @Test
+    fun `심박이 들어오면 러닝 화면에 보인다`() {
+        // given
+        answerSync(soloRun)
+        startExerciseSession()
+
+        // when
+        composeRule.runOnUiThread { app.heartRateTracker.deliver(150) }
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText("150").assertExists()
+    }
+
+    @Test
+    fun `심박을 못 재면 러닝 화면에 모름 표시를 보인다`() {
+        // given
+        answerSync(soloRun)
+        startExerciseSession()
+
+        // when
+        composeRule.runOnUiThread { app.heartRateTracker.deliver(null) }
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_value_unknown)).assertExists()
+    }
+
+    @Test
+    fun `러닝이 없다고 들으면 남은 운동을 끈다`() {
+        // when
+        answerSync(run = null)
+
+        // then
+        assertEquals(listOf("stop"), app.heartRateTracker.calls)
+    }
+
+    @Test
+    fun `러닝이 끝나면 운동을 끄고 결과 화면을 보인다`() {
+        // given
+        answerSync(soloRun)
+        startExerciseSession()
+
+        // when
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        composeRule.waitForIdle()
+
+        // then
+        assertEquals("stop", app.heartRateTracker.calls.last())
+        composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertExists()
+    }
+
+    @Test
+    fun `첫 러닝엔 권한부터 묻고 서비스를 아직 시작하지 않는다`() {
+        // when
+        answerSync(soloRun)
+
+        // then
+        assertTrue(shadowOf(composeRule.activity).lastRequestedPermission != null)
+        assertNull(shadowOf(app).nextStartedService)
+    }
+
+    @Test
+    fun `권한을 한 번 물으면 물은 것을 기억한다`() {
+        // when
+        answerSync(soloRun)
+
+        // then
+        val preferences = composeRule.activity.getSharedPreferences("exercise", Context.MODE_PRIVATE)
+        assertTrue(preferences.getBoolean("permissions_asked", false))
+    }
+
+    @Test
+    fun `권한을 물은 적 있으면 러닝이 보일 때 운동 서비스를 시작한다`() {
+        // given
+        markPermissionsAsked()
+
+        // when
+        answerSync(soloRun)
+
+        // then
+        assertExerciseServiceStarted()
+    }
+
+    @Test
+    fun `러닝이 없으면 운동 서비스를 시작하지 않는다`() {
+        // given
+        markPermissionsAsked()
+
+        // when
+        answerSync(run = null)
+
+        // then
+        assertNull(shadowOf(app).nextStartedService)
+    }
+
+    @Test
+    fun `화면이 다시 보이면 운동 서비스를 다시 시작한다`() {
+        // given
+        markPermissionsAsked()
+        answerSync(soloRun)
+        assertExerciseServiceStarted()
+
+        // when
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.waitForIdle()
+
+        // then
+        assertExerciseServiceStarted()
+    }
+
+    @Test
+    fun `권한 창이 닫히면 거부해도 운동 서비스를 시작한다`() {
+        // given
+        answerSync(soloRun)
+        assertNull(shadowOf(app).nextStartedService)
+
+        // when
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.waitForIdle()
+
+        // then
+        assertExerciseServiceStarted()
+    }
+
+    @Test
+    fun `폰 답이 끊겼다가 돌아오면 운동 서비스를 다시 시작한다`() {
+        // given
+        markPermissionsAsked()
+        answerSync(soloRun)
+        assertExerciseServiceStarted()
+        idleFor(REPLY_TIMEOUT_PASSED_MS)
+
+        // when
+        answerSync(soloRun)
+
+        // then
+        assertExerciseServiceStarted()
+    }
+
+    @Test
+    fun `조작 장에서 콤보 효과를 끄면 설정에 저장한다`() {
+        // given
+        answerSync(soloRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+
+        // when
+        composeRule.onNodeWithText(text(R.string.controls_combo_effect)).performClick()
+        composeRule.waitForIdle()
+
+        // then
+        assertFalse(app.comboEffectSetting.isOn.value)
+    }
+
+    private fun startExerciseSession() {
+        composeRule.runOnUiThread { app.exerciseSession.start(onEnded = {}) }
+        composeRule.waitForIdle()
+    }
+
+    private fun markPermissionsAsked() {
+        composeRule.activity.getSharedPreferences("exercise", Context.MODE_PRIVATE)
+            .edit().putBoolean("permissions_asked", true).commit()
+    }
+
+    private fun assertExerciseServiceStarted() {
+        val started: Intent = shadowOf(app).nextStartedService
+        assertEquals(ExerciseService::class.java.name, started.component?.className)
+    }
+
     private fun showFinishedRun() {
         answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertExists()
@@ -369,12 +569,3 @@ class MainActivityTest {
     )
 }
 
-// 수신 등록·진동을 돌리지 않고, 실제 PhoneLink로 보낸 메시지만 기록한다
-// Android가 리플렉션으로 만들어 private로 둘 수 없다
-class FakeRuniverseApp : RuniverseApp() {
-    val testScope = MainScope()
-    val sent = mutableListOf<WatchMessage>()
-    override val phoneLink = PhoneLink(testScope, send = { sent.add(it) })
-
-    override fun onCreate() = Unit
-}
