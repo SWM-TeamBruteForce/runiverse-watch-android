@@ -13,12 +13,16 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
+
+/** 끝난 결과를 가리키는 번호 쌍이다 — 오프라인 솔로는 방 번호가 끝까지 없어 방 번호로 못 가린다. */
+data class ResultKey(val phoneInstanceId: String, val statusVersion: Int)
 
 data class PhoneLinkState(
     /** 연결이 끊겨도 러닝을 접기 전까지 지우지 않는다 — 화면은 이 값에서 멈춘다. */
@@ -35,12 +39,23 @@ data class PhoneLinkState(
     val isFinishPending: Boolean = false,
     /** 명령을 보낸 지 3초가 넘었다 — 종료면 `종료 확인 중`을 띄운다. */
     val isCommandOverdue: Boolean = false,
+    /** 워치에서 닫은 결과다. 같은 결과를 다시 받아도 띄우지 않는다. */
+    val dismissedResult: ResultKey? = null,
 ) {
     val isLocked: Boolean get() = isSyncing || pendingRequestId != null
 
     /** 마지막으로 받은 상태에 아직 끝나지 않은 러닝이 있다. */
     val isRunActive: Boolean get() = phoneState?.run?.let { it.status != RunStatus.FINISHED } ?: false
+
+    /** 결과 화면에 띄울 끝난 러닝이다. */
+    val finishedRun: RunState?
+        get() {
+            val state = phoneState ?: return null
+            return state.run?.takeIf { it.status == RunStatus.FINISHED && state.resultKey() != dismissedResult }
+        }
 }
+
+private fun PhoneState.resultKey() = ResultKey(phoneInstanceId, statusVersion)
 
 /** 같은 보류가 1초마다 다시 와도 들어갈 때 한 번만 낸다. */
 fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
@@ -48,6 +63,15 @@ fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
         .distinctUntilChanged()
         .filter { it }
         .map { }
+
+/** 폰에서 요약을 닫아 띄운 결과가 사라질 때 낸다. 새 러닝으로 넘어갈 땐 내지 않는다. */
+fun Flow<PhoneLinkState>.finishedRunRemovals(): Flow<Unit> = flow {
+    var wasShown = false
+    collect {
+        if (wasShown && it.phoneState?.run == null) emit(Unit)
+        wasShown = it.finishedRun != null
+    }
+}
 
 /**
  * 폰에서 받은 메시지로 연결 상태를 판정하고, 명령·SYNC·화면 켜짐 신호를 보낸다.
@@ -100,6 +124,13 @@ class PhoneLink(
         // 접기 전에 보낸 물음의 답이 늦게 와도 접은 러닝을 되살리지 않는다
         awaitedSyncIds.clear()
         _state.value = PhoneLinkState()
+    }
+
+    /** 폰에 알리지 않고 번호 쌍만 기억한다. 끝난 러닝이 아니면 할 일이 없다. */
+    fun dismissResult() {
+        val phoneState = _state.value.phoneState ?: return
+        if (phoneState.run?.status != RunStatus.FINISHED) return
+        _state.update { it.copy(dismissedResult = phoneState.resultKey()) }
     }
 
     // 화면 둘이 잠깐 겹쳐도 먼저 멈춘 쪽이 꺼짐을 보내지 않게 켜진 화면 수를 센다
@@ -194,6 +225,7 @@ class PhoneLink(
             phoneState = message.state,
             birthday = message.birthday,
             photos = message.photos,
+            dismissedResult = _state.value.dismissedResult,
         )
         awaitNextState()
     }

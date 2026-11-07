@@ -19,7 +19,7 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
-import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.phone.finishedRunRemovals
 import com.runiverse.app.run.RunCommandState
 import com.runiverse.app.run.RunCommands
 import com.runiverse.app.run.RunScreen
@@ -61,12 +61,15 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             runiverseApp.exerciseSession.phoneLost.collect { finish() }
         }
+        lifecycleScope.launch {
+            phoneLink.state.finishedRunRemovals().collect { finish() }
+        }
         setContent {
             val linkState by phoneLink.state.collectAsState()
             val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
             val isComboEffectOn by runiverseApp.comboEffectSetting.isOn.collectAsState()
             val run = linkState.phoneState?.run?.takeIf { linkState.isRunActive }
-            val finishedRun = linkState.phoneState?.run?.takeIf { it.status == RunStatus.FINISHED }
+            val finishedRun = linkState.finishedRun
             val commands = remember {
                 RunCommands(
                     pause = { phoneLink.pause() },
@@ -83,12 +86,12 @@ class MainActivity : ComponentActivity() {
                         if (dismissState.currentValue == SwipeToDismissValue.Dismissed) isDismissed = true
                         // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
                         SwipeToDismissBox(
-                            onDismissed = { if (!phoneLink.state.value.isRunActive) finish() },
+                            onDismissed = { if (!phoneLink.state.value.isRunActive) closeScreen() },
                             state = dismissState,
                         ) { isBackground ->
                             if (!isBackground && !isDismissed) {
                                 if (finishedRun != null) {
-                                    RunSummaryScreen(finishedRun, linkState.isPhoneReachable, onClose = { finish() })
+                                    RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
                                 } else {
                                     IdleScreen()
                                 }
@@ -109,6 +112,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // 닫기 버튼·뒤로가기·쓸어 닫기가 모두 여기로 온다
+    private fun closeScreen() {
+        phoneLink.dismissResult()
+        finish()
     }
 
     // 권한 창은 첫 러닝 때 한 번만 띄운다 — 거부해도 심박 없이 러닝 화면은 그대로 쓴다
