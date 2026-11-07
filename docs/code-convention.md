@@ -13,7 +13,17 @@
 - 상수(`const val`·최상위 불변 값): `UPPER_SNAKE_CASE`
 - 패키지: 소문자, 밑줄 없이 쓴다.
 - 이름은 동작·역할이 드러나도록 짓고, 축약어·의미 없는 이름(`data`, `info`, `temp`)은 피한다.
+- 같은 것은 프로젝트 전체에서 한 이름으로 부른다. 새 이름을 짓기 전에 같은 뜻의 이름이 있는지 찾아본다.
 - 메시지와 화면 부품 이름을 겹치지 않는다 — `PlayerPhoto`는 메시지, 사진 부품은 `PlayerAvatar`.
+- 화면 부품은 역할을 접미사로 쓴다 — `*Screen`, `*Page`, `*Row`, `*Button`. 모양 이름은 역할이 다른 부품이 같이 쓰는 치수에만 쓴다(`PILL_HEIGHT`).
+- 물리량은 폰 메시지처럼 단위를 붙인다 — `distanceMeters`, `paceSecondsPerKm`, `cadenceSpm`, `caloriesKcal`, `heartRateBpm`.
+- 시간 상수는 `Duration`으로 두고, 숫자가 필요할 때만 `_MS`를 붙인다.
+- Boolean은 문장처럼 읽히게 짓는다 — `isLocked`, `hasStaleValues`, `canMeasure`, `fitsOneLine`. 동작을 고르는 옵션은 동사로 쓴다(`abbreviateUnits`). 폰 메시지 필드는 이름을 그대로 둔다(`forced`).
+- 진행 상태는 대상을 앞에 둔다 — `PHONE_CHECKING`, `DISTANCE_CHECKING`.
+- 비율 상수는 전체에 대한 몫이면 `_FRACTION`, 두 값의 비면 `A_TO_B_RATIO`로 짓는다.
+- 간격 상수는 서로 다른 둘 사이면 `A_TO_B_GAP`, 같은 것끼리면 `X_GAP`으로 짓는다.
+- 가장 넓은 값을 재는 예시 상수는 `WIDEST_*`로 짓는다.
+- 문자열 키는 쓰는 곳을 앞에 둔다 — `run_`, `controls_`, `unit_`.
 
 ## 화면
 
