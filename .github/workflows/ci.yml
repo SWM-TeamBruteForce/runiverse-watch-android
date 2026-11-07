@@ -38,5 +38,12 @@ jobs:
         run: ./gradlew :app:lintDevDebug
       - name: 단위 테스트
         run: ./gradlew :app:testDevDebugUnitTest
+      - name: 테스트 결과 보관
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+          retention-days: 7
       - name: 빌드
         run: ./gradlew :app:assembleDevDebug :app:assembleProdDebug
