@@ -72,6 +72,7 @@ import com.runiverse.app.ui.theme.SELF_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val FADED_PILL_ALPHA = 0.55f
 private const val ICON_TO_FONT_RATIO = 0.62f
@@ -388,7 +389,10 @@ private fun HoldToFinishPill(
 
     LaunchedEffect(isFilling) {
         if (isFilling) {
-            progress.animateTo(1f, tween(remainingMillis(1f - progress.value), easing = LinearEasing))
+            progress.snapTo(0f)
+            launch { progress.animateTo(1f, tween(HOLD_TO_FINISH_MILLIS, easing = LinearEasing)) }
+            // 시스템 애니메이션을 끄면 채움이 바로 끝나서 누른 시간은 따로 잰다
+            delay(HOLD_TO_FINISH_MILLIS.toLong())
             currentOnFinish()
             isPressing = false
             progress.snapTo(0f)
