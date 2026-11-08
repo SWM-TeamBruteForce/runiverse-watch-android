@@ -44,18 +44,20 @@ import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.DistanceUnitLabel
 import com.runiverse.app.run.common.GapDirection
 import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.distanceProgress
+import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatGapDistance
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.run.common.gapDirection
 import com.runiverse.app.run.common.hasStaleValues
+import com.runiverse.app.run.common.playerStatusWord
 import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.HeartRateZoneBar
@@ -285,28 +287,6 @@ private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: Te
         val baseline = mapOf<AlignmentLine, Int>(FirstBaseline to placeable[FirstBaseline] + raise)
         layout(placeable.width, placeable.height, baseline) { placeable.place(0, 0) }
     }
-
-@Composable
-internal fun connectionNotice(run: RunState, isPhoneReachable: Boolean): String? = when {
-    !isPhoneReachable -> stringResource(R.string.run_phone_checking)
-    !run.isServerConnected && run.players.isNotEmpty() -> stringResource(R.string.run_server_checking)
-    else -> null
-}
-
-@Composable
-internal fun playerStatusWord(status: RunStatus): String? = when (status) {
-    RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
-    RunStatus.DISCONNECTED -> stringResource(R.string.run_status_disconnected)
-    RunStatus.FINISHED -> stringResource(R.string.run_status_finished)
-    RunStatus.RUNNING -> null
-}
-
-@Composable
-internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
-    DistanceUnitLabel.METER -> stringResource(R.string.unit_m)
-    DistanceUnitLabel.KILOMETER -> stringResource(R.string.unit_km)
-    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_short_km)
-}
 
 // 앞/뒤에 색을 주면 레인 색과 겹치고 좋다/나쁘다로 읽혀서 흰색으로 둔다
 @Composable

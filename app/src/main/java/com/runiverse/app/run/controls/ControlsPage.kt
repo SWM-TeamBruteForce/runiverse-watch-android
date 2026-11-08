@@ -67,6 +67,7 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.formatRemainingDistance
 import com.runiverse.app.run.common.usableWidthAt
 import com.runiverse.app.run.component.AlignedText
@@ -77,7 +78,6 @@ import com.runiverse.app.run.component.PILL_HEIGHT
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.contentCenterAt
 import com.runiverse.app.run.component.contentTopAt
-import com.runiverse.app.run.distanceUnitText
 import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
