@@ -1,11 +1,19 @@
 package com.runiverse.app.run.common
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.createBitmap
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RoomType
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+
+// 폰이 줄여 보내는 크기다
+private const val PHOTO_SIZE = 128
 
 internal object RunPreviewSamples {
     private val me = MyRecord(
@@ -46,6 +54,21 @@ internal object RunPreviewSamples {
         players = players.map { it.copy(gapMeters = 9_999) },
     )
 
+    // 미리보기에서 사진 자리를 채우는 단색 사진이다
+    val brightPhotos: Map<String, ImageBitmap> by lazy {
+        mapOf(
+            "u1" to solidPhoto(Color.White),
+            "u2" to solidPhoto(Color(0xFFCFE8FF)),
+            "u3" to solidPhoto(Color(0xFFFFF3C4)),
+        )
+    }
+
+    val statusesOnPhotos = party.copy(
+        players = players.zip(listOf(RunStatus.PAUSED, RunStatus.DISCONNECTED, RunStatus.FINISHED)) { player, status ->
+            player.copy(status = status)
+        },
+    )
+
     val result = RunResult(
         isServerConfirmed = true,
         totalDistanceMeters = 5_020,
@@ -68,6 +91,11 @@ internal object RunPreviewSamples {
 
     val longestPlayer = player("u1", "가나다라마바사아자차카", 1, gapMeters = 42_195, status = RunStatus.RUNNING)
         .copy(distanceMeters = 42_100, currentPaceSecondsPerKm = 605, maxComboCount = 888)
+
+    private fun solidPhoto(color: Color): ImageBitmap =
+        createBitmap(PHOTO_SIZE, PHOTO_SIZE)
+            .apply { eraseColor(color.toArgb()) }
+            .asImageBitmap()
 
     private fun player(
         userId: String,

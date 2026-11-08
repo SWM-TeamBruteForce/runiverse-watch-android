@@ -34,6 +34,7 @@ import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.SMALL_COMBO_MOMENT_DURATION
 import com.runiverse.app.run.common.comboMomentSizeOrNull
+import com.runiverse.app.run.common.decodePlayerPhotos
 import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -106,6 +107,7 @@ class MainActivity : ComponentActivity() {
             val isComboEffectOn by runiverseApp.comboEffectSetting.isOn.collectAsState()
             val run = linkState.phoneState?.run?.takeIf { linkState.isRunActive }
             val finishedRun = linkState.finishedRun
+            val playerPhotos = remember(linkState.photos) { decodePlayerPhotos(linkState.photos) }
             val commands = remember {
                 RunCommands(
                     pause = { phoneLink.pause() },
@@ -149,6 +151,7 @@ class MainActivity : ComponentActivity() {
                                 isComboEffectOn,
                                 runiverseApp.comboEffectSetting::set,
                                 smallComboMoments,
+                                playerPhotos,
                                 onControlsShownChange = { isControlsShown = it },
                             )
                         }
