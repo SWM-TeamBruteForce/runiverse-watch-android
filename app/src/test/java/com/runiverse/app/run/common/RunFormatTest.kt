@@ -26,15 +26,6 @@ class RunFormatTest {
     }
 
     @Test
-    fun `남은 거리는 1000m 미만이면 m로, 그 위는 소수 한 자리 km로 올려 쓴다`() {
-        // when & then
-        assertEquals(FormattedDistance("999", DistanceUnitLabel.METER), formatRemainingDistance(999))
-        assertEquals(FormattedDistance("1.0", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1000))
-        assertEquals(FormattedDistance("1.1", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1001))
-        assertEquals(FormattedDistance("42.2", DistanceUnitLabel.KILOMETER), formatRemainingDistance(42_195))
-    }
-
-    @Test
     fun `격차는 1000m 미만이면 m로 쓴다`() {
         // when & then
         assertEquals(FormattedDistance("120", DistanceUnitLabel.METER), formatGapDistance(120, abbreviateUnits = false))

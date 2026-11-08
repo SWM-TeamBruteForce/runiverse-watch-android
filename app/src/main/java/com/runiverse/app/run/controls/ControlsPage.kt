@@ -68,7 +68,6 @@ import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.RunPreviewSamples
 import com.runiverse.app.run.common.distanceUnitText
-import com.runiverse.app.run.common.formatRemainingDistance
 import com.runiverse.app.run.common.usableWidthAt
 import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.ButtonContent

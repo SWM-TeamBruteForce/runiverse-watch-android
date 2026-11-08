@@ -4,6 +4,8 @@ import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.DistanceUnitLabel
+import com.runiverse.app.run.common.FormattedDistance
 import com.runiverse.app.run.common.RunPreviewSamples
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -110,5 +112,14 @@ class ControlsHintTest {
             ControlsHint(ControlsFirstHint.TO_PENALTY_LINE, 420, ControlsSecondHint.PENALTY_IF_SHORT),
             controlsHint(soloMatch.at(3580), isPhoneReachable = true),
         )
+    }
+
+    @Test
+    fun `남은 거리는 1000m 미만이면 m로, 그 위는 소수 한 자리 km로 올려 쓴다`() {
+        // when & then
+        assertEquals(FormattedDistance("999", DistanceUnitLabel.METER), formatRemainingDistance(999))
+        assertEquals(FormattedDistance("1.0", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1000))
+        assertEquals(FormattedDistance("1.1", DistanceUnitLabel.KILOMETER), formatRemainingDistance(1001))
+        assertEquals(FormattedDistance("42.2", DistanceUnitLabel.KILOMETER), formatRemainingDistance(42_195))
     }
 }
