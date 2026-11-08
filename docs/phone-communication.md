@@ -89,18 +89,18 @@
 | `run` | 진행 중인 러닝. 없으면 `null` |
 | `runningRoomId` | 방 번호. 방이 아직 안 세워졌으면 `null`(출발 직후, 오프라인 솔로). 세워지면 폰이 바로 다시 보낸다 |
 | `type` | `MATCH`·`SOLO`·`INVITE` |
-| `status` | 내 상태 `RUNNING`·`PAUSED`·`DISCONNECTED`·`FINISHED` |
+| `status` | 내 상태 `RUNNING`·`PAUSED`·`FINISHED`. 파티원 `status`엔 `DISCONNECTED`도 온다 |
 | `targetDistanceMeters` | 목표 거리. 목표 없는 솔로는 `null` |
 | `isServerConnected` | 폰↔서버 연결. `false`면 워치는 파티원만 흐리게 하고 `서버 연결 확인 중` |
 | `isPenaltyApplicable` | 못 채우면 매칭 제한이 걸리는 방 |
-| `me` | 폰 화면의 내 값. `currentPaceSecondsPerKm`은 폰처럼 30초 기준, 위치가 안 잡히면 `null`. `caloriesKcal`·`cadenceSpm`은 아직 없으면 `null` |
+| `me` | 폰 화면의 내 값. `elapsedSeconds`는 폰 러닝 화면 시간으로 버튼 일시정지만 뺀다. `currentPaceSecondsPerKm`은 폰처럼 30초 기준, 위치가 안 잡히면 `null`. `caloriesKcal`·`cadenceSpm`은 아직 없으면 `null` |
 | `players` | **나를 뺀** 참가자. 서버 `players`는 나를 포함하지만, 워치는 내 값을 `me`에서만 읽게 하려고 뺐다. 폰 파티원 화면처럼 통지가 아직 없으면 `distanceMeters` 0·`status` `RUNNING`, 이름을 모르면 `nickname`은 `함께 달리는 사람`이다 |
 | `colorSlot` | 파티원 색 번호 1~3(0은 나). 폰 `PartyBoard.colorSlotOf`를 폰 팔레트처럼 4로 나눈 나머지라 0~3만 온다. 러닝 중엔 바뀌지 않는다 |
 | `gapMeters` | 상대 − 나. 양수면 상대가 앞. 모르면 `null` |
 | `comboCount`·`maxComboCount` | 그 사람과 나 사이의 지금 콤보·최고 콤보. 콤보가 아니면 `comboCount` 0 |
 | `isStale` | 그 사람 통지가 19초 넘게 안 왔다. 폰 파티원 화면이 카드를 흐리게 그리는 기준과 같다(통지가 한 번도 없으면 `false`) |
 | `finish` | 종료 단계. `{"stage": "FINISHING"}`(서버 응답 대기) 또는 `{"stage": "GOAL_PENDING", "remainingMeters": 420}`(거리 모자람). 아니면 `null`. `GOAL_PENDING`은 폰에서 `계속 달리기`를 고르거나 다시 종료하거나 서버가 끝낼 때까지 남는다 |
-| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(방이 없었거나, 종료 확인을 못 받았거나, 조회가 실패했거나, 내 기록이 안 남음). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
+| `result` | 끝난 결과. `{"isServerConfirmed", "totalDistanceMeters", "averagePaceSecondsPerKm", "elapsedSeconds"}` — 숫자는 폰 요약과 같다. `elapsedSeconds`는 움직인 시간이라 버튼 없이 10초 넘게 선 구간도 빠져, 러닝 중 마지막 `me.elapsedSeconds`보다 작을 수 있다. `isServerConfirmed`가 `true`면 서버 기록, `false`면 폰이 잰 값(방이 없었거나, 종료 확인을 못 받았거나, 조회가 실패했거나, 내 기록이 안 남음). `status`가 `FINISHED`인데 `null`이면 서버 기록을 받는 중이다 |
 
 `WATCH_SYNCED`에만 있는 것:
 
@@ -113,14 +113,14 @@
 
 ## 보내는 규칙 — 폰
 
-- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면(일시정지 포함) 1초마다 보낸다. 앞 전송이 안 끝났으면 건너뛰고 최신 하나만 보낸다.
+- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면 보낸다 — 달리는 중엔 폰 러닝 시간(초)이 바뀔 때마다, 일시정지 중엔 1초마다. 앞 전송이 안 끝났으면 끝나는 대로 최신 하나를 보낸다.
 - 일시정지·재개·종료 단계·결과 확정은 화면이 꺼져 있어도 바로 보낸다.
 - 러닝이 사라지면(폰에서 요약을 닫음·서버 종료·강퇴) 화면이 꺼져 있어도 바로 `run: null`을 보낸다 — 워치 결과 화면도 같이 닫힌다.
 - 워치 명령을 반영하면 1초를 기다리지 않고 바로 보낸다(`statusVersion` +1, `lastRequestId`).
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
-- `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
-- 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
+- 러닝이 없을 때, 러닝을 시작한 계정이 아닐 때(로그아웃·계정 전환), `phoneInstanceId`·`statusVersion`·방이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`이다.
 - 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
 

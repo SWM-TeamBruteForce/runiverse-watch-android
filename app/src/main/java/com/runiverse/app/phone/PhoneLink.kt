@@ -285,7 +285,7 @@ class PhoneLink(
         }
     }
 
-    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 1초마다 보낸다 — 받은 결과 뒤엔 조용한 게 정상이다
+    // 폰은 화면이 켜져 있고 러닝이 끝나기 전에만 이어서 보낸다 —받은 결과 뒤엔 조용한 게 정상이다
     private fun awaitNextState() {
         silenceJob?.cancel()
         if (!isScreenVisible) return
