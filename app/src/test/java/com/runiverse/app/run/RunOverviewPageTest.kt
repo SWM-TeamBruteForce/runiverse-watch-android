@@ -86,6 +86,19 @@ class RunOverviewPageTest {
     }
 
     @Test
+    fun `멈춘 파티원도 사진 위에 멈춤을 보인다`() {
+        // given
+        val photos = mapOf("u3" to RunPreviewSamples.brightPhotos.getValue("u3"))
+
+        // when
+        show(party, playerPhotos = photos)
+
+        // then
+        composeRule.onNodeWithContentDescription("강낭콩").assertExists()
+        composeRule.onNodeWithText(text(R.string.run_status_paused)).assertExists()
+    }
+
+    @Test
     fun `멈춘 파티원은 격차 대신 멈춤을 보인다`() {
         // when
         show(party)
