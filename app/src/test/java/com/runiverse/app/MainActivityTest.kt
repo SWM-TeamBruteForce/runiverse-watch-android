@@ -3,6 +3,7 @@ package com.runiverse.app
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -545,20 +546,33 @@ class MainActivityTest {
     }
 
     @Test
-    fun `큰 순간이 덮은 동안 누르면 가려진 일시정지가 눌리지 않는다`() {
+    fun `큰 순간이 덮은 동안 쓸어도 장이 넘어가지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+
+        // when
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.mainClock.advanceTimeBy(BURST_PASSED_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_pause)).assertIsNotDisplayed()
+    }
+
+    @Test
+    fun `조작 장에서는 눈금이 와도 큰 순간을 띄우지 않는다`() {
         // given
         answerSync(partyRun)
         composeRule.onRoot().performTouchInput { swipeRight() }
         composeRule.waitForIdle()
         composeRule.mainClock.autoAdvance = false
-        receiveMilestone("e1", "u2", 10)
 
         // when
-        composeRule.onNodeWithText(text(R.string.controls_pause)).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
+        receiveMilestone("e1", "u2", 10)
 
         // then
-        assertTrue(app.sent.filterIsInstance<WatchPause>().isEmpty())
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
     }
 
     @Test

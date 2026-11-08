@@ -94,7 +94,7 @@ private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstF
     Canvas(
         Modifier
             .fillMaxSize()
-            // 덮개가 검어 뒤 조작이 안 보인다 — 터치를 받아 가려진 일시정지가 눌리지 않게 한다
+            // 덮개가 검어 뒤 장이 안 보인다 — 터치를 받아 덮인 채 장이 넘어가지 않게 한다
             .pointerInput(Unit) { awaitEachGesture { awaitFirstDown().consume() } }
             .semantics { contentDescription = description },
     ) {

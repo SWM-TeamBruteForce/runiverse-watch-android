@@ -56,6 +56,9 @@ class MainActivity : ComponentActivity() {
     // 다 그릴 때까지 다음 큰 순간은 받지 않는다 — 폰도 임팩트 중엔 새로 터뜨리지 않는다
     private var bigComboMoment by mutableStateOf<WatchComboTriggered?>(null)
 
+    // 조작 장에선 덮개가 버튼을 가려 큰 순간을 띄우지 않는다 — 진동만 한다
+    private var isControlsShown = false
+
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
         ExerciseService.start(this)
     }
@@ -146,6 +149,7 @@ class MainActivity : ComponentActivity() {
                                 isComboEffectOn,
                                 runiverseApp.comboEffectSetting::set,
                                 smallComboMoments,
+                                onControlsShownChange = { isControlsShown = it },
                             )
                         }
                     }
@@ -180,7 +184,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            ComboMomentSize.BIG -> if (bigComboMoment == null) bigComboMoment = combo
+            ComboMomentSize.BIG -> if (bigComboMoment == null && !isControlsShown) bigComboMoment = combo
             null -> Unit
         }
     }
