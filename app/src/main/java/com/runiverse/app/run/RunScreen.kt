@@ -50,6 +50,8 @@ internal fun RunScreen(
     commands: RunCommands,
     isComboEffectOn: Boolean,
     onComboEffectChange: (Boolean) -> Unit,
+    /** 사람 번호마다 지금 띄우는 작은 순간 번호다. */
+    smallComboMoments: Map<String, String> = emptyMap(),
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
     val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
@@ -89,6 +91,7 @@ internal fun RunScreen(
                     isPhoneReachable,
                     heartRateBpm,
                     heartRateZone,
+                    smallComboMoments,
                 )
 
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold {
@@ -106,6 +109,7 @@ private fun OverviewVerticalPager(
     isPhoneReachable: Boolean,
     heartRateBpm: Int?,
     heartRateZone: Int?,
+    smallComboMoments: Map<String, String>,
 ) {
     VerticalPagerScaffold(
         pagerState,
@@ -116,9 +120,9 @@ private fun OverviewVerticalPager(
             ScreenScaffold {
                 val player = run.players.getOrNull(page - 1)
                 if (player == null) {
-                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
+                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone, smallComboMoments)
                 } else {
-                    PartyPage(run, player, isPhoneReachable)
+                    PartyPage(run, player, isPhoneReachable, smallComboMoments[player.userId])
                 }
             }
         }

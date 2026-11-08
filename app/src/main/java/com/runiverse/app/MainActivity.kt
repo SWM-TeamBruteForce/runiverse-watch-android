@@ -19,12 +19,18 @@ import androidx.wear.compose.foundation.rememberSwipeToDismissBoxState
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.phone.WatchComboTriggered
 import com.runiverse.app.phone.finishedRunRemovals
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.run.RunSummaryScreen
+import com.runiverse.app.run.common.ComboMomentSize
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
+import com.runiverse.app.run.common.SMALL_COMBO_MOMENT_DURATION
+import com.runiverse.app.run.common.comboMomentSizeOrNull
 import com.runiverse.app.ui.theme.RuniverseTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -37,6 +43,10 @@ class MainActivity : ComponentActivity() {
 
     // 결과가 지워진 채 닫히면 그 사이 대기 화면이 보여 내용을 숨긴다
     private var isClosing by mutableStateOf(false)
+
+    // 사람마다 따로 둔다 — 한 통지에 여러 사람이 함께 오른다
+    private var smallComboMoments by mutableStateOf(emptyMap<String, String>())
+
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
         ExerciseService.start(this)
     }
@@ -59,6 +69,16 @@ class MainActivity : ComponentActivity() {
                     .distinctUntilChanged()
                     .filter { it }
                     .collect { startExerciseService() }
+            }
+        }
+        lifecycleScope.launch {
+            // 화면이 꺼진 사이 온 콤보는 진동만 한다 — 켜졌을 때 효과를 뒤늦게 틀지 않는다
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                try {
+                    phoneLink.combos.collect { showComboMoment(it) }
+                } finally {
+                    smallComboMoments = emptyMap()
+                }
             }
         }
         lifecycleScope.launch {
@@ -110,10 +130,22 @@ class MainActivity : ComponentActivity() {
                             commands,
                             isComboEffectOn,
                             runiverseApp.comboEffectSetting::set,
+                            smallComboMoments,
                         )
                     }
                 }
             }
+        }
+    }
+
+    // 넘겨 둔 장이 돌아와 늦게 그려져도 지난 순간을 틀지 않게 시간이 지나면 지운다
+    private fun CoroutineScope.showComboMoment(combo: WatchComboTriggered) {
+        val isEffectOn = runiverseApp.comboEffectSetting.isOn.value
+        if (comboMomentSizeOrNull(combo.kind, isEffectOn) != ComboMomentSize.SMALL) return
+        smallComboMoments = smallComboMoments + (combo.userId to combo.eventId)
+        launch {
+            delay(SMALL_COMBO_MOMENT_DURATION)
+            if (smallComboMoments[combo.userId] == combo.eventId) smallComboMoments = smallComboMoments - combo.userId
         }
     }
 

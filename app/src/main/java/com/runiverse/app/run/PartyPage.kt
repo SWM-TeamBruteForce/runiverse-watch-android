@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Measured
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -32,6 +33,7 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.GapDirection
 import com.runiverse.app.run.common.RunPageSlots
 import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.comboBumpScale
 import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.distanceProgress
@@ -45,6 +47,7 @@ import com.runiverse.app.run.common.partyComboRowTop
 import com.runiverse.app.run.common.playerStatusWord
 import com.runiverse.app.run.common.shownMyPaceSecondsPerKm
 import com.runiverse.app.run.common.shownPaceSecondsPerKm
+import com.runiverse.app.run.common.smallComboMomentProgress
 import com.runiverse.app.run.common.usableWidthAt
 import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.CONTENT_BOTTOM
@@ -69,7 +72,7 @@ private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
-internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean) {
+internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean, smallComboMomentId: String? = null) {
     val slots = currentRunPageSlots()
     val notice = connectionNotice(run, isPhoneReachable)
     val playerValuesAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
@@ -94,7 +97,14 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean)
                 Modifier.contentTopAt(slots.bottomRowTop),
             )
         } else {
-            PaceAndComboRows(player, run.shownMyPaceSecondsPerKm(), slots, playerValuesAlpha, phoneValuesAlpha)
+            PaceAndComboRows(
+                player,
+                run.shownMyPaceSecondsPerKm(),
+                slots,
+                smallComboMomentId,
+                playerValuesAlpha,
+                phoneValuesAlpha,
+            )
         }
     }
 }
@@ -105,6 +115,7 @@ private fun PaceAndComboRows(
     player: Player,
     myPaceSecondsPerKm: Int?,
     slots: RunPageSlots,
+    smallComboMomentId: String?,
     playerValuesAlpha: Float,
     phoneValuesAlpha: Float,
 ) {
@@ -142,6 +153,7 @@ private fun PaceAndComboRows(
             lineGap = RunDimensions.LINE_GAP.toPx(),
         )
     }
+    val momentProgress = smallComboMomentProgress(smallComboMomentId)
     AlignedText(
         if (player.comboCount > 0) {
             stringResource(R.string.run_combo_current, player.comboCount)
@@ -150,7 +162,14 @@ private fun PaceAndComboRows(
         },
         MaterialTheme.typography.labelSmall,
         MaterialTheme.colorScheme.onSurfaceVariant,
-        Modifier.contentTopAt(comboRowTop).alpha(playerValuesAlpha),
+        // alpha가 상자 밖을 잘라서 키우기를 바깥에 둔다
+        Modifier.contentTopAt(comboRowTop)
+            .graphicsLayer {
+                val scale = comboBumpScale(momentProgress.value)
+                scaleX = scale
+                scaleY = scale
+            }
+            .alpha(playerValuesAlpha),
     )
 }
 
