@@ -47,6 +47,21 @@ class PlayerPhotosTest {
     }
 
     @Test
+    fun `한 변이 256보다 큰 사진은 풀지 않고 뺀다`() {
+        // given
+        val photos = listOf(
+            PlayerPhoto(userId = "u2", jpegBase64 = jpegBase64(width = 257, height = 10)),
+            PlayerPhoto(userId = "u3", jpegBase64 = jpegBase64(width = 256, height = 256)),
+        )
+
+        // when
+        val images = decodePlayerPhotos(photos)
+
+        // then
+        assertEquals(setOf("u3"), images.keys)
+    }
+
+    @Test
     fun `사진이 없으면 빈 결과다`() {
         // when & then
         assertTrue(decodePlayerPhotos(emptyList()).isEmpty())
