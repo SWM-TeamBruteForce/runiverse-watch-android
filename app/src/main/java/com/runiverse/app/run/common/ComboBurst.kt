@@ -26,7 +26,7 @@ private val TEXT_DEGREES = listOf(Segment(28f, -10f, 3f), Segment(14f, 3f, 0f), 
 
 private const val RING_END = 0.56f
 private const val RING_START_SCALE = 0.35f
-private const val RING_END_SCALE = 2.4f
+internal const val RING_END_SCALE = 2.4f
 private const val RING_START_ALPHA = 0.95f
 
 internal fun comboBurstFrame(progress: Float): ComboBurstFrame {

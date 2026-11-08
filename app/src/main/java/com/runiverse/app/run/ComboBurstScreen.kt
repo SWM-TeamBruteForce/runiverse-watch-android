@@ -43,6 +43,7 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.run.common.BIG_COMBO_MOMENT_DURATION
 import com.runiverse.app.run.common.ComboBurstFrame
+import com.runiverse.app.run.common.RING_END_SCALE
 import com.runiverse.app.run.common.RunPreviewSamples
 import com.runiverse.app.run.common.comboBurstFrame
 import com.runiverse.app.run.common.currentRunPageSlots
@@ -53,8 +54,8 @@ import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.suitInkFor
 import kotlin.math.tan
 
-// 흰 고리가 2.4배로 다 퍼졌을 때 화면 끝에 닿는다
-private const val RING_RADIUS_TO_SCREEN_RATIO = 1f / 4.8f
+// 흰 고리가 다 퍼졌을 때 화면 끝에 닿는다
+private const val RING_RADIUS_TO_SCREEN_RATIO = 0.5f / RING_END_SCALE
 private val RING_STROKE_WIDTH = 1.5.dp
 private val COUNT_TO_WORD_GAP = 8.dp
 private val AVATAR_TO_NAME_GAP = 6.dp
