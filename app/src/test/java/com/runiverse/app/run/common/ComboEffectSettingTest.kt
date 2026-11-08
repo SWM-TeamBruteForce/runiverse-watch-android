@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import android.content.Context
 import org.junit.Assert.assertFalse

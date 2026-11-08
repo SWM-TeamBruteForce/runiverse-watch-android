@@ -6,6 +6,10 @@ import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.formatElapsedTime
+import com.runiverse.app.run.common.formatPace
+import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule

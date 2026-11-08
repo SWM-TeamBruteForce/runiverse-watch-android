@@ -1,6 +1,6 @@
 package com.runiverse.app.run.controls
 
-import com.runiverse.app.run.usableWidthAt
+import com.runiverse.app.run.common.usableWidthAt
 import kotlin.math.hypot
 import kotlin.math.sqrt
 

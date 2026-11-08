@@ -22,8 +22,8 @@ import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
 import com.runiverse.app.phone.WatchVisibilityUpdate
-import com.runiverse.app.run.RunPreviewSamples
-import com.runiverse.app.run.formatElapsedTime
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.formatElapsedTime
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals

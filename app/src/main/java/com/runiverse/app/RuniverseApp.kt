@@ -11,7 +11,7 @@ import com.runiverse.app.exercise.HealthServicesHeartRateTracker
 import com.runiverse.app.phone.PhoneChannel
 import com.runiverse.app.phone.PhoneLink
 import com.runiverse.app.phone.goalPendingStarts
-import com.runiverse.app.run.ComboEffectSetting
+import com.runiverse.app.run.common.ComboEffectSetting
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen

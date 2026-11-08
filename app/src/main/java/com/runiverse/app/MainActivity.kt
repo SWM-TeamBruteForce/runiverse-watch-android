@@ -20,10 +20,10 @@ import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.finishedRunRemovals
-import com.runiverse.app.run.RunCommandState
-import com.runiverse.app.run.RunCommands
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.run.RunSummaryScreen
+import com.runiverse.app.run.common.RunCommandState
+import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter

@@ -1,6 +1,6 @@
 package com.runiverse.app.run.controls
 
-import com.runiverse.app.run.usableWidthAt
+import com.runiverse.app.run.common.usableWidthAt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

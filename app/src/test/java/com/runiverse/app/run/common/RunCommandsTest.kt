@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage

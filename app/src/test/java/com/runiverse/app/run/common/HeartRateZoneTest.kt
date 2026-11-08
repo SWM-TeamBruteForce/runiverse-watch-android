@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

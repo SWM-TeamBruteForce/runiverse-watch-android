@@ -13,9 +13,9 @@ import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.RunCommandState
-import com.runiverse.app.run.RunCommands
-import com.runiverse.app.run.RunPreviewSamples
+import com.runiverse.app.run.common.RunCommandState
+import com.runiverse.app.run.common.RunCommands
+import com.runiverse.app.run.common.RunPreviewSamples
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule

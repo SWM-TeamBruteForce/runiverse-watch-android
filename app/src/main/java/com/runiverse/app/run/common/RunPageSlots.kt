@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.wear.compose.material3.MaterialTheme
+import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.contentBottom
 import com.runiverse.app.run.component.contentTop
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
