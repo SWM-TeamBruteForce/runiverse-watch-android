@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.lifecycle.Lifecycle
@@ -573,6 +574,23 @@ class MainActivityTest {
 
         // then
         composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `조작 장에서 돌아오면 눈금이 올 때 큰 순간을 띄운다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
     }
 
     @Test
