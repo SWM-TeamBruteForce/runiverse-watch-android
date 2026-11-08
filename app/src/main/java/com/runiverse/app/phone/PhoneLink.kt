@@ -86,7 +86,7 @@ class PhoneLink(
     private val _state = MutableStateFlow(PhoneLinkState())
     val state: StateFlow<PhoneLinkState> = _state.asStateFlow()
 
-    // TODO: 콤보 진동 — 콤보 효과를 만들 때 앱에서 구독한다. 받는 쪽이 없으면 버린다
+    // 받는 쪽이 없으면 버린다 — 지난 콤보를 뒤늦게 울리지 않는다
     private val _combos = MutableSharedFlow<WatchComboTriggered>(extraBufferCapacity = COMBO_BUFFER_COUNT)
     val combos: SharedFlow<WatchComboTriggered> = _combos.asSharedFlow()
 
