@@ -4,11 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -21,6 +26,7 @@ import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.WatchComboTriggered
 import com.runiverse.app.phone.finishedRunRemovals
+import com.runiverse.app.run.ComboBurstScreen
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.run.RunSummaryScreen
 import com.runiverse.app.run.common.ComboMomentSize
@@ -46,6 +52,9 @@ class MainActivity : ComponentActivity() {
 
     // 사람마다 따로 둔다 — 한 통지에 여러 사람이 함께 오른다
     private var smallComboMoments by mutableStateOf(emptyMap<String, String>())
+
+    // 다 그릴 때까지 다음 큰 순간은 받지 않는다 — 폰도 임팩트 중엔 새로 터뜨리지 않는다
+    private var bigComboMoment by mutableStateOf<WatchComboTriggered?>(null)
 
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
         ExerciseService.start(this)
@@ -78,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     phoneLink.combos.collect { showComboMoment(it) }
                 } finally {
                     smallComboMoments = emptyMap()
+                    bigComboMoment = null
                 }
             }
         }
@@ -101,37 +111,55 @@ class MainActivity : ComponentActivity() {
                 )
             }
             RuniverseTheme {
-                AppScaffold {
-                    if (run == null) {
-                        val dismissState = rememberSwipeToDismissBoxState()
-                        var isDismissed by remember { mutableStateOf(false) }
-                        // 라이브러리가 닫기 함수를 부르기 전에 화면을 되돌려, 앱이 한 번 더 보이지 않게 숨긴다
-                        if (dismissState.currentValue == SwipeToDismissValue.Dismissed) isDismissed = true
-                        // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
-                        SwipeToDismissBox(
-                            onDismissed = { if (!phoneLink.state.value.isRunActive) closeScreen() },
-                            state = dismissState,
-                        ) { isBackground ->
-                            if (!isBackground && !isDismissed && !isClosing) {
-                                if (finishedRun != null) {
-                                    RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
-                                } else {
-                                    IdleScreen(linkState.isPhoneReachable)
+                Box(Modifier.fillMaxSize()) {
+                    AppScaffold {
+                        if (run == null) {
+                            val dismissState = rememberSwipeToDismissBoxState()
+                            var isDismissed by remember { mutableStateOf(false) }
+                            // 라이브러리가 닫기 함수를 부르기 전에 화면을 되돌려, 앱이 한 번 더 보이지 않게 숨긴다
+                            if (dismissState.currentValue == SwipeToDismissValue.Dismissed) isDismissed = true
+                            // 시스템 닫기는 테마에서 껐다 — 러닝이 아닌 화면만 여기서 쓸어 닫는다
+                            SwipeToDismissBox(
+                                onDismissed = { if (!phoneLink.state.value.isRunActive) closeScreen() },
+                                state = dismissState,
+                            ) { isBackground ->
+                                if (!isBackground && !isDismissed && !isClosing) {
+                                    if (finishedRun != null) {
+                                        RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
+                                    } else {
+                                        IdleScreen(linkState.isPhoneReachable)
+                                    }
                                 }
                             }
+                        } else {
+                            RunScreen(
+                                run,
+                                linkState.isPhoneReachable,
+                                heartRateBpm,
+                                linkState.birthday,
+                                RunCommandState(
+                                    linkState.isLocked,
+                                    linkState.isFinishPending,
+                                    linkState.isCommandOverdue,
+                                ),
+                                commands,
+                                isComboEffectOn,
+                                runiverseApp.comboEffectSetting::set,
+                                smallComboMoments,
+                            )
                         }
-                    } else {
-                        RunScreen(
-                            run,
-                            linkState.isPhoneReachable,
-                            heartRateBpm,
-                            linkState.birthday,
-                            RunCommandState(linkState.isLocked, linkState.isFinishPending, linkState.isCommandOverdue),
-                            commands,
-                            isComboEffectOn,
-                            runiverseApp.comboEffectSetting::set,
-                            smallComboMoments,
-                        )
+                    }
+                    // 시계까지 덮으려고 AppScaffold 바깥에 얹는다 — 시계는 AppScaffold가 내용 위에 그린다
+                    bigComboMoment?.let { combo ->
+                        val player = run?.players?.find { it.userId == combo.userId }
+                        if (player == null) {
+                            // 명단에 없거나 러닝이 끝났으면 진동만 하고 접는다
+                            LaunchedEffect(combo.eventId) { bigComboMoment = null }
+                        } else {
+                            key(combo.eventId) {
+                                ComboBurstScreen(combo.comboCount, player, onFinished = { bigComboMoment = null })
+                            }
+                        }
                     }
                 }
             }
@@ -141,11 +169,19 @@ class MainActivity : ComponentActivity() {
     // 넘겨 둔 장이 돌아와 늦게 그려져도 지난 순간을 틀지 않게 시간이 지나면 지운다
     private fun CoroutineScope.showComboMoment(combo: WatchComboTriggered) {
         val isEffectOn = runiverseApp.comboEffectSetting.isOn.value
-        if (comboMomentSizeOrNull(combo.kind, isEffectOn) != ComboMomentSize.SMALL) return
-        smallComboMoments = smallComboMoments + (combo.userId to combo.eventId)
-        launch {
-            delay(SMALL_COMBO_MOMENT_DURATION)
-            if (smallComboMoments[combo.userId] == combo.eventId) smallComboMoments = smallComboMoments - combo.userId
+        when (comboMomentSizeOrNull(combo.kind, isEffectOn)) {
+            ComboMomentSize.SMALL -> {
+                smallComboMoments = smallComboMoments + (combo.userId to combo.eventId)
+                launch {
+                    delay(SMALL_COMBO_MOMENT_DURATION)
+                    if (smallComboMoments[combo.userId] == combo.eventId) {
+                        smallComboMoments = smallComboMoments - combo.userId
+                    }
+                }
+            }
+
+            ComboMomentSize.BIG -> if (bigComboMoment == null) bigComboMoment = combo
+            null -> Unit
         }
     }
 
