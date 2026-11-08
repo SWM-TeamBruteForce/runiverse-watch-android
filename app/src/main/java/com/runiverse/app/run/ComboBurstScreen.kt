@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
@@ -38,6 +39,7 @@ import androidx.core.graphics.withTranslation
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
 import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
+import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.run.common.BIG_COMBO_MOMENT_DURATION
 import com.runiverse.app.run.common.ComboBurstFrame
@@ -50,8 +52,6 @@ import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.suitInkFor
 import kotlin.math.tan
-
-private const val COMBO_WORD = "COMBO"
 
 // 흰 고리가 2.4배로 다 퍼졌을 때 화면 끝에 닿는다
 private const val RING_RADIUS_TO_SCREEN_RATIO = 1f / 4.8f
@@ -88,7 +88,8 @@ private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstF
     val countBrush = Brush.horizontalGradient(
         listOf(laneColor(MY_LANE_COLOR_SLOT), colors.onBackground, laneColor(player.colorSlot)),
     )
-    val description = "$comboCount $COMBO_WORD ${player.nickname}"
+    val wordText = stringResource(R.string.run_combo_burst_word)
+    val description = stringResource(R.string.run_combo_burst_description, comboCount, player.nickname)
     Canvas(
         Modifier
             .fillMaxSize()
@@ -100,7 +101,7 @@ private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstF
         drawSpreadingRing(frame, colors.onBackground)
 
         val count = measurer.measure(comboCount.toString(), countStyle)
-        val word = measurer.measure(COMBO_WORD, wordStyle.copy(color = colors.onBackground))
+        val word = measurer.measure(wordText, wordStyle.copy(color = colors.onBackground))
         val gap = COUNT_TO_WORD_GAP.toPx()
         val countInkTop = countStyle.fontSize.toPx() * suitInkFor(comboCount.toString()).aboveBaselineEm
         // 숫자 잉크의 세로 가운데를 큰 숫자 자리 가운데에 둔다
