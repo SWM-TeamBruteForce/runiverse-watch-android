@@ -84,7 +84,7 @@ import com.runiverse.app.ui.theme.tabularNumerals
 import kotlin.math.roundToInt
 
 private const val MIN_PLAYER_CELL_WIDTH_FRACTION = 110f / 480f
-private const val STATUS_OVERLAY_ALPHA = 0.45f
+private const val STATUS_OVERLAY_ALPHA = 0.6f
 private const val STATUS_ICON_FRACTION = 0.42f
 private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
 private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
