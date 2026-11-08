@@ -86,7 +86,7 @@ class RunOverviewPageTest {
     }
 
     @Test
-    fun `멈춘 파티원도 사진 위에 멈춤을 보인다`() {
+    fun `멈춘 파티원도 사진을 보이고 격차 대신 멈춤을 보인다`() {
         // given
         val photos = mapOf("u3" to RunPreviewSamples.brightPhotos.getValue("u3"))
 
