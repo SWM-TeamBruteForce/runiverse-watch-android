@@ -64,17 +64,12 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.FinishButtonStage
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.RunPreviewSamples
-import com.runiverse.app.run.common.areControlsDimmed
-import com.runiverse.app.run.common.areControlsLocked
 import com.runiverse.app.run.common.contentCenterAt
 import com.runiverse.app.run.common.contentTopAt
-import com.runiverse.app.run.common.finishButtonStage
 import com.runiverse.app.run.common.formatRemainingDistance
-import com.runiverse.app.run.common.isFinishForced
 import com.runiverse.app.run.common.usableWidthAt
 import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.ButtonContent
