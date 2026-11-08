@@ -11,7 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
 import java.io.ByteArrayOutputStream
 
-// 기본 그림 흉내는 그림이 아닌 값도 풀어 줘서 실제 그림 처리로 돌린다
+// Robolectric 기본 그래픽은 JPEG가 아닌 값도 풀어 줘서 실제 그래픽으로 돌린다
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(RobolectricTestRunner::class)
 class PlayerPhotosTest {

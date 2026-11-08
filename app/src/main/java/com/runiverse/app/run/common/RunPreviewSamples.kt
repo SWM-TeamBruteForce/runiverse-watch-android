@@ -54,7 +54,7 @@ internal object RunPreviewSamples {
         players = players.map { it.copy(gapMeters = 9_999) },
     )
 
-    // 미리보기에서 사진 자리를 채우는 단색 사진이다
+    // Robolectric 없이 도는 테스트도 이 객체를 열어서 사진은 처음 쓸 때 만든다
     val brightPhotos: Map<String, ImageBitmap> by lazy {
         mapOf(
             "u1" to solidPhoto(Color.White),

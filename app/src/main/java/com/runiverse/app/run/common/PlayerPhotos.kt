@@ -16,7 +16,7 @@ private const val MAX_PHOTO_SIDE = 256
 fun decodePlayerPhotos(photos: List<PlayerPhoto>): Map<String, ImageBitmap> =
     photos.mapNotNull { photo ->
         val image = decodeJpegOrNull(photo.jpegBase64)
-        if (image == null) Log.w(TAG, "사진을 못 풀어 첫 글자로 그린다 — ${photo.userId}")
+        if (image == null) Log.w(TAG, "파티원 사진 풀기 실패 — ${photo.userId}")
         image?.let { photo.userId to it }
     }.toMap()
 
