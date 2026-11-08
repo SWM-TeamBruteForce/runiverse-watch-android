@@ -19,9 +19,9 @@ internal enum class ComboMomentSize { SMALL, BIG }
 // 폰 배지가 튀는 시간과 같다
 internal val SMALL_COMBO_MOMENT_DURATION = 320.milliseconds
 
-private const val FLASH_RISE_END = 0.25f
-private const val FLASH_HOLD_END = 0.70f
-private const val BUMP_PEAK_AT = 0.45f
+private const val FLASH_RISE_END_FRACTION = 0.25f
+private const val FLASH_HOLD_END_FRACTION = 0.70f
+private const val BUMP_PEAK_FRACTION = 0.45f
 
 // 폰 배지가 튀는 크기와 같다
 private const val BUMP_PEAK_SCALE = 1.55f
@@ -51,16 +51,16 @@ internal fun smallComboMomentProgress(momentId: String?): State<Float> {
 /** 작은 순간 [progress](0~1)에서 고리에 덮는 흰색의 투명도다. */
 internal fun comboFlashAlpha(progress: Float): Float = when {
     progress <= 0f || progress >= 1f -> 0f
-    progress < FLASH_RISE_END -> progress / FLASH_RISE_END
-    progress < FLASH_HOLD_END -> 1f
-    else -> (1f - progress) / (1f - FLASH_HOLD_END)
+    progress < FLASH_RISE_END_FRACTION -> progress / FLASH_RISE_END_FRACTION
+    progress < FLASH_HOLD_END_FRACTION -> 1f
+    else -> (1f - progress) / (1f - FLASH_HOLD_END_FRACTION)
 }
 
 /** 작은 순간 [progress](0~1)에서 파티원 장 콤보 글자의 배율이다. */
 internal fun comboBumpScale(progress: Float): Float {
     if (progress <= 0f || progress >= 1f) return 1f
-    if (progress < BUMP_PEAK_AT) return 1f + (BUMP_PEAK_SCALE - 1f) * (progress / BUMP_PEAK_AT)
-    val settling = (progress - BUMP_PEAK_AT) / (1f - BUMP_PEAK_AT)
+    if (progress < BUMP_PEAK_FRACTION) return 1f + (BUMP_PEAK_SCALE - 1f) * (progress / BUMP_PEAK_FRACTION)
+    val settling = (progress - BUMP_PEAK_FRACTION) / (1f - BUMP_PEAK_FRACTION)
     val eased = 1f - (1f - settling) * (1f - settling)
     return BUMP_PEAK_SCALE + (1f - BUMP_PEAK_SCALE) * eased
 }

@@ -74,9 +74,9 @@ internal class RunVibrator(
     private var playingPriority = 0
 
     fun vibrate(vibration: RunVibration) {
-        val now = nowMs()
-        if (now < playingUntilMs && vibration.priority <= playingPriority) return
-        playingUntilMs = now + vibration.durationMs
+        val currentMs = nowMs()
+        if (currentMs < playingUntilMs && vibration.priority <= playingPriority) return
+        playingUntilMs = currentMs + vibration.durationMs
         playingPriority = vibration.priority
         play(vibration)
     }

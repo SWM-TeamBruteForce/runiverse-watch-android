@@ -24,13 +24,13 @@ private val TEXT_SCALE = listOf(Segment(28f, 0.3f, 1.3f, easesOut = true), Segme
 private val TEXT_ALPHA = listOf(Segment(20f, 0f, 1f), Segment(70f, 1f, 1f), Segment(6f, 1f, 0f), Segment(4f, 0f, 0f))
 private val TEXT_DEGREES = listOf(Segment(28f, -10f, 3f), Segment(14f, 3f, 0f), Segment(58f, 0f, 0f))
 
-private const val RING_END = 0.56f
+private const val RING_END_FRACTION = 0.56f
 private const val RING_START_SCALE = 0.35f
 internal const val RING_END_SCALE = 2.4f
 private const val RING_START_ALPHA = 0.95f
 
 internal fun comboBurstFrame(progress: Float): ComboBurstFrame {
-    val ringProgress = (progress / RING_END).coerceIn(0f, 1f)
+    val ringProgress = (progress / RING_END_FRACTION).coerceIn(0f, 1f)
     return ComboBurstFrame(
         coverAlpha = COVER.valueAt(progress),
         textScale = TEXT_SCALE.valueAt(progress),
