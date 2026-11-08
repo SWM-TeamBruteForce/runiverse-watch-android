@@ -561,6 +561,37 @@ class MainActivityTest {
         assertTrue(app.sent.filterIsInstance<WatchPause>().isEmpty())
     }
 
+    @Test
+    fun `명단에 없는 사람의 눈금 뒤에 온 눈금은 띄운다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u9", 10)
+
+        // when
+        receiveMilestone("e2", "u2", 20)
+
+        // then
+        composeRule.onNodeWithContentDescription("20 COMBO 콩나물").assertExists()
+    }
+
+    @Test
+    fun `큰 순간 중에 화면이 꺼지면 다시 켜져도 이어 그리지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
     // 받은 콤보는 다음 차례에 상태로 들어가 그 다음 프레임에 그려진다
     private fun receiveMilestone(eventId: String, userId: String, comboCount: Int) {
         receive(WatchComboTriggered(eventId, userId, comboCount, ComboKind.MILESTONE))
