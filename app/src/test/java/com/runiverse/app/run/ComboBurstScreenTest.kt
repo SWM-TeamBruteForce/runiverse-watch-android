@@ -49,7 +49,7 @@ class ComboBurstScreenTest {
 
     private fun show(onFinished: () -> Unit) {
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent { PreviewFrame { ComboBurstScreen(10, player, onFinished) } }
+        composeRule.setContent { PreviewFrame { ComboBurstScreen(10, player, photo = null, onFinished) } }
         composeRule.mainClock.advanceTimeByFrame()
     }
 }

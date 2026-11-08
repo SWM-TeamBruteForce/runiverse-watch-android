@@ -164,7 +164,12 @@ class MainActivity : ComponentActivity() {
                             LaunchedEffect(combo.eventId) { bigComboMoment = null }
                         } else {
                             key(combo.eventId) {
-                                ComboBurstScreen(combo.comboCount, player, onFinished = { bigComboMoment = null })
+                                ComboBurstScreen(
+                                    combo.comboCount,
+                                    player,
+                                    playerPhotos[player.userId],
+                                    onFinished = { bigComboMoment = null },
+                                )
                             }
                         }
                     }

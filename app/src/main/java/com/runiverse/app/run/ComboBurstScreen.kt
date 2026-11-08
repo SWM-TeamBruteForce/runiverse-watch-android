@@ -14,10 +14,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -34,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.withTranslation
 import androidx.wear.compose.material3.MaterialTheme
@@ -52,6 +58,7 @@ import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.suitInkFor
+import kotlin.math.roundToInt
 import kotlin.math.tan
 
 // 흰 고리가 다 퍼졌을 때 화면 끝에 닿는다
@@ -66,18 +73,18 @@ private const val ITALIC_DEGREES = 14f
 
 /** 콤보 눈금에 닿은 순간 화면 전체를 1.2초 덮는다. 다 그리면 [onFinished]를 부른다. */
 @Composable
-internal fun ComboBurstScreen(comboCount: Int, player: Player, onFinished: () -> Unit) {
+internal fun ComboBurstScreen(comboCount: Int, player: Player, photo: ImageBitmap?, onFinished: () -> Unit) {
     val progress = remember { Animatable(0f) }
     val currentOnFinished by rememberUpdatedState(onFinished)
     LaunchedEffect(Unit) {
         progress.animateTo(1f, tween(BIG_COMBO_MOMENT_DURATION.inWholeMilliseconds.toInt(), easing = LinearEasing))
         currentOnFinished()
     }
-    ComboBurstCanvas(comboCount, player, comboBurstFrame(progress.value))
+    ComboBurstCanvas(comboCount, player, photo, comboBurstFrame(progress.value))
 }
 
 @Composable
-private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstFrame) {
+private fun ComboBurstCanvas(comboCount: Int, player: Player, photo: ImageBitmap?, frame: ComboBurstFrame) {
     val slots = currentRunPageSlots()
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
@@ -117,7 +124,7 @@ private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstF
                 }
             }
         }
-        drawPlayerRow(measurer, player, nameStyle, initialStyle, slots.belowRowTop, alpha)
+        drawPlayerRow(measurer, player, photo, nameStyle, initialStyle, slots.belowRowTop, alpha)
     }
 }
 
@@ -145,6 +152,7 @@ private fun DrawScope.italic(baseline: Float, block: DrawScope.() -> Unit) {
 private fun DrawScope.drawPlayerRow(
     measurer: TextMeasurer,
     player: Player,
+    photo: ImageBitmap?,
     nameStyle: TextStyle,
     initialStyle: TextStyle,
     rowTop: Float,
@@ -176,10 +184,31 @@ private fun DrawScope.drawPlayerRow(
         alpha = alpha,
         style = Stroke(border),
     )
-    val initialText = player.nickname.take(1)
-    val initial = measurer.measure(initialText, initialStyle)
-    drawTextInkCenteredAt(initial, initialStyle, initialText, Offset(center.x - initial.size.width / 2, center.y), alpha)
+    if (photo != null) {
+        drawPhotoInCircle(photo, center, avatar / 2, alpha)
+    } else {
+        val initialText = player.nickname.take(1)
+        val initial = measurer.measure(initialText, initialStyle)
+        val initialStart = Offset(center.x - initial.size.width / 2, center.y)
+        drawTextInkCenteredAt(initial, initialStyle, initialText, initialStart, alpha)
+    }
     drawTextInkCenteredAt(name, nameStyle, player.nickname, Offset(left + avatar + gap, center.y), alpha)
+}
+
+// 첫 화면 사진처럼 가운데를 잘라 원을 꽉 채운다
+private fun DrawScope.drawPhotoInCircle(photo: ImageBitmap, center: Offset, radius: Float, alpha: Float) {
+    val side = minOf(photo.width, photo.height)
+    val diameter = (radius * 2).roundToInt()
+    clipPath(Path().apply { addOval(Rect(center, radius)) }) {
+        drawImage(
+            photo,
+            srcOffset = IntOffset((photo.width - side) / 2, (photo.height - side) / 2),
+            srcSize = IntSize(side, side),
+            dstOffset = IntOffset((center.x - radius).roundToInt(), (center.y - radius).roundToInt()),
+            dstSize = IntSize(diameter, diameter),
+            alpha = alpha,
+        )
+    }
 }
 
 // 글자 상자가 아니라 보이는 글자의 세로 가운데를 [start].y에 맞춘다
@@ -200,12 +229,19 @@ private fun DrawScope.drawTextInkCenteredAt(
 @WearPreviewSmallRound
 @Composable
 private fun ComboBurstSettledPreview() = PreviewFrame {
-    ComboBurstCanvas(10, RunPreviewSamples.party.players[1], comboBurstFrame(0.5f))
+    ComboBurstCanvas(10, RunPreviewSamples.party.players[1], photo = null, comboBurstFrame(0.5f))
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun ComboBurstPhotoPreview() = PreviewFrame {
+    val player = RunPreviewSamples.party.players[1]
+    ComboBurstCanvas(10, player, RunPreviewSamples.brightPhotos[player.userId], comboBurstFrame(0.5f))
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
 private fun ComboBurstLongestPeakPreview() = PreviewFrame {
-    ComboBurstCanvas(888, RunPreviewSamples.longestPlayer, comboBurstFrame(0.28f))
+    ComboBurstCanvas(888, RunPreviewSamples.longestPlayer, photo = null, comboBurstFrame(0.28f))
 }
