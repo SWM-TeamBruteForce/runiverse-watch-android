@@ -51,14 +51,15 @@ class PlayerPhotosTest {
         // given
         val photos = listOf(
             PlayerPhoto(userId = "u2", jpegBase64 = jpegBase64(width = 257, height = 10)),
-            PlayerPhoto(userId = "u3", jpegBase64 = jpegBase64(width = 256, height = 256)),
+            PlayerPhoto(userId = "u3", jpegBase64 = jpegBase64(width = 10, height = 257)),
+            PlayerPhoto(userId = "u4", jpegBase64 = jpegBase64(width = 256, height = 256)),
         )
 
         // when
         val images = decodePlayerPhotos(photos)
 
         // then
-        assertEquals(setOf("u3"), images.keys)
+        assertEquals(setOf("u4"), images.keys)
     }
 
     @Test
