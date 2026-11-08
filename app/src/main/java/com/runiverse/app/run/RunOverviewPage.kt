@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -86,6 +87,7 @@ import kotlin.math.roundToInt
 private const val MIN_PLAYER_CELL_WIDTH_FRACTION = 110f / 480f
 private const val STATUS_OVERLAY_ALPHA = 0.6f
 private const val STATUS_ICON_FRACTION = 0.42f
+private val PHOTO_BORDER_WIDTH = 1.dp
 private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
 private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
 private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
@@ -375,7 +377,15 @@ private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId
             Modifier.boxContentBounds()
                 .size(RunDimensions.AVATAR_SIZE)
                 .clip(CircleShape)
-                .background(lane),
+                .background(lane)
+                .drawWithContent {
+                    drawContent()
+                    // 사진이 덮은 레인 색을 선으로 남긴다 — 콤보 중엔 고리가 그 색을 보인다
+                    if (photo != null && !isCombo) {
+                        val width = PHOTO_BORDER_WIDTH.toPx()
+                        drawCircle(lane, size.minDimension / 2 - width / 2, style = Stroke(width))
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
             if (photo != null) {
