@@ -89,7 +89,7 @@
 | `run` | 진행 중인 러닝. 없으면 `null` |
 | `runningRoomId` | 방 번호. 방이 아직 안 세워졌으면 `null`(출발 직후, 오프라인 솔로). 세워지면 폰이 바로 다시 보낸다 |
 | `type` | `MATCH`·`SOLO`·`INVITE` |
-| `status` | 내 상태 `RUNNING`·`PAUSED`·`DISCONNECTED`·`FINISHED` |
+| `status` | 내 상태 `RUNNING`·`PAUSED`·`FINISHED`. 파티원 `status`엔 `DISCONNECTED`도 온다 |
 | `targetDistanceMeters` | 목표 거리. 목표 없는 솔로는 `null` |
 | `isServerConnected` | 폰↔서버 연결. `false`면 워치는 파티원만 흐리게 하고 `서버 연결 확인 중` |
 | `isPenaltyApplicable` | 못 채우면 매칭 제한이 걸리는 방 |
@@ -120,7 +120,7 @@
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
-- 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
+- 러닝이 없을 때, 러닝을 시작한 계정이 아닐 때(로그아웃·계정 전환), `phoneInstanceId`·`statusVersion`·방이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`이다.
 - 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
 
