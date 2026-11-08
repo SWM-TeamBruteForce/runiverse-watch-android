@@ -358,7 +358,8 @@ private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId
     val flashColor = MaterialTheme.colorScheme.onBackground
     val momentProgress = smallComboMomentProgress(smallComboMomentId)
     // 사진이 덮은 레인 색을 선으로 남긴다 — 콤보 중엔 고리가 그 색을 보인다
-    val photoBorder = if (photo != null && !isCombo) Modifier.border(PHOTO_BORDER_WIDTH, lane, CircleShape) else Modifier
+    val photoBorder =
+        if (photo != null && !isCombo) Modifier.border(PHOTO_BORDER_WIDTH, lane, CircleShape) else Modifier
     Box(
         modifier
             .size(RunDimensions.AVATAR_SIZE + RunDimensions.COMBO_BORDER_WIDTH * 2)
