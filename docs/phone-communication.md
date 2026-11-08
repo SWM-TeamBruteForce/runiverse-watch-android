@@ -113,13 +113,13 @@
 
 ## 보내는 규칙 — 폰
 
-- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면(일시정지 포함) 1초마다 보낸다. 앞 전송이 안 끝났으면 건너뛰고 최신 하나만 보낸다.
+- `WATCH_STATE_UPDATED`는 워치 화면이 켜져 있고 러닝이 끝나기 전이면 보낸다 — 달리는 중엔 폰 러닝 시간(초)이 바뀔 때마다, 일시정지 중엔 1초마다. 앞 전송이 안 끝났으면 끝나는 대로 최신 하나를 보낸다.
 - 일시정지·재개·종료 단계·결과 확정은 화면이 꺼져 있어도 바로 보낸다.
 - 러닝이 사라지면(폰에서 요약을 닫음·서버 종료·강퇴) 화면이 꺼져 있어도 바로 `run: null`을 보낸다 — 워치 결과 화면도 같이 닫힌다.
 - 워치 명령을 반영하면 1초를 기다리지 않고 바로 보낸다(`statusVersion` +1, `lastRequestId`).
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
-- `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 1초 전송을 멈춘다.
+- `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
 - 러닝이 없거나 다른 방일 때(로그아웃·계정 전환 포함), `phoneInstanceId`·`statusVersion`이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`이다.
 - 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
