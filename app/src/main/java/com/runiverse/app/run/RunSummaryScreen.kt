@@ -25,9 +25,6 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.run.common.RunPreviewSamples
-import com.runiverse.app.run.common.baselineAt
-import com.runiverse.app.run.common.contentBottomAt
-import com.runiverse.app.run.common.contentTopAt
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.formatElapsedTime
@@ -38,6 +35,9 @@ import com.runiverse.app.run.component.ControlButton
 import com.runiverse.app.run.component.ControlIcon
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.contentBottomAt
+import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.ui.component.PreviewFrame
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f

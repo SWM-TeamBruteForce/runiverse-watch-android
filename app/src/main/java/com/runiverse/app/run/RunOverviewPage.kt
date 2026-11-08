@@ -47,10 +47,6 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.DistanceUnitLabel
 import com.runiverse.app.run.common.GapDirection
 import com.runiverse.app.run.common.RunPreviewSamples
-import com.runiverse.app.run.common.baselineAt
-import com.runiverse.app.run.common.contentBottomAt
-import com.runiverse.app.run.common.contentCenterAt
-import com.runiverse.app.run.common.contentTopAt
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.distanceProgress
@@ -66,7 +62,11 @@ import com.runiverse.app.run.component.HeartRateZoneBar
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.baselineAt
 import com.runiverse.app.run.component.boxContentBounds
+import com.runiverse.app.run.component.contentBottomAt
+import com.runiverse.app.run.component.contentCenterAt
+import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.run.component.widestHeartRateBlockWidth
 import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT

@@ -32,10 +32,6 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.GapDirection
 import com.runiverse.app.run.common.RunPageSlots
 import com.runiverse.app.run.common.RunPreviewSamples
-import com.runiverse.app.run.common.baselineAt
-import com.runiverse.app.run.common.contentBottomAt
-import com.runiverse.app.run.common.contentCenterAt
-import com.runiverse.app.run.common.contentTopAt
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.distanceProgress
 import com.runiverse.app.run.common.formatGapDistance
@@ -54,6 +50,10 @@ import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.contentBottomAt
+import com.runiverse.app.run.component.contentCenterAt
+import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
