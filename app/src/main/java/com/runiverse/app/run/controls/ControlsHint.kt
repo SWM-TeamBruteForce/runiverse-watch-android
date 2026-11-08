@@ -1,8 +1,12 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.DistanceUnitLabel
+import com.runiverse.app.run.common.FormattedDistance
+import com.runiverse.app.run.common.METERS_PER_KM
+import com.runiverse.app.run.common.METERS_PER_TENTH_KM
 
 enum class ControlsFirstHint { PHONE_CHECKING, SERVER_CHECKING, DISTANCE_CHECKING, TO_PENALTY_LINE, TO_GOAL }
 
@@ -59,3 +63,10 @@ private fun toGoalHint(remainingMeters: Int, isPaused: Boolean) = ControlsHint(
     remainingMeters,
     if (isPaused) ControlsSecondHint.MAY_NOT_COMPLETE else null,
 )
+
+/** 남은 거리를 적게 말하지 않게 폰처럼 올린다. */
+fun formatRemainingDistance(meters: Int): FormattedDistance {
+    if (meters < METERS_PER_KM) return FormattedDistance("$meters", DistanceUnitLabel.METER)
+    val tenthsOfKm = (meters + METERS_PER_TENTH_KM - 1) / METERS_PER_TENTH_KM
+    return FormattedDistance("${tenthsOfKm / 10}.${tenthsOfKm % 10}", DistanceUnitLabel.KILOMETER)
+}

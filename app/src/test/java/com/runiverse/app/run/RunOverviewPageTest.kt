@@ -6,6 +6,11 @@ import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.formatElapsedTime
+import com.runiverse.app.run.common.formatPace
+import com.runiverse.app.run.common.formatRunDistanceKm
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -138,7 +143,7 @@ class RunOverviewPageTest {
 
     private fun show(run: RunState, isPhoneReachable: Boolean = true, heartRateBpm: Int? = 150) {
         composeRule.setContent {
-            RunPreviewFrame { RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
+            PreviewFrame { RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
         }
     }
 }

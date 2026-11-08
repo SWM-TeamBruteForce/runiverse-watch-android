@@ -14,6 +14,11 @@ import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.run.common.RunCommandState
+import com.runiverse.app.run.common.RunCommands
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.formatElapsedTime
+import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -215,7 +220,7 @@ class RunScreenTest {
 
     private fun show(run: RunState) {
         composeRule.setContent {
-            RunPreviewFrame {
+            PreviewFrame {
                 RunScreen(
                     run,
                     isPhoneReachable = true,

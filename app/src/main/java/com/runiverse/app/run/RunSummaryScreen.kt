@@ -24,6 +24,21 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.currentRunPageSlots
+import com.runiverse.app.run.common.currentScreenWidth
+import com.runiverse.app.run.common.formatElapsedTime
+import com.runiverse.app.run.common.formatPace
+import com.runiverse.app.run.common.formatRunDistanceKm
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ControlButton
+import com.runiverse.app.run.component.ControlIcon
+import com.runiverse.app.run.component.RunDimensions
+import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.contentBottomAt
+import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.PreviewFrame
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
 private const val CLOSE_BUTTON_WIDTH_FRACTION = 204f / 480f
@@ -111,7 +126,7 @@ private fun closeButtonWidth(): Dp = maxOf(currentScreenWidth() * CLOSE_BUTTON_W
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
+private fun RunSummaryScreenConfirmedPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = true, onClose = {})
 }
 
@@ -119,24 +134,24 @@ private fun RunSummaryScreenConfirmedPreview() = RunPreviewFrame {
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun RunSummaryScreenLongValuesPreview() = RunPreviewFrame {
+private fun RunSummaryScreenLongValuesPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.longResult, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenConfirmedPhoneLostPreview() = RunPreviewFrame {
+private fun RunSummaryScreenConfirmedPhoneLostPreview() = PreviewFrame {
     RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = false, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenPendingPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPendingPreview() = PreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunSummaryScreenPhoneLostPreview() = RunPreviewFrame {
+private fun RunSummaryScreenPhoneLostPreview() = PreviewFrame {
     RunSummaryContent(result = null, isPhoneReachable = false, onClose = {})
 }

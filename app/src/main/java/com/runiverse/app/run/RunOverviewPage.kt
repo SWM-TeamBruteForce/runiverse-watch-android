@@ -44,6 +44,33 @@ import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.GapDirection
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.connectionNotice
+import com.runiverse.app.run.common.currentRunPageSlots
+import com.runiverse.app.run.common.currentScreenWidth
+import com.runiverse.app.run.common.distanceProgress
+import com.runiverse.app.run.common.distanceUnitText
+import com.runiverse.app.run.common.formatElapsedTime
+import com.runiverse.app.run.common.formatGapDistance
+import com.runiverse.app.run.common.formatPace
+import com.runiverse.app.run.common.formatRunDistanceKm
+import com.runiverse.app.run.common.gapDirection
+import com.runiverse.app.run.common.hasStaleValues
+import com.runiverse.app.run.common.playerStatusWord
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ContentBoundsColumn
+import com.runiverse.app.run.component.HeartRateZoneBar
+import com.runiverse.app.run.component.ProgressRing
+import com.runiverse.app.run.component.RunDimensions
+import com.runiverse.app.run.component.ValueWithUnit
+import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.boxContentBounds
+import com.runiverse.app.run.component.contentBottomAt
+import com.runiverse.app.run.component.contentCenterAt
+import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.run.component.widestHeartRateBlockWidth
+import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -261,28 +288,6 @@ private fun Modifier.raisedAboveRowBaseline(statusSize: TextUnit, numberSize: Te
         layout(placeable.width, placeable.height, baseline) { placeable.place(0, 0) }
     }
 
-@Composable
-internal fun connectionNotice(run: RunState, isPhoneReachable: Boolean): String? = when {
-    !isPhoneReachable -> stringResource(R.string.run_phone_checking)
-    !run.isServerConnected && run.players.isNotEmpty() -> stringResource(R.string.run_server_checking)
-    else -> null
-}
-
-@Composable
-internal fun playerStatusWord(status: RunStatus): String? = when (status) {
-    RunStatus.PAUSED -> stringResource(R.string.run_status_paused)
-    RunStatus.DISCONNECTED -> stringResource(R.string.run_status_disconnected)
-    RunStatus.FINISHED -> stringResource(R.string.run_status_finished)
-    RunStatus.RUNNING -> null
-}
-
-@Composable
-internal fun distanceUnitText(unit: DistanceUnitLabel): String = when (unit) {
-    DistanceUnitLabel.METER -> stringResource(R.string.unit_m)
-    DistanceUnitLabel.KILOMETER -> stringResource(R.string.unit_km)
-    DistanceUnitLabel.SHORT_KILOMETER -> stringResource(R.string.unit_short_km)
-}
-
 // 앞/뒤에 색을 주면 레인 색과 겹치고 좋다/나쁘다로 읽혀서 흰색으로 둔다
 @Composable
 private fun GapDirectionIndicator(pointsUp: Boolean, modifier: Modifier) {
@@ -405,25 +410,25 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun RunOverviewPagePartyPreview() = RunPreviewFrame {
+private fun RunOverviewPagePartyPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageLongValuesPreview() = RunPreviewFrame {
+private fun RunOverviewPageLongValuesPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPagePhoneLostPreview() = RunPreviewFrame {
+private fun RunOverviewPagePhoneLostPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
+private fun RunOverviewPageServerLostPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.party.copy(isServerConnected = false),
         isPhoneReachable = true,
@@ -435,14 +440,14 @@ private fun RunOverviewPageServerLostPreview() = RunPreviewFrame {
 @WearPreviewLargeRound
 @WearPreviewFontScales
 @Composable
-private fun RunOverviewPageSoloPreview() = RunPreviewFrame {
+private fun RunOverviewPageSoloPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
+private fun RunOverviewPagePausedPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
@@ -453,7 +458,7 @@ private fun RunOverviewPagePausedPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun RunOverviewPageSoloPausedPreview() = RunPreviewFrame {
+private fun RunOverviewPageSoloPausedPreview() = PreviewFrame {
     RunOverviewPage(
         RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,

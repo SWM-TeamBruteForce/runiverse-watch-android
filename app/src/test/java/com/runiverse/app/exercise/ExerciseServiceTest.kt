@@ -9,7 +9,7 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
-import com.runiverse.app.run.RunPreviewSamples
+import com.runiverse.app.run.common.RunPreviewSamples
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals

@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer

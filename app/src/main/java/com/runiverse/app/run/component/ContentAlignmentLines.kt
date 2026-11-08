@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.AlignmentLine
@@ -42,3 +42,22 @@ internal fun Modifier.boxContentBounds(): Modifier = layout { measurable, constr
 internal fun Placeable.contentTop(): Int = this[CONTENT_TOP].takeIf { it != AlignmentLine.Unspecified } ?: 0
 
 internal fun Placeable.contentBottom(): Int = this[CONTENT_BOTTOM].takeIf { it != AlignmentLine.Unspecified } ?: height
+
+internal fun Modifier.contentBottomAt(y: Float): Modifier = placedAt { y - it.contentBottom() }
+
+internal fun Modifier.contentTopAt(y: Float): Modifier = placedAt { y - it.contentTop() }
+
+internal fun Modifier.contentCenterAt(y: Float): Modifier = placedAt { y - (it.contentTop() + it.contentBottom()) / 2f }
+
+/** 옆 글자에 상관없이 숫자 기준선을 정한 높이에 둘 때 쓴다. */
+internal fun Modifier.baselineAt(y: Float): Modifier = placedAt {
+    // 통지 전 파티원만 있는 격차 줄은 그릴 글자가 없어 기준선도 없다
+    val baseline = it[FirstBaseline]
+    if (baseline == AlignmentLine.Unspecified) y else y - baseline
+}
+
+private fun Modifier.placedAt(placedTop: (Placeable) -> Float): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val y = placedTop(placeable).roundToInt()
+    layout(placeable.width, constraints.maxHeight) { placeable.place(0, y) }
+}

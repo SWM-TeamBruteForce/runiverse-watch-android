@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import java.time.LocalDate
 import java.time.Period

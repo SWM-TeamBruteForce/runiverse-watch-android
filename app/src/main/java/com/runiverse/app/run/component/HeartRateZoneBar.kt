@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height

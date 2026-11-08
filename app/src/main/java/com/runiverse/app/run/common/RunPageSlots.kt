@@ -1,18 +1,13 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.AlignmentLine
-import androidx.compose.ui.layout.FirstBaseline
-import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.wear.compose.material3.MaterialTheme
+import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** 장 공통 줄 높이(화면 위에서 px)다. 큰 숫자 높이로 잡아 장을 넘겨도 줄이 제자리에 있다. */
@@ -80,23 +75,4 @@ internal fun currentRunPageSlots(): RunPageSlots {
 @Composable
 internal fun currentScreenWidth(): Dp = with(LocalDensity.current) {
     LocalWindowInfo.current.containerSize.width.toDp()
-}
-
-internal fun Modifier.contentBottomAt(y: Float): Modifier = placedAt { y - it.contentBottom() }
-
-internal fun Modifier.contentTopAt(y: Float): Modifier = placedAt { y - it.contentTop() }
-
-internal fun Modifier.contentCenterAt(y: Float): Modifier = placedAt { y - (it.contentTop() + it.contentBottom()) / 2f }
-
-/** 옆 글자에 상관없이 숫자 기준선을 정한 높이에 둘 때 쓴다. */
-internal fun Modifier.baselineAt(y: Float): Modifier = placedAt {
-    // 통지 전 파티원만 있는 격차 줄은 그릴 글자가 없어 기준선도 없다
-    val baseline = it[FirstBaseline]
-    if (baseline == AlignmentLine.Unspecified) y else y - baseline
-}
-
-private fun Modifier.placedAt(placedTop: (Placeable) -> Float): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    val y = placedTop(placeable).roundToInt()
-    layout(placeable.width, constraints.maxHeight) { placeable.place(0, y) }
 }

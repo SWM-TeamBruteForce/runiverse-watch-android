@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -64,6 +64,20 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.run.common.RunCommandState
+import com.runiverse.app.run.common.RunCommands
+import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.distanceUnitText
+import com.runiverse.app.run.common.usableWidthAt
+import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.ButtonContent
+import com.runiverse.app.run.component.ControlButton
+import com.runiverse.app.run.component.ControlIcon
+import com.runiverse.app.run.component.PILL_HEIGHT
+import com.runiverse.app.run.component.RunDimensions
+import com.runiverse.app.run.component.contentCenterAt
+import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -532,7 +546,7 @@ private val PREVIEW_COMMANDS = RunCommands(pause = {}, resume = {}, finish = {})
 @WearPreviewSmallRound
 @WearPreviewFontScales
 @Composable
-private fun ControlsPageRunningPreview() = RunPreviewFrame {
+private fun ControlsPageRunningPreview() = PreviewFrame {
     ControlsPageContent(
         RunPreviewSamples.party,
         isPhoneReachable = true,
@@ -546,7 +560,7 @@ private fun ControlsPageRunningPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun ControlsPagePausedPreview() = RunPreviewFrame {
+private fun ControlsPagePausedPreview() = PreviewFrame {
     ControlsPageContent(
         RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
@@ -560,7 +574,7 @@ private fun ControlsPagePausedPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun ControlsPagePhoneLostPreview() = RunPreviewFrame {
+private fun ControlsPagePhoneLostPreview() = PreviewFrame {
     ControlsPageContent(
         RunPreviewSamples.party,
         isPhoneReachable = false,
@@ -574,7 +588,7 @@ private fun ControlsPagePhoneLostPreview() = RunPreviewFrame {
 
 @WearPreviewLargeRound
 @Composable
-private fun ControlsPageFinishingPreview() = RunPreviewFrame {
+private fun ControlsPageFinishingPreview() = PreviewFrame {
     ControlsPageContent(
         RunPreviewSamples.party,
         isPhoneReachable = true,

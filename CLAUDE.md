@@ -21,16 +21,20 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 
 - 모듈은 `app` 하나, 코드는 `app/src/main/java/com/runiverse/app/`. 패키지는 아래 자리에 두고, 기능 패키지를 새로 만들면 여기에 적는다.
   ```
-  RuniverseApp   앱에 하나뿐인 것(폰 연결·운동 세션)을 직접 만든다
+  RuniverseApp   앱에 하나뿐인 것(폰 연결·운동 세션·콤보 설정)을 직접 만든다
   MainActivity   화면을 열 때 SYNC, 켜짐·꺼짐을 알린다. 러닝이 보이면 운동 서비스를 시작한다
   IdleScreen     러닝이 없을 때 보이는 대기 화면
   phone/         폰과 메시지 주고받기·연결 상태
   exercise/      러닝 중 앱을 살려 두는 서비스·심박 측정
-  run/           러닝 중 화면(첫 화면·파티원 장·내 기록 장·조작 장)·결과 요약과 표기 규칙
-  ui/theme/      여러 기능이 같이 쓰는 색·글자. 화면은 MaterialTheme으로 읽는다
+  run/           러닝 화면·장·결과 요약
+  run/controls/  조작 장과 그 장만 쓰는 것
+  run/common/    장 밖에 두는 규칙·값(표기·자리 계산·폰 명령 등)
+  run/component/ 화면·장이 같이 쓰는 UI 부품·정렬 Modifier·치수
+  ui/theme/      여러 기능이 같이 쓰는 색·글자
   ui/component/  두 기능 이상이 쓰는 부품
   ```
-- 화면은 폰 상태로 `when` 분기한다. 폰 상태는 맨 위 화면 한 곳에서만 읽고, 아래로는 값과 동작 함수만 넘긴다.
+- `run/`에는 화면 파일만 둔다. 장 전용 파일이 둘 이상이면 `controls/`처럼 장 폴더를 만들고, 참조는 `run/ → controls/ → common/ → component/` 한 방향으로만 한다.
+- 화면은 폰 상태로 `when` 분기한다. 폰 상태는 맨 위 화면 한 곳에서만 읽고, 아래로는 값과 동작 함수만 넘긴다. 색·글자는 MaterialTheme으로 읽는다.
 - 라이브러리·플러그인 버전은 `gradle/libs.versions.toml`에만 적는다.
 - flavor는 폰 앱과 같다 — `dev`(`com.runiverse.app.dev`)·`prod`(`com.runiverse.app`). 폰 dev 빌드와 붙여 볼 땐 워치도 `dev`.
 

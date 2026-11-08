@@ -1,20 +1,9 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.controls
 
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-
-data class RunCommandState(
-    val isLocked: Boolean = false,
-    val isFinishPending: Boolean = false,
-    val isCommandOverdue: Boolean = false,
-)
-
-class RunCommands(
-    val pause: () -> Unit,
-    val resume: () -> Unit,
-    val finish: (forced: Boolean) -> Unit,
-)
+import com.runiverse.app.run.common.RunCommandState
 
 enum class FinishButtonStage { HOLD, TAP, FINISHING, CHECKING }
 

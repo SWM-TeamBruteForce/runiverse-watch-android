@@ -1,4 +1,4 @@
-package com.runiverse.app.run
+package com.runiverse.app.run.common
 
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
@@ -15,8 +15,8 @@ enum class GapDirection { AHEAD, BEHIND, LEVEL }
 
 const val UNKNOWN_PACE = "--'--\""
 
-private const val METERS_PER_KM = 1000
-private const val METERS_PER_TENTH_KM = 100
+internal const val METERS_PER_KM = 1000
+internal const val METERS_PER_TENTH_KM = 100
 private const val EXTRA_DECIMAL_BELOW_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
@@ -48,13 +48,6 @@ fun formatGapDistance(gapMeters: Int, abbreviateUnits: Boolean, dropKmDecimal: B
 
         else -> FormattedDistance("${meters / METERS_PER_KM}", kilometerLabel)
     }
-}
-
-/** 남은 거리를 적게 말하지 않게 폰처럼 올린다. */
-fun formatRemainingDistance(meters: Int): FormattedDistance {
-    if (meters < METERS_PER_KM) return FormattedDistance("$meters", DistanceUnitLabel.METER)
-    val tenthsOfKm = (meters + METERS_PER_TENTH_KM - 1) / METERS_PER_TENTH_KM
-    return FormattedDistance("${tenthsOfKm / 10}.${tenthsOfKm % 10}", DistanceUnitLabel.KILOMETER)
 }
 
 /** `gapMeters`는 상대 − 나라서 양수면 상대가 앞이다. */
