@@ -2,6 +2,7 @@ package com.runiverse.app
 
 import android.app.Application
 import android.media.AudioAttributes
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -12,6 +13,11 @@ import com.runiverse.app.phone.PhoneChannel
 import com.runiverse.app.phone.PhoneLink
 import com.runiverse.app.phone.goalPendingStarts
 import com.runiverse.app.run.common.ComboEffectSetting
+import com.runiverse.app.run.common.RunVibration
+import com.runiverse.app.run.common.RunVibrator
+import com.runiverse.app.run.common.comboHeadcount
+import com.runiverse.app.run.common.comboVibration
+import com.runiverse.app.run.common.goalPendingVibration
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
@@ -29,6 +35,7 @@ open class RuniverseApp : Application() {
     open val phoneLink by lazy { PhoneLink(scope, phoneChannel::send) }
     open val exerciseSession by lazy { ExerciseSession(scope, phoneLink, HealthServicesHeartRateTracker(this)) }
     val comboEffectSetting by lazy { ComboEffectSetting(getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)) }
+    private val runVibrator by lazy { RunVibrator(::play, SystemClock::elapsedRealtime) }
 
     override fun onCreate() {
         super.onCreate()
@@ -46,13 +53,25 @@ open class RuniverseApp : Application() {
         }
         // 화면이 꺼져 있어도 울리게 화면 코드 밖에서 받는다
         scope.launch {
-            phoneLink.state.goalPendingStarts().collect { vibrateOnce() }
+            phoneLink.state.goalPendingStarts().collect { runVibrator.vibrate(goalPendingVibration()) }
+        }
+        scope.launch {
+            phoneLink.combos.collect { combo ->
+                // 러닝을 접은 뒤 늦게 온 콤보는 울릴 일이 아니다
+                val linkState = phoneLink.state.value
+                val players = linkState.phoneState?.run?.players?.takeIf { linkState.isRunActive } ?: return@collect
+                runVibrator.vibrate(comboVibration(combo.kind, comboHeadcount(players, combo.userId)))
+            }
         }
     }
 
     // 기본 용도는 터치 진동 설정에 막히고, 알림 용도는 앱이 뒤에 있으면 막힌다
-    private fun vibrateOnce() {
-        val effect = VibrationEffect.createOneShot(GOAL_PENDING_VIBRATION_MS, GOAL_PENDING_VIBRATION_AMPLITUDE)
+    private fun play(vibration: RunVibration) {
+        val effect = VibrationEffect.createWaveform(
+            vibration.timingsMs.toLongArray(),
+            vibration.amplitudes.toIntArray(),
+            NO_REPEAT,
+        )
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build()
         getSystemService(Vibrator::class.java).vibrate(effect, attributes)
     }
@@ -60,10 +79,7 @@ open class RuniverseApp : Application() {
     private companion object {
         const val TAG = "RuniverseApp"
         const val PREFERENCES_NAME = "settings"
-
-        // 콤보의 짧은 여러 번과 구분되게 한 번만 세게 울린다
-        const val GOAL_PENDING_VIBRATION_MS = 300L
-        const val GOAL_PENDING_VIBRATION_AMPLITUDE = 255
+        const val NO_REPEAT = -1
         val RETRY_DELAY = 3.seconds
         val MAX_RETRY_DELAY = 1.minutes
     }

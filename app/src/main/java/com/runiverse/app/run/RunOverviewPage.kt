@@ -46,6 +46,7 @@ import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.GapDirection
 import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.comboFlashAlpha
 import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.currentScreenWidth
@@ -58,6 +59,7 @@ import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.run.common.gapDirection
 import com.runiverse.app.run.common.hasStaleValues
 import com.runiverse.app.run.common.playerStatusWord
+import com.runiverse.app.run.common.smallComboMomentProgress
 import com.runiverse.app.run.component.AlignedText
 import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.HeartRateZoneBar
@@ -91,7 +93,13 @@ private val NARROW_SCREEN_BELOW = 200.dp
 private val WIDEST_GAPS_METERS = listOf(400, 4_000)
 
 @Composable
-internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, heartRateZone: Int?) {
+internal fun RunOverviewPage(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    heartRateBpm: Int?,
+    heartRateZone: Int?,
+    smallComboMoments: Map<String, String> = emptyMap(),
+) {
     val slots = currentRunPageSlots()
     // 키운 글자로는 가장 긴 값이 한 줄에 안 들어간다
     val abbreviateUnits = LocalDensity.current.fontScale > 1f
@@ -131,7 +139,7 @@ internal fun RunOverviewPage(run: RunState, isPhoneReachable: Boolean, heartRate
             val abbreviateGapUnits = abbreviateUnits || isNarrowScreen
             val dropGapKmDecimal = abbreviateUnits && isNarrowScreen
             val cellWidth = playerCellWidth(abbreviateGapUnits, dropGapKmDecimal)
-            AvatarRow(run, isPhoneReachable, cellWidth, Modifier.contentTopAt(slots.belowRowTop))
+            AvatarRow(run, isPhoneReachable, cellWidth, smallComboMoments, Modifier.contentTopAt(slots.belowRowTop))
             // 끊긴 동안의 격차는 오래된 값이라 숨기고 그 자리에 안내를 띄운다
             if (notice == null) {
                 // 상태 글자는 윗변이 높아 윗변으로 맞추면 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
@@ -214,12 +222,22 @@ private fun playerCellWidth(abbreviateUnits: Boolean, dropKmDecimal: Boolean): D
 }
 
 @Composable
-private fun AvatarRow(run: RunState, isPhoneReachable: Boolean, cellWidth: Dp, modifier: Modifier) {
+private fun AvatarRow(
+    run: RunState,
+    isPhoneReachable: Boolean,
+    cellWidth: Dp,
+    smallComboMoments: Map<String, String>,
+    modifier: Modifier,
+) {
     Row(modifier) {
         run.players.forEach { player ->
             val hasStaleValues = player.hasStaleValues(run, isPhoneReachable)
             Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
-                PlayerAvatar(player, Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f))
+                PlayerAvatar(
+                    player,
+                    smallComboMoments[player.userId],
+                    Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f),
+                )
             }
         }
     }
@@ -319,10 +337,12 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
 // TODO: 파티원 사진 — 폰이 사진을 보내면 photos로 그린다. 그 전엔 색 원에 첫 글자를 쓴다
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
-private fun PlayerAvatar(player: Player, modifier: Modifier) {
+private fun PlayerAvatar(player: Player, smallComboMomentId: String?, modifier: Modifier) {
     val lane = laneColor(player.colorSlot)
     val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
+    val flashColor = MaterialTheme.colorScheme.onBackground
+    val momentProgress = smallComboMomentProgress(smallComboMomentId)
     Box(
         modifier
             .size(RunDimensions.AVATAR_SIZE + RunDimensions.COMBO_BORDER_WIDTH * 2)
@@ -330,11 +350,11 @@ private fun PlayerAvatar(player: Player, modifier: Modifier) {
                 if (isCombo) {
                     // 나와 상대의 레인 색을 섞어 누구와 붙었는지 알 수 있게 한다
                     val border = RunDimensions.COMBO_BORDER_WIDTH.toPx()
-                    drawCircle(
-                        Brush.linearGradient(listOf(myLane, lane)),
-                        radius = RunDimensions.AVATAR_SIZE.toPx() / 2 + border / 2,
-                        style = Stroke(border),
-                    )
+                    val radius = RunDimensions.AVATAR_SIZE.toPx() / 2 + border / 2
+                    drawCircle(Brush.linearGradient(listOf(myLane, lane)), radius, style = Stroke(border))
+                    // 작은 순간엔 페이스를 가리지 않게 고리만 잠깐 흰색으로 밝힌다
+                    val flashAlpha = comboFlashAlpha(momentProgress.value)
+                    if (flashAlpha > 0f) drawCircle(flashColor, radius, alpha = flashAlpha, style = Stroke(border))
                 }
             },
         contentAlignment = Alignment.Center,

@@ -5,8 +5,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -50,8 +53,15 @@ internal fun RunScreen(
     commands: RunCommands,
     isComboEffectOn: Boolean,
     onComboEffectChange: (Boolean) -> Unit,
+    /** 사람 번호마다 지금 띄우는 작은 순간 번호다. */
+    smallComboMoments: Map<String, String> = emptyMap(),
+    onControlsShownChange: (Boolean) -> Unit = {},
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
+    val currentOnControlsShownChange by rememberUpdatedState(onControlsShownChange)
+    LaunchedEffect(horizontalPagerState.currentPage) {
+        currentOnControlsShownChange(horizontalPagerState.currentPage == CONTROLS_PAGE_INDEX)
+    }
     val verticalPagerState = rememberPagerState(initialPage = OVERVIEW_VERTICAL_PAGE_INDEX) { run.players.size + 1 }
     val scope = rememberCoroutineScope()
     val isOnOverview = horizontalPagerState.currentPage == OVERVIEW_PAGE_INDEX &&
@@ -89,6 +99,7 @@ internal fun RunScreen(
                     isPhoneReachable,
                     heartRateBpm,
                     heartRateZone,
+                    smallComboMoments,
                 )
 
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold {
@@ -106,6 +117,7 @@ private fun OverviewVerticalPager(
     isPhoneReachable: Boolean,
     heartRateBpm: Int?,
     heartRateZone: Int?,
+    smallComboMoments: Map<String, String>,
 ) {
     VerticalPagerScaffold(
         pagerState,
@@ -116,9 +128,9 @@ private fun OverviewVerticalPager(
             ScreenScaffold {
                 val player = run.players.getOrNull(page - 1)
                 if (player == null) {
-                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone)
+                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone, smallComboMoments)
                 } else {
-                    PartyPage(run, player, isPhoneReachable)
+                    PartyPage(run, player, isPhoneReachable, smallComboMoments[player.userId])
                 }
             }
         }

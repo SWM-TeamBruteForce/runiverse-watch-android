@@ -3,20 +3,25 @@ package com.runiverse.app
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.lifecycle.Lifecycle
 import com.runiverse.app.exercise.ExerciseService
+import com.runiverse.app.phone.ComboKind
 import com.runiverse.app.phone.PhoneMessage
 import com.runiverse.app.phone.PhoneState
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
+import com.runiverse.app.phone.WatchComboTriggered
 import com.runiverse.app.phone.WatchPause
 import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
@@ -46,6 +51,7 @@ private const val REPLY_TIMEOUT_PASSED_MS = 3_500L
 private const val RESULT_REPLY_TIMEOUT_PASSED_MS = 13_500L
 private const val PHONE_LOST_NOT_YET_MS = 9 * 60_000L
 private const val PHONE_LOST_REMAINING_MS = 4 * 60_000L
+private const val BURST_PASSED_MS = 1_300L
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = FakeRuniverseApp::class)
@@ -59,6 +65,7 @@ class MainActivityTest {
 
     // 오프라인 솔로는 방 번호가 없어 SYNC 없이 바로 받는다
     private val soloRun = RunPreviewSamples.solo.copy(runningRoomId = null)
+    private val partyRun = RunPreviewSamples.party
     private val appName get() = composeRule.activity.getString(R.string.app_name)
 
     @After
@@ -464,6 +471,164 @@ class MainActivityTest {
 
         // then
         assertFalse(app.comboEffectSetting.isOn.value)
+    }
+
+    @Test
+    fun `콤보 눈금이 오면 큰 순간을 띄우고 다 그린 뒤 걷는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+        composeRule.mainClock.advanceTimeBy(BURST_PASSED_MS)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `콤보 효과를 끄면 눈금이 와도 큰 순간을 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.runOnUiThread { app.comboEffectSetting.set(false) }
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `명단에 없는 사람의 눈금은 큰 순간을 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u9", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `큰 순간 중에 온 다음 눈금은 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+
+        // when
+        receiveMilestone("e2", "u1", 20)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+        composeRule.onNodeWithContentDescription("20 COMBO 완두콩").assertDoesNotExist()
+    }
+
+    @Test
+    fun `화면이 꺼진 사이 온 눈금은 다시 켜져도 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `큰 순간이 덮은 동안 쓸어도 장이 넘어가지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+
+        // when
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.mainClock.advanceTimeBy(BURST_PASSED_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_pause)).assertIsNotDisplayed()
+    }
+
+    @Test
+    fun `조작 장에서는 눈금이 와도 큰 순간을 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `조작 장에서 돌아오면 눈금이 올 때 큰 순간을 띄운다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+    }
+
+    @Test
+    fun `명단에 없는 사람의 눈금 뒤에 온 눈금은 띄운다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u9", 10)
+
+        // when
+        receiveMilestone("e2", "u2", 20)
+
+        // then
+        composeRule.onNodeWithContentDescription("20 COMBO 콩나물").assertExists()
+    }
+
+    @Test
+    fun `큰 순간 중에 화면이 꺼지면 다시 켜져도 이어 그리지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    // 받은 콤보는 다음 차례에 상태로 들어가 그 다음 프레임에 그려진다
+    private fun receiveMilestone(eventId: String, userId: String, comboCount: Int) {
+        receive(WatchComboTriggered(eventId, userId, comboCount, ComboKind.MILESTONE))
+        composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeByFrame()
     }
 
     private fun startExerciseSession() {
