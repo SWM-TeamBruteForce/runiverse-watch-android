@@ -170,7 +170,8 @@ private fun DrawScope.drawPlayerRow(
     val left = (size.width - (avatar + gap + name.size.width)) / 2
     val center = Offset(left + avatar / 2, rowTop + avatar / 2)
     val lane = laneColor(player.colorSlot)
-    drawCircle(lane, avatar / 2, center, alpha = alpha)
+    // 사진과 따로 반투명하게 겹치면 나타나는 동안 레인 색이 사진 너머로 비친다
+    if (photo == null) drawCircle(lane, avatar / 2, center, alpha = alpha)
     val border = RunDimensions.COMBO_BORDER_WIDTH.toPx()
     val ringRadius = avatar / 2 + border / 2
     drawCircle(
