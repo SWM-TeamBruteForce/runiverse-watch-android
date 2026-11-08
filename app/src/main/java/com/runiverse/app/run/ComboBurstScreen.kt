@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
@@ -86,7 +89,13 @@ private fun ComboBurstCanvas(comboCount: Int, player: Player, frame: ComboBurstF
         listOf(laneColor(MY_LANE_COLOR_SLOT), colors.onBackground, laneColor(player.colorSlot)),
     )
     val description = "$comboCount $COMBO_WORD ${player.nickname}"
-    Canvas(Modifier.fillMaxSize().semantics { contentDescription = description }) {
+    Canvas(
+        Modifier
+            .fillMaxSize()
+            // 덮개가 검어 뒤 조작이 안 보인다 — 터치를 받아 가려진 일시정지가 눌리지 않게 한다
+            .pointerInput(Unit) { awaitEachGesture { awaitFirstDown().consume() } }
+            .semantics { contentDescription = description },
+    ) {
         drawRect(colors.background, alpha = frame.coverAlpha)
         drawSpreadingRing(frame, colors.onBackground)
 

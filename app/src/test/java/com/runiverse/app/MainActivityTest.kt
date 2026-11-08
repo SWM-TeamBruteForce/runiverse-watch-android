@@ -544,6 +544,23 @@ class MainActivityTest {
         composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
     }
 
+    @Test
+    fun `큰 순간이 덮은 동안 누르면 가려진 일시정지가 눌리지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+
+        // when
+        composeRule.onNodeWithText(text(R.string.controls_pause)).performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        assertTrue(app.sent.filterIsInstance<WatchPause>().isEmpty())
+    }
+
     // 받은 콤보는 다음 차례에 상태로 들어가 그 다음 프레임에 그려진다
     private fun receiveMilestone(eventId: String, userId: String, comboCount: Int) {
         receive(WatchComboTriggered(eventId, userId, comboCount, ComboKind.MILESTONE))
