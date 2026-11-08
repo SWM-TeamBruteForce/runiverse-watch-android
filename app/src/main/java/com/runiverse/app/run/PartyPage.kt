@@ -13,8 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.Measured
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
@@ -57,8 +58,10 @@ import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
 import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.contentBottom
 import com.runiverse.app.run.component.contentBottomAt
 import com.runiverse.app.run.component.contentCenterAt
+import com.runiverse.app.run.component.contentTop
 import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
@@ -164,13 +167,23 @@ private fun PaceAndComboRows(
         MaterialTheme.colorScheme.onSurfaceVariant,
         // alpha가 상자 밖을 잘라서 키우기를 바깥에 둔다
         Modifier.contentTopAt(comboRowTop)
-            .graphicsLayer {
-                val scale = comboBumpScale(momentProgress.value)
-                scaleX = scale
-                scaleY = scale
-            }
+            .scaledAtContentCenter { comboBumpScale(momentProgress.value) }
             .alpha(playerValuesAlpha),
     )
+}
+
+// 상자 가운데로 키우면 꼬리 글자는 아래로 치우쳐 커진다 — 보이는 글자 가운데를 붙잡는다
+private fun Modifier.scaledAtContentCenter(scale: () -> Float): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val pivotY = (placeable.contentTop() + placeable.contentBottom()) / 2f / placeable.height
+    layout(placeable.width, placeable.height) {
+        placeable.placeWithLayer(0, 0) {
+            val current = scale()
+            transformOrigin = TransformOrigin(0.5f, pivotY)
+            scaleX = current
+            scaleY = current
+        }
+    }
 }
 
 // 거리와 이름은 글자 종류·크기가 달라 기준선 대신 보이는 글자의 세로 가운데를 맞춘다
