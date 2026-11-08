@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.GestureInclusion
@@ -55,6 +56,7 @@ internal fun RunScreen(
     onComboEffectChange: (Boolean) -> Unit,
     /** 사람 번호마다 지금 띄우는 작은 순간 번호다. */
     smallComboMoments: Map<String, String> = emptyMap(),
+    playerPhotos: Map<String, ImageBitmap> = emptyMap(),
     onControlsShownChange: (Boolean) -> Unit = {},
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
@@ -100,6 +102,7 @@ internal fun RunScreen(
                     heartRateBpm,
                     heartRateZone,
                     smallComboMoments,
+                    playerPhotos,
                 )
 
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold {
@@ -118,6 +121,7 @@ private fun OverviewVerticalPager(
     heartRateBpm: Int?,
     heartRateZone: Int?,
     smallComboMoments: Map<String, String>,
+    playerPhotos: Map<String, ImageBitmap>,
 ) {
     VerticalPagerScaffold(
         pagerState,
@@ -128,7 +132,7 @@ private fun OverviewVerticalPager(
             ScreenScaffold {
                 val player = run.players.getOrNull(page - 1)
                 if (player == null) {
-                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone, smallComboMoments)
+                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone, smallComboMoments, playerPhotos)
                 } else {
                     PartyPage(run, player, isPhoneReachable, smallComboMoments[player.userId])
                 }

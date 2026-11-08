@@ -1,7 +1,9 @@
 package com.runiverse.app.run
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
@@ -67,6 +69,33 @@ class RunOverviewPageTest {
         composeRule.onNodeWithText("완").assertExists()
         composeRule.onNodeWithText("120").assertExists()
         composeRule.onNodeWithText("150").assertDoesNotExist()
+    }
+
+    @Test
+    fun `사진이 있는 파티원은 첫 글자 대신 사진을 보인다`() {
+        // given
+        val photos = mapOf("u1" to RunPreviewSamples.brightPhotos.getValue("u1"))
+
+        // when
+        show(party, playerPhotos = photos)
+
+        // then
+        composeRule.onNodeWithContentDescription("완두콩").assertExists()
+        composeRule.onNodeWithText("완").assertDoesNotExist()
+        composeRule.onNodeWithText("콩").assertExists()
+    }
+
+    @Test
+    fun `멈춘 파티원도 사진을 보이고 격차 대신 멈춤을 보인다`() {
+        // given
+        val photos = mapOf("u3" to RunPreviewSamples.brightPhotos.getValue("u3"))
+
+        // when
+        show(party, playerPhotos = photos)
+
+        // then
+        composeRule.onNodeWithContentDescription("강낭콩").assertExists()
+        composeRule.onNodeWithText(text(R.string.run_status_paused)).assertExists()
     }
 
     @Test
@@ -141,9 +170,16 @@ class RunOverviewPageTest {
 
     private fun text(id: Int) = RuntimeEnvironment.getApplication().getString(id)
 
-    private fun show(run: RunState, isPhoneReachable: Boolean = true, heartRateBpm: Int? = 150) {
+    private fun show(
+        run: RunState,
+        isPhoneReachable: Boolean = true,
+        heartRateBpm: Int? = 150,
+        playerPhotos: Map<String, ImageBitmap> = emptyMap(),
+    ) {
         composeRule.setContent {
-            PreviewFrame { RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3) }
+            PreviewFrame {
+                RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone = 3, playerPhotos = playerPhotos)
+            }
         }
     }
 }

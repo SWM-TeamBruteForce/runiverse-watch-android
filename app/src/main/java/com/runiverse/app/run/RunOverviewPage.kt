@@ -1,7 +1,9 @@
 package com.runiverse.app.run
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,11 +23,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -81,8 +85,9 @@ import com.runiverse.app.ui.theme.tabularNumerals
 import kotlin.math.roundToInt
 
 private const val MIN_PLAYER_CELL_WIDTH_FRACTION = 110f / 480f
-private const val STATUS_OVERLAY_ALPHA = 0.45f
+private const val STATUS_OVERLAY_ALPHA = 0.6f
 private const val STATUS_ICON_FRACTION = 0.42f
+private val PHOTO_BORDER_WIDTH = 1.dp
 private val DIRECTION_INDICATOR_WIDTH = 7.5.dp
 private val DIRECTION_INDICATOR_HEIGHT = 6.6.dp
 private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
@@ -99,6 +104,7 @@ internal fun RunOverviewPage(
     heartRateBpm: Int?,
     heartRateZone: Int?,
     smallComboMoments: Map<String, String> = emptyMap(),
+    playerPhotos: Map<String, ImageBitmap> = emptyMap(),
 ) {
     val slots = currentRunPageSlots()
     // 키운 글자로는 가장 긴 값이 한 줄에 안 들어간다
@@ -139,7 +145,14 @@ internal fun RunOverviewPage(
             val abbreviateGapUnits = abbreviateUnits || isNarrowScreen
             val dropGapKmDecimal = abbreviateUnits && isNarrowScreen
             val cellWidth = playerCellWidth(abbreviateGapUnits, dropGapKmDecimal)
-            AvatarRow(run, isPhoneReachable, cellWidth, smallComboMoments, Modifier.contentTopAt(slots.belowRowTop))
+            AvatarRow(
+                run,
+                isPhoneReachable,
+                cellWidth,
+                smallComboMoments,
+                playerPhotos,
+                Modifier.contentTopAt(slots.belowRowTop),
+            )
             // 끊긴 동안의 격차는 오래된 값이라 숨기고 그 자리에 안내를 띄운다
             if (notice == null) {
                 // 상태 글자는 윗변이 높아 윗변으로 맞추면 옆 사람 격차까지 밀린다 — 숫자 기준선에 맞춘다
@@ -227,6 +240,7 @@ private fun AvatarRow(
     isPhoneReachable: Boolean,
     cellWidth: Dp,
     smallComboMoments: Map<String, String>,
+    playerPhotos: Map<String, ImageBitmap>,
     modifier: Modifier,
 ) {
     Row(modifier) {
@@ -235,6 +249,7 @@ private fun AvatarRow(
             Box(Modifier.width(cellWidth), contentAlignment = Alignment.Center) {
                 PlayerAvatar(
                     player,
+                    playerPhotos[player.userId],
                     smallComboMoments[player.userId],
                     Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f),
                 )
@@ -334,15 +349,17 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
     }
 }
 
-// TODO: 파티원 사진 — 폰이 사진을 보내면 photos로 그린다. 그 전엔 색 원에 첫 글자를 쓴다
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
-private fun PlayerAvatar(player: Player, smallComboMomentId: String?, modifier: Modifier) {
+private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId: String?, modifier: Modifier) {
     val lane = laneColor(player.colorSlot)
     val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
     val flashColor = MaterialTheme.colorScheme.onBackground
     val momentProgress = smallComboMomentProgress(smallComboMomentId)
+    // 사진이 덮은 레인 색을 선으로 남긴다 — 콤보 중엔 고리가 그 색을 보인다
+    val photoBorder =
+        if (photo != null && !isCombo) Modifier.border(PHOTO_BORDER_WIDTH, lane, CircleShape) else Modifier
     Box(
         modifier
             .size(RunDimensions.AVATAR_SIZE + RunDimensions.COMBO_BORDER_WIDTH * 2)
@@ -363,17 +380,21 @@ private fun PlayerAvatar(player: Player, smallComboMomentId: String?, modifier: 
             Modifier.boxContentBounds()
                 .size(RunDimensions.AVATAR_SIZE)
                 .clip(CircleShape)
-                .background(lane),
+                .background(lane)
+                .then(photoBorder),
             contentAlignment = Alignment.Center,
         ) {
-            if (player.status == RunStatus.RUNNING) {
+            if (photo != null) {
+                Image(photo, player.nickname, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            } else if (player.status == RunStatus.RUNNING) {
                 Text(
                     player.nickname.take(1),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
                 )
-            } else {
+            }
+            if (player.status != RunStatus.RUNNING) {
                 val iconColor = MaterialTheme.colorScheme.onBackground
                 Box(
                     Modifier.fillMaxSize()
@@ -432,6 +453,31 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
 @Composable
 private fun RunOverviewPagePartyPreview() = PreviewFrame {
     RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+}
+
+@WearPreviewLargeRound
+@WearPreviewSmallRound
+@Composable
+private fun RunOverviewPagePhotosPreview() = PreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.party,
+        isPhoneReachable = true,
+        heartRateBpm = 148,
+        heartRateZone = 3,
+        playerPhotos = RunPreviewSamples.brightPhotos,
+    )
+}
+
+@WearPreviewLargeRound
+@Composable
+private fun RunOverviewPagePhotoStatusesPreview() = PreviewFrame {
+    RunOverviewPage(
+        RunPreviewSamples.statusesOnPhotos,
+        isPhoneReachable = true,
+        heartRateBpm = 148,
+        heartRateZone = 3,
+        playerPhotos = RunPreviewSamples.brightPhotos,
+    )
 }
 
 @WearPreviewLargeRound

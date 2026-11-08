@@ -2,7 +2,9 @@ package com.runiverse.app
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Looper
+import android.util.Base64
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -19,6 +21,7 @@ import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.ComboKind
 import com.runiverse.app.phone.PhoneMessage
 import com.runiverse.app.phone.PhoneState
+import com.runiverse.app.phone.PlayerPhoto
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.phone.WatchComboTriggered
@@ -42,6 +45,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.io.ByteArrayOutputStream
 import java.time.Duration
 
 // 닫기 애니메이션 200ms보다 넉넉히 돌린다
@@ -312,6 +316,15 @@ class MainActivityTest {
 
         // then
         assertEquals(WatchVisibilityUpdate(isVisible = false), app.sent.last { it is WatchVisibilityUpdate })
+    }
+
+    @Test
+    fun `폰이 보낸 파티원 사진을 러닝 첫 화면에 보인다`() {
+        // when
+        answerSync(partyRun, photos = listOf(PlayerPhoto(userId = "u1", jpegBase64 = jpegBase64())))
+
+        // then
+        composeRule.onNodeWithContentDescription("완두콩").assertExists()
     }
 
     @Test
@@ -670,11 +683,17 @@ class MainActivityTest {
         composeRule.waitForIdle()
     }
 
-    private fun answerSync(run: RunState?) {
+    private fun answerSync(run: RunState?, photos: List<PlayerPhoto> = emptyList()) {
         composeRule.waitForIdle()
         val syncId = app.sent.filterIsInstance<WatchSync>().last().syncId
-        receive(WatchSynced(syncId, phoneState(run), birthday = null, photos = emptyList()))
+        receive(WatchSynced(syncId, phoneState(run), birthday = null, photos = photos))
         composeRule.waitForIdle()
+    }
+
+    private fun jpegBase64(): String {
+        val bitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
+        val jpeg = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }.toByteArray()
+        return Base64.encodeToString(jpeg, Base64.NO_WRAP)
     }
 
     // SYNC 중엔 상태가 조용히 버려진다
