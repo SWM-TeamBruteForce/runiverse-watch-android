@@ -16,6 +16,14 @@ android {
         versionName = "1.0"
     }
 
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+
     flavorDimensions += "env"
     productFlavors {
         // 폰 dev 빌드와 applicationId가 같아야 Data Layer로 통신된다
