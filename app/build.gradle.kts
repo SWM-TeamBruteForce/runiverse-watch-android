@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.runiverse.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.runiverse.app"
@@ -51,7 +51,7 @@ android {
     }
 
     lint {
-        // 버전은 IntelliJ에서 열리는 값으로 고정해 둔다
+        // 버전은 Android Studio에서 열리는 AGP와 Wear Compose에 맞춰 고정해 둔다
         disable += setOf("GradleDependency", "AndroidGradlePluginVersion")
     }
 }
