@@ -1,6 +1,7 @@
 package com.runiverse.app.exercise
 
 import com.runiverse.app.phone.MyRecord
+import com.runiverse.app.phone.PhoneError
 import com.runiverse.app.phone.PhoneLink
 import com.runiverse.app.phone.PhoneState
 import com.runiverse.app.phone.RoomType
@@ -332,6 +333,19 @@ class ExerciseSessionTest {
     }
 
     @Test
+    fun `세션을 시작한 적 없이 업데이트로 막히면 남은 운동을 한 번 끈다`() = runTest {
+        // given -> 앱이 죽었다 다시 열려 이 프로세스에선 세션이 없다
+        val fixture = Fixture(this)
+
+        // when
+        fixture.phoneLink.onReceived(PhoneError("WATCH_UPDATE_REQUIRED", "워치 앱 업데이트 필요", "WATCH_SYNC"))
+        runCurrent()
+
+        // then
+        assertEquals(listOf("stop"), fixture.tracker.calls)
+    }
+
+    @Test
     fun `세션을 시작한 적 없어도 러닝 중이면 운동을 끄지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -373,6 +387,22 @@ class ExerciseSessionTest {
         // then
         assertEquals("stop", fixture.tracker.calls.last())
         assertTrue(fixture.isEnded)
+    }
+
+    @Test
+    fun `폰이 업데이트를 요구하면 운동을 끝내고 세션을 끝낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.startSession()
+
+        // when
+        fixture.phoneLink.onReceived(PhoneError("WATCH_UPDATE_REQUIRED", "워치 앱 업데이트 필요", "WATCH_SYNC"))
+        runCurrent()
+
+        // then
+        assertEquals("stop", fixture.tracker.calls.last())
+        assertTrue(fixture.isEnded)
+        assertFalse(fixture.isPhoneLost)
     }
 
     @Test

@@ -53,10 +53,10 @@ class ExerciseSession(
     private val isActive get() = phoneWatchJob?.isActive == true
 
     init {
-        // 앱이 죽어도 운동은 남는다 — 시작한 적 없이 러닝이 없다고 들으면 남은 운동을 끈다
+        // 앱이 죽어도 운동은 남는다 — 시작한 적 없이 러닝이 없다고 듣거나 업데이트로 막히면 남은 운동을 끈다
         scope.launch {
             phoneLink.state
-                .map { it.phoneState != null && !it.isRunActive }
+                .map { (it.phoneState != null || it.isUpdateRequired) && !it.isRunActive }
                 .distinctUntilChanged()
                 .filter { it }
                 .collect {

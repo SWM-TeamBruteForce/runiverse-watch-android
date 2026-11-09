@@ -9,7 +9,7 @@ sealed interface WatchMessage
 sealed interface PhoneMessage
 
 @Serializable
-data class WatchSync(val syncId: String) : WatchMessage
+data class WatchSync(val syncId: String, val watchVersion: String) : WatchMessage
 
 @Serializable
 data class WatchPause(

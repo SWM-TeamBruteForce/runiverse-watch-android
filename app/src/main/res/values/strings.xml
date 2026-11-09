@@ -38,6 +38,10 @@
     <string name="controls_penalty_if_short">못 채우면 20분 매칭 제한</string>
     <string name="controls_penalty_if_finished">끝내면 20분 매칭 제한</string>
     <string name="controls_may_not_complete">끝내면 미완주 가능</string>
+    <string name="update_required">워치 앱 업데이트 필요</string>
+    <string name="update_cannot_connect">폰 연결 불가</string>
+    <string name="update_open_store">업데이트</string>
+    <string name="update_open_store_failed">스토어 열기 실패</string>
     <string name="unit_km">km</string>
     <string name="unit_m">m</string>
     <string name="unit_short_km">k</string>

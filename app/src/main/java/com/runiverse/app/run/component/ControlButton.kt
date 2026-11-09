@@ -33,12 +33,19 @@ private const val PAUSE_ICON_LEFT_BAR_FRACTION = 0.1f
 private const val PAUSE_ICON_RIGHT_BAR_FRACTION = 0.62f
 private const val CHECK_ICON_TURN_FRACTION = 0.38f
 private const val CHECK_ICON_ARM_FRACTION = 0.35f
-private val CHECK_ICON_STROKE_WIDTH = 1.5.dp
+private const val UP_ARROW_ICON_SHAFT_END_FRACTION = 0.72f
+private const val UP_ARROW_ICON_HEAD_FRACTION = 0.32f
+private val LINE_ICON_STROKE_WIDTH = 1.5.dp
 private val ICON_TO_LABEL_GAP = 6.dp
+private const val BOTTOM_PILL_WIDTH_FRACTION = 204f / 480f
+
+// 작은 화면에서 알약이 동그래지지 않게 한다
+private val MIN_BOTTOM_PILL_WIDTH = 96.dp
 
 internal val PILL_HEIGHT = 48.dp
+internal val BOTTOM_PILL_BOTTOM_PADDING = 8.dp
 
-internal enum class ControlIcon { PAUSE, PLAY, STOP, CHECK }
+internal enum class ControlIcon { PAUSE, PLAY, STOP, CHECK, UP_ARROW }
 
 @Composable
 internal fun ControlButton(
@@ -106,7 +113,29 @@ private fun DrawScope.drawControlIcon(icon: ControlIcon, color: Color) {
                 lineTo(size.width, middle - arm)
             },
             color,
-            style = Stroke(CHECK_ICON_STROKE_WIDTH.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+            style = lineIconStroke(),
+        )
+
+        ControlIcon.UP_ARROW -> drawPath(
+            Path().apply {
+                val center = size.width / 2
+                val head = size.width * UP_ARROW_ICON_HEAD_FRACTION
+                moveTo(center, size.height * UP_ARROW_ICON_SHAFT_END_FRACTION)
+                lineTo(center, 0f)
+                moveTo(center - head, head)
+                lineTo(center, 0f)
+                lineTo(center + head, head)
+                moveTo(0f, size.height)
+                lineTo(size.width, size.height)
+            },
+            color,
+            style = lineIconStroke(),
         )
     }
 }
+
+private fun DrawScope.lineIconStroke() =
+    Stroke(LINE_ICON_STROKE_WIDTH.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+/** 화면 맨 아래에 하나만 두는 알약 버튼의 폭이다. */
+internal fun bottomPillWidth(screenWidth: Dp): Dp = maxOf(screenWidth * BOTTOM_PILL_WIDTH_FRACTION, MIN_BOTTOM_PILL_WIDTH)

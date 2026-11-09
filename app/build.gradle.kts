@@ -13,7 +13,7 @@ android {
         minSdk = 30
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.2.0"
     }
 
     buildTypes {
@@ -38,6 +38,8 @@ android {
 
     buildFeatures {
         compose = true
+        // 폰에 워치 버전을 알리려고 켠다 — AGP 기본값은 꺼져 있다
+        buildConfig = true
     }
 
     testOptions {
