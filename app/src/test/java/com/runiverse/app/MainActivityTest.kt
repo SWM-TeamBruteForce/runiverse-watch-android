@@ -346,6 +346,19 @@ class MainActivityTest {
     }
 
     @Test
+    fun `스토어 앱이 없으면 업데이트를 눌러도 스토어 열기 실패를 보인다`() {
+        // given
+        shadowOf(composeRule.activity.application).checkActivities(true)
+        rejectSync()
+
+        // when
+        composeRule.onNodeWithText(text(R.string.update_open_store)).performClick()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.update_open_store_failed)).assertExists()
+    }
+
+    @Test
     fun `앱을 열면 폰에 SYNC와 화면 켜짐을 보낸다`() {
         // when
         composeRule.waitForIdle()

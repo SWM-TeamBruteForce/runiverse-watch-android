@@ -717,6 +717,23 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `업데이트 거절 전에 보낸 SYNC의 답이 늦게 와도 받지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1))
+        fixture.phoneLink.probeWhileScreenOff()
+        runCurrent()
+        val lateSync = fixture.sent.last { it is WatchSync } as WatchSync
+
+        // when
+        fixture.phoneLink.onReceived(updateRequired(requestId = null))
+        fixture.phoneLink.onReceived(synced(lateSync.syncId, state(stateSequence = 5)))
+
+        // then
+        assertEquals(PhoneLinkState(isUpdateRequired = true), fixture.phoneLink.state.value)
+    }
+
+    @Test
     fun `잠겨 있으면 명령을 보내지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
