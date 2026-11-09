@@ -18,22 +18,22 @@ class IdleScreenTest {
     private val context get() = RuntimeEnvironment.getApplication()
 
     @Test
-    fun `폰이 연결돼 있으면 앱 이름을 보인다`() {
+    fun `폰이 연결돼 있으면 폰에서 러닝을 시작하라고 보인다`() {
         // when
         composeRule.setContent { PreviewFrame { IdleScreen(isPhoneReachable = true) } }
 
         // then
-        composeRule.onNodeWithText(context.getString(R.string.app_name)).assertExists()
+        composeRule.onNodeWithText(context.getString(R.string.idle_start_on_phone)).assertExists()
         composeRule.onNodeWithText(context.getString(R.string.run_phone_checking)).assertDoesNotExist()
     }
 
     @Test
-    fun `폰 응답이 없으면 앱 이름 대신 폰 연결 확인 중을 보인다`() {
+    fun `폰 응답이 없으면 러닝 시작 안내 대신 폰 연결 확인 중을 보인다`() {
         // when
         composeRule.setContent { PreviewFrame { IdleScreen(isPhoneReachable = false) } }
 
         // then
         composeRule.onNodeWithText(context.getString(R.string.run_phone_checking)).assertExists()
-        composeRule.onNodeWithText(context.getString(R.string.app_name)).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.idle_start_on_phone)).assertDoesNotExist()
     }
 }

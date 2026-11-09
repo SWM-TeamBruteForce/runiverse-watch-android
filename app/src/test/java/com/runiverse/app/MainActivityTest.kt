@@ -7,7 +7,7 @@ import android.os.Looper
 import android.util.Base64
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -71,7 +71,8 @@ class MainActivityTest {
     // 오프라인 솔로는 방 번호가 없어 SYNC 없이 바로 받는다
     private val soloRun = RunPreviewSamples.solo.copy(runningRoomId = null)
     private val partyRun = RunPreviewSamples.party
-    private val appName get() = composeRule.activity.getString(R.string.app_name)
+    // 대기 화면 아이콘은 폰 연결 여부와 상관없이 있어, 폰이 끊긴 대기 화면도 이것으로 찾는다
+    private val idleMark get() = composeRule.activity.getString(R.string.app_name)
 
     @After
     fun cancelTestScope() {
@@ -85,7 +86,7 @@ class MainActivityTest {
         idleFor(REPLY_TIMEOUT_PASSED_MS)
 
         // then -> SYNCED를 못 받았으면 3초 뒤 폰 연결 확인 중으로 바뀐다
-        composeRule.onNodeWithText(appName).assertExists()
+        composeRule.onNodeWithContentDescription(idleMark).assertExists()
     }
 
     @Test
@@ -118,7 +119,7 @@ class MainActivityTest {
     fun `쓸어 닫는 도중 러닝이 시작되면 앱을 닫지 않고 러닝 화면을 보인다`() {
         // given
         answerSync(run = null)
-        composeRule.onNodeWithText(appName).assertExists()
+        composeRule.onNodeWithContentDescription(idleMark).assertExists()
         composeRule.mainClock.autoAdvance = false
         composeRule.onRoot().performTouchInput { swipeRight() }
 
@@ -140,7 +141,7 @@ class MainActivityTest {
 
         // when
         composeRule.onRoot().performTouchInput { swipeRight() }
-        val lefts = recordAppNameLefts()
+        val lefts = recordIdleMarkLefts()
 
         // then
         val shownLefts = lefts.takeWhile { it != null }.filterNotNull()
@@ -264,7 +265,7 @@ class MainActivityTest {
 
         // when
         receiveState(run = null)
-        val lefts = recordAppNameLefts()
+        val lefts = recordIdleMarkLefts()
 
         // then
         assertTrue(composeRule.activity.isFinishing)
@@ -288,7 +289,7 @@ class MainActivityTest {
         // when
         composeRule.mainClock.autoAdvance = false
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(PHONE_LOST_REMAINING_MS))
-        val lefts = recordAppNameLefts()
+        val lefts = recordIdleMarkLefts()
 
         // then
         assertTrue(composeRule.activity.isFinishing)
@@ -303,7 +304,7 @@ class MainActivityTest {
 
         // then
         composeRule.onNodeWithText(text(R.string.update_required)).assertExists()
-        composeRule.onNodeWithText(appName).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(idleMark).assertDoesNotExist()
     }
 
     @Test
@@ -730,15 +731,15 @@ class MainActivityTest {
     private fun assertClosedWithoutIdleScreen() {
         assertTrue(composeRule.activity.isFinishing)
         assertNull(app.phoneLink.state.value.finishedRun)
-        composeRule.onNodeWithText(appName).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(idleMark).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
     }
 
     private fun text(id: Int) = composeRule.activity.getString(id)
 
-    private fun recordAppNameLefts(): List<Float?> = List(SWIPE_SETTLE_FRAME_COUNT) {
+    private fun recordIdleMarkLefts(): List<Float?> = List(SWIPE_SETTLE_FRAME_COUNT) {
         composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onAllNodesWithText(appName).fetchSemanticsNodes().firstOrNull()?.boundsInRoot?.left
+        composeRule.onAllNodesWithContentDescription(idleMark).fetchSemanticsNodes().firstOrNull()?.boundsInRoot?.left
     }
 
     private fun idleFor(ms: Long) {
