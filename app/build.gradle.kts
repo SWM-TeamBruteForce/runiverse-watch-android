@@ -60,6 +60,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
     // 코드에서 직접 쓰지 않는다 — Play 서비스가 끌어오는 옛 버전을 권한 요청 API가 요구하는 버전으로 올린다
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.wear.compose.material3)
