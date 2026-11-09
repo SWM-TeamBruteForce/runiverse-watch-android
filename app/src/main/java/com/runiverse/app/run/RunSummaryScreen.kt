@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
@@ -31,22 +30,19 @@ import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.run.component.AlignedText
+import com.runiverse.app.run.component.BOTTOM_PILL_BOTTOM_PADDING
 import com.runiverse.app.run.component.ControlButton
 import com.runiverse.app.run.component.ControlIcon
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
 import com.runiverse.app.run.component.baselineAt
+import com.runiverse.app.run.component.bottomPillWidth
 import com.runiverse.app.run.component.contentBottomAt
 import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.ui.component.PreviewFrame
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
-private const val CLOSE_BUTTON_WIDTH_FRACTION = 204f / 480f
 private val MIN_TIME_TO_PACE_GAP = 10.dp
-
-// 작은 화면에서 알약이 동그래지지 않게 한다
-private val MIN_CLOSE_BUTTON_WIDTH = 96.dp
-private val CLOSE_BUTTON_BOTTOM_PADDING = 8.dp
 
 /** 받은 결과는 더 안 바뀌어 폰이 끊겨도 멈춘 것으로 보지 않는다. */
 fun isResultStuck(result: RunResult?, isPhoneReachable: Boolean): Boolean = result == null && !isPhoneReachable
@@ -97,9 +93,9 @@ private fun RunSummaryContent(result: RunResult?, isPhoneReachable: Boolean, onC
             stringResource(R.string.run_summary_close),
             ControlIcon.CHECK,
             MaterialTheme.colorScheme.outlineVariant,
-            closeButtonWidth(),
+            bottomPillWidth(currentScreenWidth()),
             isEnabled = true,
-            Modifier.align(Alignment.BottomCenter).padding(bottom = CLOSE_BUTTON_BOTTOM_PADDING),
+            Modifier.align(Alignment.BottomCenter).padding(bottom = BOTTOM_PILL_BOTTOM_PADDING),
             onClick = onClose,
         )
     }
@@ -118,9 +114,6 @@ private fun TimePaceRow(time: String, pace: String, modifier: Modifier) {
         AlignedText(pace, style, color)
     }
 }
-
-@Composable
-private fun closeButtonWidth(): Dp = maxOf(currentScreenWidth() * CLOSE_BUTTON_WIDTH_FRACTION, MIN_CLOSE_BUTTON_WIDTH)
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
