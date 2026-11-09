@@ -1,5 +1,6 @@
 package com.runiverse.app.phone
 
+import com.runiverse.app.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -41,6 +42,8 @@ data class PhoneLinkState(
     val isCommandOverdue: Boolean = false,
     /** 워치에서 닫은 결과다. 같은 결과를 다시 받아도 띄우지 않는다. */
     val dismissedResult: ResultKey? = null,
+    /** 폰이 이 워치 버전을 거절했다 — 앱을 다시 열 때까지 폰에 아무것도 보내지 않는다. */
+    val isUpdateRequired: Boolean = false,
 ) {
     val isLocked: Boolean get() = isSyncing || pendingRequestId != null
 
@@ -64,11 +67,11 @@ fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
         .filter { it }
         .map { }
 
-/** 폰에서 요약을 닫아 띄운 결과가 사라질 때 낸다. 새 러닝으로 넘어갈 땐 내지 않는다. */
+/** 폰에서 요약을 닫아 띄운 결과가 사라질 때 낸다. 새 러닝으로 넘어갈 때나 업데이트로 막힐 땐 내지 않는다. */
 fun Flow<PhoneLinkState>.finishedRunRemovals(): Flow<Unit> = flow {
     var wasShown = false
     collect {
-        if (wasShown && it.phoneState?.run == null) emit(Unit)
+        if (wasShown && it.phoneState?.run == null && !it.isUpdateRequired) emit(Unit)
         wasShown = it.finishedRun != null
     }
 }
@@ -81,6 +84,7 @@ fun Flow<PhoneLinkState>.finishedRunRemovals(): Flow<Unit> = flow {
 class PhoneLink(
     private val scope: CoroutineScope,
     private val send: suspend (WatchMessage) -> Unit,
+    private val watchVersion: String = BuildConfig.VERSION_NAME,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val _state = MutableStateFlow(PhoneLinkState())
@@ -109,7 +113,11 @@ class PhoneLink(
     }
 
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
-    fun start() = requestSync()
+    fun start() {
+        // 쓸어 닫아도 앱 프로세스는 남아 거절도 남는다 — 다시 열면 다시 묻는다
+        if (_state.value.isUpdateRequired) _state.value = PhoneLinkState()
+        requestSync()
+    }
 
     /** 화면이 꺼진 동안 폰이 있는지 묻는다. 켜져 있으면 3초 감시가 이미 묻고 있다. */
     fun probeWhileScreenOff() {
@@ -145,6 +153,8 @@ class PhoneLink(
 
     private fun onScreenVisibilityChanged(isVisible: Boolean) {
         visibilityJob?.cancel()
+        // 켜질 때마다 3초 감시가 SYNC를 다시 보내 거절을 되풀이하지 않게 한다
+        if (_state.value.isUpdateRequired) return
         if (isVisible) {
             visibilityJob = scope.launch {
                 while (true) {
@@ -209,7 +219,7 @@ class PhoneLink(
             do {
                 val syncId = newId()
                 awaitedSyncIds.addCapped(syncId, SYNC_ID_MEMORY_COUNT)
-                scope.launch { sendWithLimit(WatchSync(syncId)) }
+                scope.launch { sendWithLimit(WatchSync(syncId, watchVersion)) }
                 delay(REPLY_TIMEOUT)
                 _state.update { it.copy(isPhoneReachable = false) }
             } while (isScreenVisible)
@@ -270,9 +280,24 @@ class PhoneLink(
     }
 
     private fun onError(error: PhoneError) {
+        // 어느 SYNC의 거절이든 버전은 같아 번호를 맞춰 보지 않는다
+        if (error.code == "WATCH_UPDATE_REQUIRED") {
+            requireUpdate()
+            return
+        }
         if (error.requestId == null || error.requestId != _state.value.pendingRequestId) return
         commandJob?.cancel()
         _state.update { it.copy(pendingRequestId = null, isFinishPending = false, isCommandOverdue = false) }
+    }
+
+    // 러닝을 비워 운동 세션도 끝난다 — 폰 기록은 폰에서 계속된다
+    private fun requireUpdate() {
+        syncJob?.cancel()
+        silenceJob?.cancel()
+        commandJob?.cancel()
+        visibilityJob?.cancel()
+        awaitedSyncIds.clear()
+        _state.value = PhoneLinkState(isUpdateRequired = true)
     }
 
     // 폰은 켜짐 신호를 받으면 러닝이 없어도 바로 답한다 — 답이 없으면 끊긴 것이다
