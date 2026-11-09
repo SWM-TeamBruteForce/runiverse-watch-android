@@ -19,6 +19,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.lifecycle.Lifecycle
 import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.ComboKind
+import com.runiverse.app.phone.PhoneError
 import com.runiverse.app.phone.PhoneMessage
 import com.runiverse.app.phone.PhoneState
 import com.runiverse.app.phone.PlayerPhoto
@@ -293,6 +294,55 @@ class MainActivityTest {
         assertTrue(composeRule.activity.isFinishing)
         assertTrue(lefts.all { it == null })
         composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `폰이 업데이트를 요구하면 업데이트 화면을 보인다`() {
+        // when
+        rejectSync()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.update_required)).assertExists()
+        composeRule.onNodeWithText(appName).assertDoesNotExist()
+    }
+
+    @Test
+    fun `러닝 중 업데이트를 요구받으면 러닝 화면 대신 업데이트 화면을 보인다`() {
+        // given
+        answerSync(soloRun)
+
+        // when
+        rejectSync()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.update_required)).assertExists()
+        composeRule.onNodeWithText(formatElapsedTime(soloRun.me.elapsedSeconds)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `업데이트 화면을 쓸면 앱을 닫는다`() {
+        // given
+        rejectSync()
+
+        // when
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+
+        // then
+        assertTrue(composeRule.activity.isFinishing)
+    }
+
+    @Test
+    fun `업데이트를 누르면 워치 스토어의 앱 상세를 연다`() {
+        // given
+        rejectSync()
+
+        // when
+        composeRule.onNodeWithText(text(R.string.update_open_store)).performClick()
+
+        // then
+        val opened: Intent = shadowOf(composeRule.activity).nextStartedActivity
+        assertEquals("market://details?id=${composeRule.activity.packageName}", opened.dataString)
     }
 
     @Test
@@ -687,6 +737,13 @@ class MainActivityTest {
         composeRule.waitForIdle()
         val syncId = app.sent.filterIsInstance<WatchSync>().last().syncId
         receive(WatchSynced(syncId, phoneState(run), birthday = null, photos = photos))
+        composeRule.waitForIdle()
+    }
+
+    private fun rejectSync() {
+        composeRule.waitForIdle()
+        val syncId = app.sent.filterIsInstance<WatchSync>().last().syncId
+        receive(PhoneError("WATCH_UPDATE_REQUIRED", "워치 앱 업데이트 필요", "WATCH_SYNC", syncId))
         composeRule.waitForIdle()
     }
 
