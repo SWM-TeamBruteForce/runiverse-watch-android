@@ -122,7 +122,9 @@
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
-- `WATCH_SYNC`의 `watchVersion`이 최소 버전보다 낮거나 없으면 `WATCH_SYNCED` 대신 `ERROR`로 거절하고, `requestId`에는 `syncId`를 넣는다. 명령·`WATCH_VISIBILITY_UPDATE`는 버전을 보지 않는다. 러닝 중이라도 SYNC가 거절되면 워치는 러닝을 접는다.
+- `WATCH_SYNC`는 서버에서 받아 둔 워치 최소 버전으로 바로 판정한다. `watchVersion`이 최소 버전보다 낮거나, 없거나, `x.y.z`가 아니면 `WATCH_SYNCED` 대신 `ERROR`로 거절하고, `requestId`에는 `syncId`를 넣는다. 명령·`WATCH_VISIBILITY_UPDATE`는 버전을 보지 않는다.
+- 최소 버전을 아직 모르면 거절도 답도 하지 않고 서버에 받으러 간다. 워치는 다음 SYNC에서 판정받는다.
+- 러닝 중 한 번 통과한 워치는 그 러닝이 끝날 때까지 다시 막지 않는다. 통과하지 않은 워치는 러닝 중이라도 SYNC가 거절되면 러닝을 접는다.
 - 명령은 러닝이 없을 때, 러닝을 시작한 계정이 아닐 때(로그아웃·계정 전환), `phoneInstanceId`·`statusVersion`·방이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 명령 거절에 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`, SYNC 거절에 `WATCH_UPDATE_REQUIRED`를 쓴다.
 - 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
