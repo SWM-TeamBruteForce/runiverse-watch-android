@@ -694,6 +694,29 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `거절 뒤 앞 화면이 멈추기 전에 다시 열어도 켜짐 신호를 다시 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.start()
+        fixture.phoneLink.onScreenStarted()
+        runCurrent()
+        fixture.phoneLink.onReceived(updateRequired(requestId = null))
+
+        // when -> 새 화면의 onCreate·onStart가 앞 화면의 onStop보다 먼저 온다
+        fixture.phoneLink.start()
+        fixture.phoneLink.onScreenStarted()
+        fixture.phoneLink.onScreenStopped()
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+        fixture.phoneLink.onReceived(synced(sync.syncId, state(stateSequence = 1)))
+        fixture.sent.clear()
+        advanceTimeBy(10_001)
+
+        // then
+        assertTrue(fixture.sent.any { it is WatchVisibilityUpdate && it.isVisible })
+    }
+
+    @Test
     fun `잠겨 있으면 명령을 보내지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)

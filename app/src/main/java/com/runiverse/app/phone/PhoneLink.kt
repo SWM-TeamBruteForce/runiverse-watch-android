@@ -115,7 +115,11 @@ class PhoneLink(
     /** 화면을 새로 만들 때 부른다 — 닫혀 있던 동안의 상태를 SYNC로 새로 맞춘다. */
     fun start() {
         // 쓸어 닫아도 앱 프로세스는 남아 거절도 남는다 — 다시 열면 다시 묻는다
-        if (_state.value.isUpdateRequired) _state.value = PhoneLinkState()
+        if (_state.value.isUpdateRequired) {
+            _state.value = PhoneLinkState()
+            // 앞 화면이 아직 안 멈췄으면 화면 수가 0→1로 안 바뀌어, 멈춰 둔 켜짐 신호를 여기서 다시 켠다
+            if (isScreenVisible) onScreenVisibilityChanged(true)
+        }
         requestSync()
     }
 
