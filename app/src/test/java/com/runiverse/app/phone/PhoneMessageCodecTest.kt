@@ -208,6 +208,18 @@ class PhoneMessageCodecTest {
     }
 
     @Test
+    fun `SYNC는 워치 버전을 함께 쓴다`() {
+        // given
+        val message = WatchSync(syncId = "s1", watchVersion = "1.0.0")
+
+        // when
+        val body = PhoneMessageCodec.encode(message).decodeToString()
+
+        // then
+        assertEquals("""{"event":"WATCH_SYNC","data":{"syncId":"s1","watchVersion":"1.0.0"}}""", body)
+    }
+
+    @Test
     fun `종료 명령을 봉투에 담아 쓴다`() {
         // given
         val message = WatchFinish(

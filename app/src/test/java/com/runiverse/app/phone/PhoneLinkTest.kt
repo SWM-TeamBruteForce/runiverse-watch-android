@@ -42,6 +42,19 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `SYNC에 워치 버전을 싣는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+
+        // when
+        fixture.phoneLink.start()
+        runCurrent()
+
+        // then
+        assertEquals(WATCH_VERSION, (fixture.sent.single() as WatchSync).watchVersion)
+    }
+
+    @Test
     fun `보낸 적 없는 syncId의 SYNCED는 버린다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -611,6 +624,76 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `앱을 열 때 업데이트 필요 ERROR가 오면 SYNC를 더 보내지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.phoneLink.start()
+        fixture.phoneLink.onScreenStarted()
+        runCurrent()
+        val sync = fixture.sent.last { it is WatchSync } as WatchSync
+
+        // when
+        fixture.phoneLink.onReceived(updateRequired(requestId = sync.syncId))
+        fixture.sent.clear()
+        advanceTimeBy(10_001)
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isUpdateRequired)
+        assertTrue(fixture.sent.isEmpty())
+    }
+
+    @Test
+    fun `러닝 중 번호가 다른 업데이트 필요 ERROR도 받아 러닝을 비우고 뒤에 온 상태는 버린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1))
+
+        // when
+        fixture.phoneLink.onReceived(updateRequired(requestId = "모르는-id"))
+        fixture.phoneLink.onReceived(WatchStateUpdated(state(stateSequence = 2)))
+
+        // then
+        val linkState = fixture.phoneLink.state.value
+        assertTrue(linkState.isUpdateRequired)
+        assertNull(linkState.phoneState)
+        assertFalse(linkState.isRunActive)
+    }
+
+    @Test
+    fun `업데이트가 필요하면 화면이 켜지고 꺼져도 아무것도 보내지 않는다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1))
+        fixture.phoneLink.onReceived(updateRequired(requestId = null))
+
+        // when
+        fixture.phoneLink.onScreenStarted()
+        runCurrent()
+        advanceTimeBy(3_001)
+        fixture.phoneLink.onScreenStopped()
+        runCurrent()
+
+        // then
+        assertTrue(fixture.sent.isEmpty())
+    }
+
+    @Test
+    fun `업데이트가 필요한 채 다시 열면 SYNC를 다시 보낸다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1))
+        fixture.phoneLink.onReceived(updateRequired(requestId = null))
+
+        // when
+        fixture.phoneLink.start()
+        runCurrent()
+
+        // then
+        assertTrue(fixture.sent.single() is WatchSync)
+        assertFalse(fixture.phoneLink.state.value.isUpdateRequired)
+    }
+
+    @Test
     fun `잠겨 있으면 명령을 보내지 않는다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -997,6 +1080,21 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `업데이트로 막혀 결과가 사라질 땐 알리지 않는다`() = runTest {
+        // given
+        val linkStates = listOf(
+            PhoneLinkState(phoneState = finishedState(stateSequence = 1)),
+            PhoneLinkState(isUpdateRequired = true),
+        )
+
+        // when
+        val removals = linkStates.asFlow().finishedRunRemovals().toList()
+
+        // then
+        assertTrue(removals.isEmpty())
+    }
+
+    @Test
     fun `결과를 받는 중 13초 넘게 소식이 없으면 끊긴 것으로 보고 SYNC를 보낸다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -1116,6 +1214,7 @@ class PhoneLinkTest {
                 delay(sendDelayMs(it))
                 delivered += it
             },
+            watchVersion = WATCH_VERSION,
             newId = { "id-${++nextId}" },
         )
 
@@ -1129,6 +1228,8 @@ class PhoneLinkTest {
     }
 
     private companion object {
+        const val WATCH_VERSION = "1.0.0"
+
         val confirmedResult = RunResult(
             isServerConfirmed = true,
             totalDistanceMeters = 5020,
@@ -1138,6 +1239,9 @@ class PhoneLinkTest {
 
         fun synced(syncId: String, state: PhoneState) =
             WatchSynced(syncId = syncId, state = state, birthday = null, photos = emptyList())
+
+        fun updateRequired(requestId: String?) =
+            PhoneError("WATCH_UPDATE_REQUIRED", "워치 앱 업데이트 필요", "WATCH_SYNC", requestId)
 
         fun finishedState(
             stateSequence: Long,
