@@ -122,7 +122,7 @@
 - `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
-- `WATCH_SYNC`의 `watchVersion`이 최소 버전보다 낮거나 없으면 `WATCH_SYNCED` 대신 `ERROR`로 거절하고, `requestId`에는 `syncId`를 넣는다. 명령·`WATCH_VISIBILITY_UPDATE`는 버전을 보지 않는다 — 러닝 중에 끊지 않는다.
+- `WATCH_SYNC`의 `watchVersion`이 최소 버전보다 낮거나 없으면 `WATCH_SYNCED` 대신 `ERROR`로 거절하고, `requestId`에는 `syncId`를 넣는다. 명령·`WATCH_VISIBILITY_UPDATE`는 버전을 보지 않는다. 러닝 중이라도 SYNC가 거절되면 워치는 러닝을 접는다.
 - 명령은 러닝이 없을 때, 러닝을 시작한 계정이 아닐 때(로그아웃·계정 전환), `phoneInstanceId`·`statusVersion`·방이 다를 때만 거절(`ERROR`)한다. 명령의 `runningRoomId`가 `null`이면 방 번호 비교만 생략한다. 워치 명령은 폰 버튼과 같은 길로 처리한다.
 - `ERROR`의 `code`는 명령 거절에 `NO_RUN`·`NOT_RUN_OWNER`·`OTHER_PHONE_INSTANCE`·`STALE_STATUS`·`OTHER_ROOM`, SYNC 거절에 `WATCH_UPDATE_REQUIRED`를 쓴다.
 - 폰에서 러닝을 시작하면 메시지가 아니라 플랫폼 기능으로 워치 앱을 켠다.
@@ -136,7 +136,7 @@
 - `phoneInstanceId`가 바뀌었거나 모르는 `runningRoomId`가 오면 SYNC. `null`은 모르는 번호로 보지 않는다.
 - 러닝 중 SYNC를 보낸 뒤로 10분 넘게 답이 없으면 운동을 끝내고 마지막 값을 지운 뒤 앱을 닫는다(화면이 꺼져 있으면 더 늦어질 수 있다). 폰이 돌아와도 워치가 스스로 다시 켜지 않는다.
 - 명령을 보내면 `lastRequestId`가 그 값인 상태나 같은 `requestId`의 `ERROR`가 올 때까지 버튼을 잠근다. 3초 넘게 없으면 SYNC를 보내고 명령은 다시 보내지 않는다.
-- `code`가 `WATCH_UPDATE_REQUIRED`인 `ERROR`를 받으면 `requestId`와 상관없이 운동을 끝내고 마지막 값을 지운 뒤 업데이트 화면을 띄운다. 앱을 다시 열 때까지 폰에 아무것도 보내지 않는다.
+- `code`가 `WATCH_UPDATE_REQUIRED`인 `ERROR`를 받으면 `requestId`와 상관없이 운동을 끝내고 마지막 값을 지운 뒤 업데이트 화면을 띄운다. 앱을 다시 열 때까지 폰에 새로 보내지 않는다.
 - 결과 요약을 닫으면 앱을 닫고, 그때의 `phoneInstanceId`·`statusVersion` 쌍을 앱 프로세스가 살아 있는 동안 기억해 같은 쌍의 끝난 상태는 다시 받아도 결과를 띄우지 않는다(폰에 알리지 않는다). 결과 요약이 떠 있을 때 `run: null`을 받아도 앱을 닫는다.
 - 종료 뒤 `GOAL_PENDING`이 오면 한 번 진동한다.
 - 러닝 중에 `WATCH_COMBO_TRIGGERED`를 받으면 진동한다. 화면이 꺼져 있거나 조작 장이 보이면 진동만 하고, 켜진 뒤 효과를 뒤늦게 띄우지 않는다.

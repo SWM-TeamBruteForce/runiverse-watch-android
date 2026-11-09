@@ -42,7 +42,7 @@ data class PhoneLinkState(
     val isCommandOverdue: Boolean = false,
     /** 워치에서 닫은 결과다. 같은 결과를 다시 받아도 띄우지 않는다. */
     val dismissedResult: ResultKey? = null,
-    /** 폰이 이 워치 버전을 거절했다 — 앱을 다시 열 때까지 폰에 아무것도 보내지 않는다. */
+    /** 폰이 이 워치 버전을 거절했다 — 앱을 다시 열 때까지 폰에 새로 보내지 않는다. */
     val isUpdateRequired: Boolean = false,
 ) {
     val isLocked: Boolean get() = isSyncing || pendingRequestId != null
