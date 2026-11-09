@@ -1,5 +1,7 @@
 package com.runiverse.app
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
@@ -129,10 +132,12 @@ class MainActivity : ComponentActivity() {
                                 state = dismissState,
                             ) { isBackground ->
                                 if (!isBackground && !isDismissed && !isClosing) {
-                                    if (finishedRun != null) {
-                                        RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
-                                    } else {
-                                        IdleScreen(linkState.isPhoneReachable)
+                                    when {
+                                        linkState.isUpdateRequired -> UpdateRequiredScreen(::openStore)
+                                        finishedRun != null ->
+                                            RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
+
+                                        else -> IdleScreen(linkState.isPhoneReachable)
                                     }
                                 }
                             }
@@ -206,6 +211,14 @@ class MainActivity : ComponentActivity() {
     private fun finishHidden() {
         isClosing = true
         finish()
+    }
+
+    // 워치8에서 이 주소가 워치 Play 스토어의 앱 상세를 바로 연다
+    private fun openStore(): Boolean = try {
+        startActivity(Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri()))
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
     }
 
     // 권한 창은 첫 러닝 때 한 번만 띄운다 — 거부해도 심박 없이 러닝 화면은 그대로 쓴다
