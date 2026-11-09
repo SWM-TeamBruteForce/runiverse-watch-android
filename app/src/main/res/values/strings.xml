@@ -42,6 +42,8 @@
     <string name="update_cannot_connect">폰 연결 불가</string>
     <string name="update_open_store">업데이트</string>
     <string name="update_open_store_failed">스토어 열기 실패</string>
+    <string name="idle_start_on_phone">폰에서 러닝 시작</string>
+    <string name="idle_run_screen_shown_automatically">러닝 화면 자동 표시</string>
     <string name="unit_km">km</string>
     <string name="unit_m">m</string>
     <string name="unit_short_km">k</string>
