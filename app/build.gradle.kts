@@ -1,8 +1,21 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// 폰 앱과 같은 업로드 키여야 Play가 같은 앱으로 받는다
+// 파일이 없으면 debug 키로 빌드한다. 그 산출물은 Play가 받지 않는다
+fun loadKeystore(fileName: String): Properties? =
+    rootProject.file(fileName).takeIf { it.isFile }?.let { file ->
+        Properties().apply { FileInputStream(file).use { load(it) } }
+    }
+
+val prodKeystore = loadKeystore("key.properties")
+val devKeystore = loadKeystore("key-dev.properties")
 
 android {
     namespace = "com.runiverse.app"
@@ -12,8 +25,20 @@ android {
         applicationId = "com.runiverse.app"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
+        // 배포 workflow가 10000 + 실행 번호를 넘긴다 — 폰은 실행 번호 그대로라 같은 앱 안에서 겹치지 않는다
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
         versionName = "1.2.0"
+    }
+
+    signingConfigs {
+        fun uploadKey(name: String, keystore: Properties) = create(name) {
+            keyAlias = keystore["keyAlias"] as String
+            keyPassword = keystore["keyPassword"] as String
+            storeFile = file(keystore["storeFile"] as String)
+            storePassword = keystore["storePassword"] as String
+        }
+        prodKeystore?.let { uploadKey("prod", it) }
+        devKeystore?.let { uploadKey("dev", it) }
     }
 
     buildTypes {
@@ -30,9 +55,11 @@ android {
         create("dev") {
             dimension = "env"
             applicationIdSuffix = ".dev"
+            signingConfig = signingConfigs.findByName("dev") ?: signingConfigs.getByName("debug")
         }
         create("prod") {
             dimension = "env"
+            signingConfig = signingConfigs.findByName("prod") ?: signingConfigs.getByName("debug")
         }
     }
 
