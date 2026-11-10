@@ -1,0 +1,115 @@
+# 운영 워치 앱(com.runiverse.app)을 빌드해 Play의 Wear OS 내부 테스트 트랙에 올린다.
+# 프로덕션 승급은 Play Console에서 사람이 한다.
+name: Prod Release
+
+on:
+  push:
+    branches:
+      - main # dev→main PR이 머지되면 돈다
+  workflow_dispatch: # Actions 화면의 Run workflow 버튼. 브랜치는 main을 고른다
+
+concurrency:
+  group: prod-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PACKAGE_NAME: com.runiverse.app
+
+jobs:
+  release:
+    name: 검사·배포
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: prod # Secret·Variable은 prod 환경에 있다. 이름은 dev 환경과 같다
+    steps:
+      - name: main 브랜치인지 확인
+        run: |
+          # 다른 브랜치에서 누르면 그 브랜치 코드가 운영 앱으로 나간다
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::main 브랜치에서만 실행한다 ($GITHUB_REF_NAME)"
+            exit 1
+          fi
+
+      - name: 코드 받기
+        uses: actions/checkout@v6
+
+      # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
+      - name: JDK 21 설치
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: 버전 정하기
+        id: version
+        run: |
+          # 폰 앱은 실행 번호를 그대로 쓴다. 같은 Play 앱 안에서 번호가 겹치면 업로드가 거절된다
+          echo "code=$((10000 + ${{ github.run_number }}))" >> "$GITHUB_OUTPUT"
+          echo "name=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: lint
+        run: ./gradlew :app:lintProdDebug
+      - name: 단위 테스트
+        run: ./gradlew :app:testProdDebugUnitTest
+      - name: 테스트 결과 보관
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+          retention-days: 7
+
+      - name: 서명 파일 만들기
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::$name이 비어 있다"; exit 1; fi
+          done
+          # key.properties가 없으면 debug 키로 서명된다. 아래 지문 검사가 그것도 잡는다
+          KEYSTORE="$RUNNER_TEMP/upload-keystore.jks"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+          cat > key.properties <<EOF
+          storeFile=$KEYSTORE
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=upload
+          keyPassword=$KEYSTORE_PASSWORD
+          EOF
+
+      - name: App Bundle 빌드
+        run: ./gradlew :app:bundleProdRelease -PversionCode=${{ steps.version.outputs.code }}
+
+      - name: 산출물 검증
+        env:
+          UPLOAD_CERT_SHA1: ${{ vars.UPLOAD_CERT_SHA1 }} # 운영 업로드 키의 공개 지문. 다른 키로 서명됐으면 멈춘다
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          set -euo pipefail
+          [ -n "$UPLOAD_CERT_SHA1" ] || { echo "::error::UPLOAD_CERT_SHA1이 비어 있다"; exit 1; }
+          AAB=app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          MANIFEST=app/build/intermediates/merged_manifest/prodRelease/processProdReleaseMainManifest/AndroidManifest.xml
+
+          grep -q "package=\"$PACKAGE_NAME\"" "$MANIFEST" || { echo "::error::패키지가 $PACKAGE_NAME이 아니다"; exit 1; }
+          grep -q "android:versionCode=\"$VERSION_CODE\"" "$MANIFEST" || { echo "::error::버전 코드가 $VERSION_CODE가 아니다"; exit 1; }
+          if grep -q 'android:debuggable="true"' "$MANIFEST"; then echo "::error::debuggable 빌드다"; exit 1; fi
+
+          SHA1=$(keytool -printcert -jarfile "$AAB" | awk '/SHA1:/ && !found {print $2; found=1}')
+          [ "$SHA1" = "$UPLOAD_CERT_SHA1" ] || { echo "::error::운영 업로드 키로 서명되지 않았다 ($SHA1)"; exit 1; }
+
+      # 워치 트랙은 폰 트랙과 따로 있다. 내부 테스트의 API 이름이 qa다
+      - name: Play Wear OS 내부 테스트에 올리기
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          releaseName: ${{ steps.version.outputs.code }} (${{ steps.version.outputs.name }} ${{ steps.version.outputs.sha }})
+          tracks: wear:qa
+          status: completed
