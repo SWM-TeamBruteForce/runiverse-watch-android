@@ -34,7 +34,7 @@ jobs:
           fi
 
       # Run workflow를 누른 순간의 dev 커밋을 빌드한다
-      - name: 코드 받기
+      - name: Checkout
         uses: actions/checkout@v6
 
       - name: 버전 정하기
@@ -55,24 +55,24 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: 코드 받기
+      - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.commit }}
 
       # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
-      - name: JDK 21 설치
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: gradle
 
-      - name: lint
+      - name: Lint
         run: ./gradlew :app:lintDevDebug
-      - name: 단위 테스트
+      - name: Test
         run: ./gradlew :app:testDevDebugUnitTest
-      - name: 테스트 결과 보관
+      - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
@@ -87,13 +87,13 @@ jobs:
     timeout-minutes: 30
     environment: dev # Secret·Variable은 dev 환경에 있다. 이름은 prod 환경과 같다
     steps:
-      - name: 코드 받기
+      - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.commit }}
 
       # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
-      - name: JDK 21 설치
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -119,7 +119,7 @@ jobs:
           keyPassword=$KEYSTORE_PASSWORD
           EOF
 
-      - name: App Bundle 빌드
+      - name: Build app bundle
         run: ./gradlew :app:bundleDevRelease -PversionCode=${{ needs.prepare.outputs.code }}
 
       - name: 산출물 검증
@@ -140,7 +140,7 @@ jobs:
           [ "$SHA1" = "$UPLOAD_CERT_SHA1" ] || { echo "::error::dev 업로드 키로 서명되지 않았다 ($SHA1)"; exit 1; }
 
       # 워치 트랙은 폰 트랙과 따로 있다
-      - name: Play Wear OS 내부 테스트에 올리기
+      - name: Upload to Play Wear OS internal testing
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
