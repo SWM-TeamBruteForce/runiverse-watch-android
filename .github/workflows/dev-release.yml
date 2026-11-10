@@ -100,7 +100,7 @@ jobs:
           SHA1=$(keytool -printcert -jarfile "$AAB" | awk '/SHA1:/ && !found {print $2; found=1}')
           [ "$SHA1" = "$UPLOAD_CERT_SHA1" ] || { echo "::error::dev 업로드 키로 서명되지 않았다 ($SHA1)"; exit 1; }
 
-      # 워치 트랙은 폰 트랙과 따로 있다. 내부 테스트의 API 이름이 qa다
+      # 워치 트랙은 폰 트랙과 따로 있다
       - name: Play Wear OS 내부 테스트에 올리기
         uses: r0adkll/upload-google-play@v1
         with:
@@ -108,5 +108,5 @@ jobs:
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: app/build/outputs/bundle/devRelease/app-dev-release.aab
           releaseName: ${{ steps.version.outputs.code }} (${{ steps.version.outputs.name }} ${{ steps.version.outputs.sha }})
-          tracks: wear:qa
+          tracks: wear:internal
           status: completed
