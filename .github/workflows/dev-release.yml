@@ -1,0 +1,151 @@
+# dev 워치 앱(com.runiverse.app.dev)을 빌드해 Play의 Wear OS 내부 테스트 트랙에 올린다.
+# 머지마다 돌리지 않는다 — 폰 dev 앱처럼 테스트할 때만 올린다.
+name: Dev Release
+
+on:
+  workflow_dispatch: # Actions 화면의 Run workflow 버튼. 브랜치는 dev를 고른다
+
+concurrency:
+  group: dev-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PACKAGE_NAME: com.runiverse.app.dev
+
+jobs:
+  prepare:
+    name: 준비
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.version.outputs.code }}
+      name: ${{ steps.version.outputs.name }}
+      commit: ${{ steps.version.outputs.commit }}
+      sha: ${{ steps.version.outputs.sha }}
+    steps:
+      - name: dev 브랜치인지 확인
+        run: |
+          # 다른 브랜치에서 누르면 그 브랜치 코드가 dev 앱으로 나간다
+          if [ "$GITHUB_REF" != "refs/heads/dev" ]; then
+            echo "::error::dev 브랜치에서만 실행한다 ($GITHUB_REF_NAME)"
+            exit 1
+          fi
+
+      # Run workflow를 누른 순간의 dev 커밋을 빌드한다
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: 버전 정하기
+        id: version
+        run: |
+          # 폰 앱은 실행 번호를 그대로 쓴다. 같은 Play 앱 안에서 번호가 겹치면 업로드가 거절된다
+          # 검사와 배포가 같은 커밋을 빌드하도록 여기서 정한 커밋을 넘긴다
+          {
+            echo "code=$((10000 + ${{ github.run_number }}))"
+            echo "name=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "sha=$(git rev-parse --short HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+  check:
+    name: 검사
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+
+      # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Lint
+        run: ./gradlew :app:lintDevDebug
+      - name: Test
+        run: ./gradlew :app:testDevDebugUnitTest
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+          retention-days: 7
+
+  wear:
+    name: Wear OS 배포
+    needs: [prepare, check] # 검사가 실패하면 올리지 않는다
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: dev # Secret·Variable은 dev 환경에 있다. 이름은 prod 환경과 같다
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+
+      # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: 서명 파일 만들기
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::$name이 비어 있다"; exit 1; fi
+          done
+          # key-dev.properties가 없으면 debug 키로 서명된다. 아래 지문 검사가 그것도 잡는다
+          KEYSTORE="$RUNNER_TEMP/upload-keystore-dev.jks"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+          cat > key-dev.properties <<EOF
+          storeFile=$KEYSTORE
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=upload-dev
+          keyPassword=$KEYSTORE_PASSWORD
+          EOF
+
+      - name: Build app bundle
+        run: ./gradlew :app:bundleDevRelease -PversionCode=${{ needs.prepare.outputs.code }}
+
+      - name: 산출물 검증
+        env:
+          UPLOAD_CERT_SHA1: ${{ vars.UPLOAD_CERT_SHA1 }} # dev 업로드 키의 공개 지문. 다른 키로 서명됐으면 멈춘다
+          VERSION_CODE: ${{ needs.prepare.outputs.code }}
+        run: |
+          set -euo pipefail
+          [ -n "$UPLOAD_CERT_SHA1" ] || { echo "::error::UPLOAD_CERT_SHA1이 비어 있다"; exit 1; }
+          AAB=app/build/outputs/bundle/devRelease/app-dev-release.aab
+          MANIFEST=app/build/intermediates/merged_manifest/devRelease/processDevReleaseMainManifest/AndroidManifest.xml
+
+          grep -q "package=\"$PACKAGE_NAME\"" "$MANIFEST" || { echo "::error::패키지가 $PACKAGE_NAME이 아니다"; exit 1; }
+          grep -q "android:versionCode=\"$VERSION_CODE\"" "$MANIFEST" || { echo "::error::버전 코드가 $VERSION_CODE가 아니다"; exit 1; }
+          if grep -q 'android:debuggable="true"' "$MANIFEST"; then echo "::error::debuggable 빌드다"; exit 1; fi
+
+          SHA1=$(keytool -printcert -jarfile "$AAB" | awk '/SHA1:/ && !found {print $2; found=1}')
+          [ "$SHA1" = "$UPLOAD_CERT_SHA1" ] || { echo "::error::dev 업로드 키로 서명되지 않았다 ($SHA1)"; exit 1; }
+
+      # 워치 트랙은 폰 트랙과 따로 있다
+      - name: Upload to Play Wear OS internal testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: app/build/outputs/bundle/devRelease/app-dev-release.aab
+          releaseName: ${{ needs.prepare.outputs.code }} (${{ needs.prepare.outputs.name }} ${{ needs.prepare.outputs.sha }})
+          tracks: wear:internal
+          status: completed

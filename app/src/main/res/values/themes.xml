@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Runiverse" parent="@android:style/Theme.DeviceDefault">
+        <!-- 러닝 중에만 쓸어서 닫기를 막아야 해서 시스템 닫기를 끄고 화면이 맡는다 -->
+        <item name="android:windowSwipeToDismiss" tools:ignore="WearBackNavigation">false</item>
+    </style>
+
+    <style name="Theme.Runiverse.Starting" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <!-- 심사 기준은 48dp다 — 런처 아이콘을 통째로 넘기면 59dp로 커져서 바탕과 전경을 나눠 넘긴다 -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+        <!-- 삼성 워치 앱 목록은 아이콘 없이 열어서 앱이 아이콘을 앞세운다 -->
+        <item name="android:windowSplashScreenBehavior" tools:targetApi="33">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Runiverse</item>
+    </style>
+</resources>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Runiverse</string>
+    <string name="run_notification_channel">러닝 기록</string>
+    <string name="run_notification_title">러닝 기록 중</string>
+
+    <string name="run_phone_checking">폰 연결 확인 중</string>
+    <string name="run_server_checking">서버 연결 확인 중</string>
+    <string name="run_status_paused">멈춤</string>
+    <string name="run_status_disconnected">끊김</string>
+    <string name="run_status_finished">마침</string>
+    <string name="run_value_unknown">--</string>
+    <string name="run_gap_ahead">앞</string>
+    <string name="run_gap_behind">뒤</string>
+    <string name="run_pace_player">상대</string>
+    <string name="run_pace_me">나</string>
+    <string name="run_combo_current">%d콤보</string>
+    <string name="run_combo_max">최고 %d</string>
+    <string name="run_combo_burst_word">COMBO</string>
+    <string name="run_combo_burst_description">%1$d COMBO %2$s</string>
+    <string name="run_summary_completed">러닝 완료</string>
+    <string name="run_summary_close">닫기</string>
+    <string name="controls_pause">일시정지</string>
+    <string name="controls_resume">계속 달리기</string>
+    <string name="controls_hold_to_finish">길게 눌러 종료</string>
+    <string name="controls_finish">종료</string>
+    <string name="controls_keep_pressing">계속 누르기</string>
+    <string name="controls_hold_longer">길게 눌러야 종료</string>
+    <string name="controls_finishing">종료 중</string>
+    <string name="controls_finish_checking">종료 확인 중</string>
+    <string name="controls_combo_effect">콤보 효과</string>
+    <string name="controls_to_penalty_line">80%%까지 약 %1$s</string>
+    <string name="controls_to_goal">목표까지 약 %1$s</string>
+    <string name="controls_distance_checking">거리 확인 중</string>
+    <string name="controls_after_reconnect">연결 후 조작 가능</string>
+    <string name="controls_run_recording">러닝 기록 중</string>
+    <string name="controls_keep_running_if_short">모자라면 계속 달리기</string>
+    <string name="controls_penalty_if_short">못 채우면 20분 매칭 제한</string>
+    <string name="controls_penalty_if_finished">끝내면 20분 매칭 제한</string>
+    <string name="controls_may_not_complete">끝내면 미완주 가능</string>
+    <string name="update_required">워치 앱 업데이트 필요</string>
+    <string name="update_cannot_connect">폰 연결 불가</string>
+    <string name="update_open_store">업데이트</string>
+    <string name="update_open_store_failed">스토어 열기 실패</string>
+    <string name="idle_start_on_phone">폰에서 러닝 시작</string>
+    <string name="idle_run_screen_shown_automatically">러닝 화면 자동 표시</string>
+    <string name="unit_km">km</string>
+    <string name="unit_m">m</string>
+    <string name="unit_short_km">k</string>
+    <string name="unit_bpm">bpm</string>
+    <string name="unit_spm">spm</string>
+    <string name="unit_kcal">kcal</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 폰은 이 이름을 선언한 워치에만 보낸다 — 앱이 없는 워치로 보내면 사라진 걸 폰이 모른다 -->
+    <string-array name="android_wear_capabilities">
+        <item>runiverse_running</item>
+    </string-array>
+</resources>
