@@ -1,10 +1,13 @@
 package com.runiverse.app
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Looper
 import android.util.Base64
+import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -444,6 +447,27 @@ class MainActivityTest {
     }
 
     @Test
+    fun `대기 화면이 보이면 권한을 묻는다`() {
+        // when
+        composeRule.waitForIdle()
+
+        // then
+        assertNotNull(shadowOf(composeRule.activity).lastRequestedPermission)
+    }
+
+    @Test
+    fun `대기 화면에서 권한 창이 닫히면 운동 서비스를 시작하지 않는다`() {
+        // given
+        answerSync(run = null)
+
+        // when
+        closePermissionRequest()
+
+        // then
+        assertNull(shadowOf(app).nextStartedService)
+    }
+
+    @Test
     fun `첫 러닝엔 권한부터 묻고 서비스를 아직 시작하지 않는다`() {
         // when
         answerSync(soloRun)
@@ -466,7 +490,7 @@ class MainActivityTest {
     @Test
     fun `권한을 물은 적 있으면 러닝이 보일 때 운동 서비스를 시작한다`() {
         // given
-        markPermissionsAsked()
+        closePermissionRequest()
 
         // when
         answerSync(soloRun)
@@ -478,7 +502,7 @@ class MainActivityTest {
     @Test
     fun `러닝이 없으면 운동 서비스를 시작하지 않는다`() {
         // given
-        markPermissionsAsked()
+        closePermissionRequest()
 
         // when
         answerSync(run = null)
@@ -490,7 +514,7 @@ class MainActivityTest {
     @Test
     fun `화면이 다시 보이면 운동 서비스를 다시 시작한다`() {
         // given
-        markPermissionsAsked()
+        closePermissionRequest()
         answerSync(soloRun)
         assertExerciseServiceStarted()
 
@@ -510,9 +534,7 @@ class MainActivityTest {
         assertNull(shadowOf(app).nextStartedService)
 
         // when
-        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
-        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
-        composeRule.waitForIdle()
+        closePermissionRequest()
 
         // then
         assertExerciseServiceStarted()
@@ -521,7 +543,7 @@ class MainActivityTest {
     @Test
     fun `폰 답이 끊겼다가 돌아오면 운동 서비스를 다시 시작한다`() {
         // given
-        markPermissionsAsked()
+        closePermissionRequest()
         answerSync(soloRun)
         assertExerciseServiceStarted()
         idleFor(REPLY_TIMEOUT_PASSED_MS)
@@ -713,9 +735,17 @@ class MainActivityTest {
         composeRule.waitForIdle()
     }
 
-    private fun markPermissionsAsked() {
-        composeRule.activity.getSharedPreferences("exercise", Context.MODE_PRIVATE)
-            .edit().putBoolean("permissions_asked", true).commit()
+    private fun closePermissionRequest() {
+        composeRule.waitForIdle()
+        val request = shadowOf(composeRule.activity).lastRequestedPermission
+        val denied = IntArray(request.requestedPermissions.size) { PackageManager.PERMISSION_DENIED }
+        val result = Intent()
+            .putExtra(RequestMultiplePermissions.EXTRA_PERMISSIONS, request.requestedPermissions)
+            .putExtra(RequestMultiplePermissions.EXTRA_PERMISSION_GRANT_RESULTS, denied)
+        composeRule.runOnUiThread {
+            composeRule.activity.activityResultRegistry.dispatchResult(request.requestCode, Activity.RESULT_OK, result)
+        }
+        composeRule.waitForIdle()
     }
 
     private fun assertExerciseServiceStarted() {

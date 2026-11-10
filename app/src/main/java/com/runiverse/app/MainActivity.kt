@@ -64,8 +64,13 @@ class MainActivity : ComponentActivity() {
     // 조작 장에선 덮개가 버튼을 가려 큰 순간을 띄우지 않는다 — 진동만 한다
     private var isControlsShown = false
 
+    // 답하기 전에 시작하면 서비스가 알림 권한 없이 알림을 한 번 올리고 다시 올리지 않는다
+    private var isPermissionRequestPending = false
+
     private val permissionRequest = registerForActivityResult(RequestMultiplePermissions()) {
-        ExerciseService.start(this)
+        isPermissionRequestPending = false
+        val linkState = phoneLink.state.value
+        if (linkState.isRunActive && !linkState.isSyncing) ExerciseService.start(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,7 +144,11 @@ class MainActivity : ComponentActivity() {
                                         finishedRun != null ->
                                             RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
 
-                                        else -> IdleScreen(linkState.isPhoneReachable)
+                                        else -> {
+                                            // 러닝 화면에서 물으면 권한 창이 러닝을 가려, 대기 화면에서 먼저 묻는다
+                                            LaunchedEffect(Unit) { requestPermissionsOnce() }
+                                            IdleScreen(linkState.isPhoneReachable)
+                                        }
                                     }
                                 }
                             }
@@ -223,14 +232,18 @@ class MainActivity : ComponentActivity() {
         false
     }
 
-    // 권한 창은 첫 러닝 때 한 번만 띄운다 — 거부해도 심박 없이 러닝 화면은 그대로 쓴다
+    // 대기 화면을 거치지 않고 러닝이 먼저 보이면 여기서 묻는다
     private fun startExerciseService() {
+        requestPermissionsOnce()
+        if (!isPermissionRequestPending) ExerciseService.start(this)
+    }
+
+    // 권한 창은 한 번만 띄운다 — 거부해도 심박 없이 러닝 화면은 그대로 쓴다
+    private fun requestPermissionsOnce() {
         val preferences = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-        if (preferences.getBoolean(KEY_PERMISSIONS_ASKED, false)) {
-            ExerciseService.start(this)
-            return
-        }
+        if (preferences.getBoolean(KEY_PERMISSIONS_ASKED, false)) return
         preferences.edit { putBoolean(KEY_PERMISSIONS_ASKED, true) }
+        isPermissionRequestPending = true
         permissionRequest.launch(ExerciseService.PERMISSIONS)
     }
 
