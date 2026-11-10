@@ -368,10 +368,18 @@ private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId
                     // 나와 상대의 레인 색을 섞어 누구와 붙었는지 알 수 있게 한다
                     val border = RunDimensions.COMBO_BORDER_WIDTH.toPx()
                     val radius = RunDimensions.AVATAR_SIZE.toPx() / 2 + border / 2
-                    drawCircle(Brush.linearGradient(listOf(myLane, lane)), radius, style = Stroke(border))
+                    // 사진은 가운데 정렬이 정수 px로 반올림해 칸 가운데에서 0.5px 밀릴 수 있다 — 고리를 사진 가운데에 둔다
+                    val avatarSize = RunDimensions.AVATAR_SIZE.roundToPx()
+                    val avatarCenter = Offset(
+                        ((size.width - avatarSize) / 2f).roundToInt() + avatarSize / 2f,
+                        ((size.height - avatarSize) / 2f).roundToInt() + avatarSize / 2f,
+                    )
+                    drawCircle(Brush.linearGradient(listOf(myLane, lane)), radius, avatarCenter, style = Stroke(border))
                     // 작은 순간엔 페이스를 가리지 않게 고리만 잠깐 흰색으로 밝힌다
                     val flashAlpha = comboFlashAlpha(momentProgress.value)
-                    if (flashAlpha > 0f) drawCircle(flashColor, radius, alpha = flashAlpha, style = Stroke(border))
+                    if (flashAlpha > 0f) {
+                        drawCircle(flashColor, radius, avatarCenter, alpha = flashAlpha, style = Stroke(border))
+                    }
                 }
             },
         contentAlignment = Alignment.Center,
