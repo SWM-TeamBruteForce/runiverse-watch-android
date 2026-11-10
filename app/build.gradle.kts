@@ -27,7 +27,7 @@ android {
         targetSdk = 36
         // 배포 workflow가 10000 + 실행 번호를 넘긴다 — 폰은 실행 번호 그대로라 같은 앱 안에서 겹치지 않는다
         versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
-        versionName = "1.2.0"
+        versionName = "1.3.0"
     }
 
     signingConfigs {
