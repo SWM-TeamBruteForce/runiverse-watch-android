@@ -16,11 +16,14 @@ env:
   PACKAGE_NAME: com.runiverse.app.dev
 
 jobs:
-  release:
-    name: 검사·배포
+  prepare:
+    name: 준비
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    environment: dev # Secret·Variable은 dev 환경에 있다. 이름은 prod 환경과 같다
+    outputs:
+      code: ${{ steps.version.outputs.code }}
+      name: ${{ steps.version.outputs.name }}
+      commit: ${{ steps.version.outputs.commit }}
+      sha: ${{ steps.version.outputs.sha }}
     steps:
       - name: dev 브랜치인지 확인
         run: |
@@ -30,8 +33,32 @@ jobs:
             exit 1
           fi
 
+      # Run workflow를 누른 순간의 dev 커밋을 빌드한다
       - name: 코드 받기
         uses: actions/checkout@v6
+
+      - name: 버전 정하기
+        id: version
+        run: |
+          # 폰 앱은 실행 번호를 그대로 쓴다. 같은 Play 앱 안에서 번호가 겹치면 업로드가 거절된다
+          # 검사와 배포가 같은 커밋을 빌드하도록 여기서 정한 커밋을 넘긴다
+          {
+            echo "code=$((10000 + ${{ github.run_number }}))"
+            echo "name=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "sha=$(git rev-parse --short HEAD)"
+          } >> "$GITHUB_OUTPUT"
+
+  check:
+    name: 검사
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 코드 받기
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
 
       # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
       - name: JDK 21 설치
@@ -40,14 +67,6 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: gradle
-
-      - name: 버전 정하기
-        id: version
-        run: |
-          # 폰 앱은 실행 번호를 그대로 쓴다. 같은 Play 앱 안에서 번호가 겹치면 업로드가 거절된다
-          echo "code=$((10000 + ${{ github.run_number }}))" >> "$GITHUB_OUTPUT"
-          echo "name=$(sed -n 's/^ *versionName = "\(.*\)"/\1/p' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: lint
         run: ./gradlew :app:lintDevDebug
@@ -60,6 +79,26 @@ jobs:
           name: test-reports
           path: app/build/reports/tests/
           retention-days: 7
+
+  wear:
+    name: Wear OS 배포
+    needs: [prepare, check] # 검사가 실패하면 올리지 않는다
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: dev # Secret·Variable은 dev 환경에 있다. 이름은 prod 환경과 같다
+    steps:
+      - name: 코드 받기
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+
+      # Gradle 데몬이 JDK 21을 요구한다(gradle/gradle-daemon-jvm.properties)
+      - name: JDK 21 설치
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
 
       - name: 서명 파일 만들기
         env:
@@ -81,12 +120,12 @@ jobs:
           EOF
 
       - name: App Bundle 빌드
-        run: ./gradlew :app:bundleDevRelease -PversionCode=${{ steps.version.outputs.code }}
+        run: ./gradlew :app:bundleDevRelease -PversionCode=${{ needs.prepare.outputs.code }}
 
       - name: 산출물 검증
         env:
           UPLOAD_CERT_SHA1: ${{ vars.UPLOAD_CERT_SHA1 }} # dev 업로드 키의 공개 지문. 다른 키로 서명됐으면 멈춘다
-          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_CODE: ${{ needs.prepare.outputs.code }}
         run: |
           set -euo pipefail
           [ -n "$UPLOAD_CERT_SHA1" ] || { echo "::error::UPLOAD_CERT_SHA1이 비어 있다"; exit 1; }
@@ -107,6 +146,6 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: app/build/outputs/bundle/devRelease/app-dev-release.aab
-          releaseName: ${{ steps.version.outputs.code }} (${{ steps.version.outputs.name }} ${{ steps.version.outputs.sha }})
+          releaseName: ${{ needs.prepare.outputs.code }} (${{ needs.prepare.outputs.name }} ${{ needs.prepare.outputs.sha }})
           tracks: wear:internal
           status: completed
