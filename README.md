@@ -3,7 +3,7 @@
 > 멀리 떨어져 있어도 함께 달리는 원격 동반 러닝 플랫폼, **Runiverse**의 갤럭시워치(Wear OS) 앱입니다.
 
 폰 앱과 붙어서 러닝 중 화면과 끝난 직후 결과 요약을 보여 줍니다. 기록과 판단은 폰이 하고, 워치는 보여 주기와 조작만 합니다.
-심박은 워치가 재서 워치에만 보여 주고, 폰에 보내거나 저장하지 않습니다. 갤럭시워치 말고도 Wear OS 워치(픽셀워치 등)에서 돌아갑니다.
+심박은 워치가 재서 워치에만 보여 주고, 폰에 보내거나 저장하지 않습니다.
 
 폰 앱은 [runiverse-frontend](https://github.com/SWM-TeamBruteForce/runiverse-frontend), 서버는 [runiverse-backend](https://github.com/SWM-TeamBruteForce/runiverse-backend),
 애플워치 앱은 [runiverse-watch-ios](https://github.com/SWM-TeamBruteForce/runiverse-watch-ios)입니다.
@@ -33,6 +33,14 @@ runiverse-watch-android
 └── docs            # 컨벤션 · 폰 통신 문서
 ```
 
+## 구성
+
+폰 앱과 따로 빌드하고 따로 설치하는 별개 앱입니다. 갤럭시워치 말고도 Wear OS 워치(픽셀워치 등)에서 돌아갑니다.
+
+- 폰 앱과 데이터를 주고받으려면 최종 **applicationId(`com.runiverse.app`)와 설치된 앱의 서명 인증서**가 같아야 합니다. 같아도 연결 상태·수신 처리가 갖춰져야 실제로 주고받습니다.
+- 워치 앱은 폰 앱과 같은 Play 등록 정보의 Wear OS 트랙에 올라갑니다. 폰 쪽 변경이 없는 워치 수정은 워치 앱만 올리고, 폰 앱 버전은 그대로입니다.
+- `versionCode`는 폰 앱과 겹치지 않고, 각 기기의 이전 배포본보다 커야 합니다. 워치는 배포 workflow가 `10000 + 실행 번호`로 붙입니다(로컬 빌드는 1).
+
 ## 시작하기
 
 ```bash
@@ -44,9 +52,10 @@ runiverse-watch-android
 
 flavor는 폰 앱과 같습니다. `dev`는 `com.runiverse.app.dev`, `prod`는 `com.runiverse.app`입니다.
 
-> **폰 앱과 데이터를 주고받으려면 applicationId와 서명 인증서가 같아야 합니다.**
-> 로컬에서 볼 때는 두 앱을 같은 flavor의 debug로 빌드해 같은 debug 키로 서명합니다.
-> Play에서 받을 때는 둘 다 Play 테스트 트랙에서 받습니다. Play 폰 앱과 로컬 debug 워치 앱은 서명이 달라 통신하지 않습니다.
+- **폰과 같이 볼 때**: 두 앱을 같은 flavor의 debug로 빌드해 설치합니다. 두 앱이 같은 debug 키로 서명돼야 합니다.
+  기본 설정이면 같은 사용자 계정의 `~/.android/debug.keystore`를 쓰지만, 실제 서명 설정을 확인합니다.
+  Play 폰 앱과 debug 키로 서명한 워치 앱은 통신할 수 없습니다.
+- **출시 전 검증**: 둘 다 Play 테스트 트랙에서 받아 확인합니다.
 
 ## 브랜치 전략 · 배포
 
@@ -56,8 +65,6 @@ flavor는 폰 앱과 같습니다. `dev`는 `com.runiverse.app.dev`, `prod`는 `
 | `dev` | 통합 | Actions에서 **Dev Release**를 돌리면 lint·테스트 후 dev 앱을 Play Wear OS 내부 테스트에 올린다 |
 | `main` | 운영 | `dev`에서 온 PR만 허용. 머지되면 lint·테스트 후 운영 앱을 Play Wear OS 내부 테스트에 올린다(**Prod Release**) |
 
-- 워치 앱은 폰 앱과 같은 Play 등록 정보의 Wear OS 트랙에 올라갑니다. 폰 쪽 변경이 없는 워치 수정은 워치 앱만 올리고, 폰 앱 버전은 그대로입니다.
-- `versionCode`는 폰 앱과 겹치지 않고, 각 기기의 이전 배포본보다 커야 합니다. 워치는 배포 workflow가 `10000 + 실행 번호`로 붙입니다(로컬 빌드는 1).
 - 서명 키와 Play 업로드 계정은 GitHub 환경 `dev`·`prod`의 Secret에 있습니다. 이름은 폰 앱 저장소와 같습니다.
 - Play 프로덕션 승급은 사람이 합니다.
 
