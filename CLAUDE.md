@@ -48,6 +48,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
 ## 주의사항
 
 - 폰과 통신하려면 applicationId와 서명이 폰 앱과 같아야 한다. Play 폰 앱과 로컬 빌드 워치 앱은 서명이 달라 안 붙는다.
+- 폰과 주고받는 메시지를 바꿀 땐 두 워치 레포의 통신 문서를 같이 고치고, 폰·갤럭시·애플을 함께 바꾼다.
 - 러닝 중엔 `ExerciseService`(포그라운드 서비스)가 앱을 살려 둔다. 심박을 쓰는 서비스라 화면이 보일 때만 시작할 수 있다.
 - 화면이 꺼지면 CPU가 잠들어 `delay`가 밀린다. 꺼진 동안의 시간은 `elapsedRealtime`으로 잰다.
 - 키스토어·`key.properties`는 커밋하지 않는다.
