@@ -109,7 +109,7 @@
 | 필드 | 뜻 |
 |---|---|
 | `birthday` | 프로필 API 값 그대로(`yyyy-MM-dd`), 없으면 `null`. 워치가 심박 구간을 계산한다 |
-| `photos` | `[{"userId", "jpegBase64"}]` — 파티원 사진을 128×128 JPEG로 줄인 것. 사진이 없는 사람은 뺀다. 워치는 256px를 넘거나 못 푼 사진을 첫 글자로 그린다 |
+| `photos` | `[{"userId", "jpegBase64"}]` — 파티원 사진을 64×64 JPEG로 줄인 것. 사진이 없는 사람은 뺀다. 워치는 256px를 넘거나 못 푼 사진을 첫 글자로 그린다 |
 
 `WATCH_COMBO_TRIGGERED`의 `kind`는 `TICK`(1 오름)·`MILESTONE`(1·3·5·10·20… 도달)·`BREAK`(끊김)다.
 

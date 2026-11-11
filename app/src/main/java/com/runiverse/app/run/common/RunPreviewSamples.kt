@@ -13,7 +13,7 @@ import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 
 // 폰이 줄여 보내는 크기다
-private const val PHOTO_SIZE = 128
+private const val PHOTO_SIZE = 64
 
 internal object RunPreviewSamples {
     private val me = MyRecord(
