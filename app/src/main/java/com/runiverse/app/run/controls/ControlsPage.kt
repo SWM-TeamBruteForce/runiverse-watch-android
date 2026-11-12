@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -81,15 +82,17 @@ import com.runiverse.app.ui.component.PreviewFrame
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
+import com.runiverse.app.ui.theme.tabularNumerals
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val FADED_BUTTON_ALPHA = 0.55f
 
-// 제재 방은 10km, 초대 방은 42.195km까지다 — SUIT 숫자는 0, 4 순으로 넓다
+// 제재 방은 10km, 초대 방은 42.195km까지다
+// 같은 폭 숫자라도 SUIT는 1 다음 1에 자간이 붙는다
 private const val WIDEST_PENALTY_LINE_REMAINING = "4.0km"
-private const val WIDEST_GOAL_REMAINING = "40.0km"
+private const val WIDEST_GOAL_REMAINING = "11.1km"
 private const val HOLD_TO_FINISH_MS = 1200
 private val HOLD_LONGER_NOTICE_TIMEOUT = 1500.milliseconds
 
@@ -232,9 +235,11 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
     val widestSecondHint = stringResource(R.string.controls_penalty_if_short)
     return remember(widestFirstHints, widestSecondHint, style, density, screenSize) {
         with(density) {
-            val widestFirstHint = widestFirstHints.maxBy { measurer.measure(it, style).size.width }
+            val widthOf = { hintIndex: Int, text: String ->
+                measurer.measure(text, hintStyle(hintIndex, style)).size.width.toFloat()
+            }
             controlsPageSlots(
-                listOf(widestFirstHint, widestSecondHint),
+                listOf(widestFirstHints.maxBy { widthOf(0, it) }, widestSecondHint),
                 screenSize,
                 edgeMargin = RunDimensions.TEXT_EDGE_MARGIN.toPx(),
                 lineAdvance = hintLineAdvance(style.fontSize.toPx()),
@@ -243,7 +248,7 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
                 firstButtonTopAtDefaultFont = FIRST_BUTTON_TOP_AT_DEFAULT_FONT.toPx(),
                 hintToButtonGap = HINT_TO_BUTTON_GAP.toPx(),
                 isFontScaled = fontScale > 1f,
-                widthOf = { measurer.measure(it, style).size.width.toFloat() },
+                widthOf = widthOf,
             )
         }
     }
@@ -251,6 +256,10 @@ private fun currentControlsPageSlots(): ControlsPageSlots {
 
 private fun Density.hintLineAdvance(fontSize: Float): Float =
     fontSize * (SUIT_HANGUL_INK.aboveBaselineEm + SUIT_HANGUL_INK.belowBaselineEm) + RunDimensions.LINE_GAP.toPx()
+
+// 남은 거리는 내 거리로 1초마다 바뀌어, 원래 폭 숫자면 가운데 맞춘 줄이 매초 흔들린다
+private fun hintStyle(hintIndex: Int, style: TextStyle): TextStyle =
+    if (hintIndex == 0) style.tabularNumerals() else style
 
 // 안내 길이와 상관없이 버튼 자리가 고정되게 칸 높이를 잡는다
 @Composable
@@ -267,7 +276,9 @@ private fun ControlsHintLines(run: RunState, isPhoneReachable: Boolean, slots: C
                 slots.hintTop,
                 hintLineAdvance(style.fontSize.toPx()),
                 widthAt = { usableWidthAt(it, screenSize, RunDimensions.TEXT_EDGE_MARGIN.toPx()) },
-                widthOf = { measurer.measure(it, style).size.width.toFloat() },
+                widthOf = { hintIndex, text ->
+                    measurer.measure(text, hintStyle(hintIndex, style)).size.width.toFloat()
+                },
             )
         }
     }
@@ -278,7 +289,7 @@ private fun ControlsHintLines(run: RunState, isPhoneReachable: Boolean, slots: C
         lines.forEach { line ->
             AlignedText(
                 line.text,
-                style,
+                hintStyle(line.hintIndex, style),
                 if (line.hintIndex == 0) firstHintColor else secondHintColor,
                 Modifier.contentTopAt(line.top),
             )

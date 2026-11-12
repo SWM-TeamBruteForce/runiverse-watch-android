@@ -21,7 +21,8 @@ private const val ZONE_COUNT = 5
 private val ZONE_GAP = 3.dp
 
 // 막대를 가장 긴 심박 폭으로 고정해 100을 넘어도 길이가 안 바뀌게 한다
-private const val WIDEST_HEART_RATE = "888"
+// 같은 폭 숫자라도 SUIT는 1 다음 1에 자간이 붙어, 11이 가장 많은 값이 가장 넓다
+private const val WIDEST_HEART_RATE = "111"
 
 /** 가장 넓은 심박 덩어리(세 자리 숫자 + `bpm`) 폭이다. 구간 막대 길이로 쓴다. */
 @Composable
