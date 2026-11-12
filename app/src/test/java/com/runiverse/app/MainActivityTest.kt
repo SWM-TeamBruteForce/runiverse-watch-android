@@ -9,6 +9,8 @@ import android.os.Looper
 import android.util.Base64
 import android.view.Display
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -62,6 +64,9 @@ private const val RESULT_REPLY_TIMEOUT_PASSED_MS = 13_500L
 private const val PHONE_LOST_NOT_YET_MS = 9 * 60_000L
 private const val PHONE_LOST_REMAINING_MS = 4 * 60_000L
 private const val BURST_PASSED_MS = 1_300L
+
+// 큰 순간 1.2초가 끝나기 전에 조작 장에 자리 잡게 한다
+private const val CONTROLS_SETTLE_MS = 600L
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = FakeRuniverseApp::class)
@@ -731,6 +736,30 @@ class MainActivityTest {
 
         // then
         composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+    }
+
+    @Test
+    fun `조작 장으로 넘어가는 중에 뜬 큰 순간은 조작 장에 닿으면 걷는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onRoot().performTouchInput {
+            down(center)
+            moveBy(Offset(width * 0.2f, 0f))
+        }
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        composeRule.onRoot().performTouchInput {
+            moveBy(Offset(width * 0.4f, 0f))
+            up()
+        }
+        composeRule.mainClock.advanceTimeBy(CONTROLS_SETTLE_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_pause)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
     }
 
     @Test

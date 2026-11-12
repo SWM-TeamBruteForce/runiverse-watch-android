@@ -190,7 +190,11 @@ class MainActivity : ComponentActivity() {
                                 smallComboMoments,
                                 playerPhotos,
                                 isDisplayOn,
-                                onControlsShownChange = { isControlsShown = it },
+                                // 넘기는 중에 뜬 덮개도 접는다 — 남으면 일시정지·종료를 가린다
+                                onControlsShownChange = {
+                                    isControlsShown = it
+                                    if (it) bigComboMoment = null
+                                },
                             )
                         }
                     }
