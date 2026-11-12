@@ -45,6 +45,18 @@ class IdleScreenTest {
     }
 
     @Test
+    fun `폰 답을 기다리는 동안은 문구 없이 그림만 보인다`() {
+        // when
+        composeRule.setContent { PreviewFrame { IdleScreen(isPhoneReachable = null) } }
+
+        // then
+        composeRule.onNodeWithContentDescription(context.getString(R.string.app_name)).assertExists()
+        composeRule.onNodeWithText(context.getString(R.string.idle_start_on_phone)).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.run_phone_checking)).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.idle_run_screen_shown_automatically)).assertDoesNotExist()
+    }
+
+    @Test
     fun `화면 읽기는 아이콘을 앱 이름으로 읽는다`() {
         // when
         composeRule.setContent { PreviewFrame { IdleScreen(isPhoneReachable = true) } }
@@ -66,6 +78,21 @@ class IdleScreenTest {
 
         // then
         assertEquals(checkingTop, topOf(R.string.idle_start_on_phone))
+    }
+
+    @Test
+    fun `문구가 없어도 그림은 같은 높이에 있다`() {
+        // given
+        var isPhoneReachable by mutableStateOf<Boolean?>(null)
+        composeRule.setContent { PreviewFrame { IdleScreen(isPhoneReachable) } }
+        val awaitingMarkTop = markTop()
+
+        // when
+        isPhoneReachable = true
+        composeRule.waitForIdle()
+
+        // then
+        assertEquals(awaitingMarkTop, markTop())
     }
 
     @Test
@@ -95,4 +122,8 @@ class IdleScreenTest {
 
     private fun topOf(id: Int): Float =
         composeRule.onNodeWithText(context.getString(id)).fetchSemanticsNode().boundsInRoot.top
+
+    private fun markTop(): Float =
+        composeRule.onNodeWithContentDescription(context.getString(R.string.app_name))
+            .fetchSemanticsNode().boundsInRoot.top
 }

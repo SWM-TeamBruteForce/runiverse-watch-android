@@ -147,7 +147,16 @@ class MainActivity : ComponentActivity() {
                                         else -> {
                                             // 러닝 화면에서 물으면 권한 창이 러닝을 가려, 대기 화면에서 먼저 묻는다
                                             LaunchedEffect(Unit) { requestPermissionsOnce() }
-                                            IdleScreen(linkState.isPhoneReachable)
+                                            // 폰이 답하기 전엔 폰 앱이 떠 있는지 몰라, 끊김 판정 전까지 문구 없이 그린다
+                                            IdleScreen(
+                                                if ((linkState.isSyncing || linkState.isAwaitingVisibleReply) &&
+                                                    linkState.isPhoneReachable
+                                                ) {
+                                                    null
+                                                } else {
+                                                    linkState.isPhoneReachable
+                                                },
+                                            )
                                         }
                                     }
                                 }

@@ -204,6 +204,54 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `화면으로 돌아오면 폰 상태를 받을 때까지 켜짐 신호의 답을 기다리는 중이다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+
+        // when
+        fixture.phoneLink.onScreenStarted()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+
+        // when
+        fixture.phoneLink.onReceived(WatchStateUpdated(state(stateSequence = 2).copy(run = null)))
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+    }
+
+    @Test
+    fun `켜짐 신호의 답을 3초 동안 못 받으면 기다리는 중이 풀리고 폰 연결 확인 중이 된다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+        fixture.phoneLink.onScreenStarted()
+
+        // when
+        advanceTimeBy(3_001)
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+        assertFalse(fixture.phoneLink.state.value.isPhoneReachable)
+    }
+
+    @Test
+    fun `켜짐 신호의 답을 기다리다 화면이 꺼지면 기다리는 중이 풀린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+        fixture.phoneLink.onScreenStarted()
+
+        // when
+        fixture.phoneLink.onScreenStopped()
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+    }
+
+    @Test
     fun `화면이 꺼져 있으면 SYNC를 한 번만 보낸다`() = runTest {
         // given
         val fixture = Fixture(this)

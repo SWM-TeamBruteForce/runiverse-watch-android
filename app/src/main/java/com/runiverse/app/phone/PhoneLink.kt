@@ -34,6 +34,8 @@ data class PhoneLinkState(
     val isPhoneReachable: Boolean = true,
     /** SYNC를 보내고 SYNCED를 기다리는 중이다. */
     val isSyncing: Boolean = false,
+    /** 화면이 다시 켜져 켜짐 신호의 답을 기다리는 중이다. */
+    val isAwaitingVisibleReply: Boolean = false,
     /** 보내고 아직 결과를 못 받은 명령이다. */
     val pendingRequestId: String? = null,
     /** 보내고 아직 결과를 못 받은 명령이 종료다. */
@@ -170,6 +172,7 @@ class PhoneLink(
         } else {
             visibilitySends.trySend(false)
             silenceJob?.cancel()
+            _state.update { it.copy(isAwaitingVisibleReply = false) }
         }
     }
 
@@ -249,6 +252,7 @@ class PhoneLink(
         // SYNC 중엔 사진·번호를 새로 받기 전이라 이어 붙이지 않는다
         if (current.isSyncing) return
         val known = current.phoneState ?: return
+        _state.update { it.copy(isAwaitingVisibleReply = false) }
         if (incoming.phoneInstanceId != known.phoneInstanceId) {
             requestSync()
             return
@@ -307,9 +311,10 @@ class PhoneLink(
     // 폰은 켜짐 신호를 받으면 러닝이 없어도 바로 답한다 — 답이 없으면 끊긴 것이다
     private fun awaitVisibleReply() {
         silenceJob?.cancel()
+        _state.update { it.copy(isAwaitingVisibleReply = true) }
         silenceJob = scope.launch {
             delay(REPLY_TIMEOUT)
-            _state.update { it.copy(isPhoneReachable = false) }
+            _state.update { it.copy(isPhoneReachable = false, isAwaitingVisibleReply = false) }
             requestSync()
         }
     }
