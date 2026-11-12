@@ -43,8 +43,9 @@ import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.tabularNumerals
 
-private const val WIDEST_CADENCE = "888"
-private const val WIDEST_CALORIES = "8888"
+// 같은 폭 숫자라도 SUIT는 1 다음 1에 자간이 붙어, 11이 가장 많은 값이 가장 넓다
+private const val WIDEST_CADENCE = "111"
+private const val WIDEST_CALORIES = "1111"
 
 @Composable
 internal fun MyRecordPage(run: RunState, isPhoneReachable: Boolean, heartRateBpm: Int?, heartRateZone: Int?) {

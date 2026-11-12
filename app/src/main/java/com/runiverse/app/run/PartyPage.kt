@@ -69,7 +69,8 @@ import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.tabularNumerals
 
-private const val WIDEST_PACE = "88'88\""
+// 같은 폭 숫자라도 SUIT는 1 다음 1에 자간이 붙어, 11이 가장 많은 값이 가장 넓다
+private const val WIDEST_PACE = "11'11\""
 private val LABEL_TO_PACE_GAP = 3.dp
 private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
