@@ -149,7 +149,9 @@ class MainActivity : ComponentActivity() {
                                             LaunchedEffect(Unit) { requestPermissionsOnce() }
                                             // 폰이 답하기 전엔 폰 앱이 떠 있는지 몰라, 끊김 판정 전까지 문구 없이 그린다
                                             IdleScreen(
-                                                if (linkState.isSyncing && linkState.isPhoneReachable) {
+                                                if ((linkState.isSyncing || linkState.isAwaitingVisibleReply) &&
+                                                    linkState.isPhoneReachable
+                                                ) {
                                                     null
                                                 } else {
                                                     linkState.isPhoneReachable
