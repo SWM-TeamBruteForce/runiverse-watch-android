@@ -26,6 +26,14 @@ class RunFormatTest {
     }
 
     @Test
+    fun `내 거리도 소수를 빼면 버림한 정수 km로 쓴다`() {
+        // when & then
+        assertEquals("42", formatRunDistanceKm(42_195, dropKmDecimal = true))
+        assertEquals("100", formatRunDistanceKm(100_999, dropKmDecimal = true))
+        assertEquals("0", formatRunDistanceKm(999, dropKmDecimal = true))
+    }
+
+    @Test
     fun `격차는 1000m 미만이면 m로 쓴다`() {
         // when & then
         assertEquals(FormattedDistance("120", DistanceUnitLabel.METER), formatGapDistance(120, abbreviateUnits = false))

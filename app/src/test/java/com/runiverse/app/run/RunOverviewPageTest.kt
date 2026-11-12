@@ -42,6 +42,33 @@ class RunOverviewPageTest {
     }
 
     @Test
+    fun `10시간을 넘으면 윗줄 거리에서 소수를 뺀다`() {
+        // when
+        show(solo.copy(me = solo.me.copy(distanceMeters = 42_195, elapsedSeconds = 36_000)))
+
+        // then
+        composeRule.onNodeWithText("42").assertExists()
+    }
+
+    @Test
+    fun `100km를 넘으면 윗줄 거리에서 소수를 뺀다`() {
+        // when
+        show(solo.copy(me = solo.me.copy(distanceMeters = 100_000, elapsedSeconds = 35_999)))
+
+        // then
+        composeRule.onNodeWithText("100").assertExists()
+    }
+
+    @Test
+    fun `10시간·100km 전엔 윗줄 거리에 소수를 쓴다`() {
+        // when
+        show(solo.copy(me = solo.me.copy(distanceMeters = 99_999, elapsedSeconds = 35_999)))
+
+        // then
+        composeRule.onNodeWithText("99.9").assertExists()
+    }
+
+    @Test
     fun `심박이 없으면 값 자리에 모름 표시를 보인다`() {
         // when
         show(solo, heartRateBpm = null)

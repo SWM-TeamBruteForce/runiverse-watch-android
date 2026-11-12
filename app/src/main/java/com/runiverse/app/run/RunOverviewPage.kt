@@ -94,6 +94,10 @@ private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
 private val MIN_LABEL_TO_CELL_GAP = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
+// 10시간·100km부터 시간·거리가 한 자리씩 넓어져, 192dp에선 글자를 안 키워도 윗줄이 넘친다
+private const val KM_DECIMAL_BELOW_SECONDS = 36_000
+private const val KM_DECIMAL_BELOW_METERS = 100_000
+
 // 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
 private val WIDEST_GAPS_METERS = listOf(400, 4_000)
 
@@ -182,12 +186,13 @@ internal fun RunOverviewPage(
 @Composable
 private fun DistanceTimeRow(me: MyRecord, abbreviateUnits: Boolean, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
+    val dropKmDecimal = me.elapsedSeconds >= KM_DECIMAL_BELOW_SECONDS || me.distanceMeters >= KM_DECIMAL_BELOW_METERS
     Row(
         modifier.fillMaxWidth(1f - RunDimensions.TOP_ROW_SIDE_FRACTION * 2),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         ValueWithUnit(
-            formatRunDistanceKm(me.distanceMeters),
+            formatRunDistanceKm(me.distanceMeters, dropKmDecimal),
             if (abbreviateUnits) null else stringResource(R.string.unit_km),
             style,
         )
