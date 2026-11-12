@@ -9,8 +9,18 @@ import org.junit.Test
 class ControlsPageSlotsTest {
 
     private val widthOf = { text: String -> text.length * 10f }
+    private val hintWidthOf = { _: Int, text: String -> widthOf(text) }
 
-    private fun slots(widestHints: List<String>, isFontScaled: Boolean) = controlsPageSlots(
+    // 첫 안내만 같은 폭 숫자처럼 넓게 그린다
+    private val wideFirstHintWidthOf = { hintIndex: Int, text: String ->
+        text.length * if (hintIndex == 0) 20f else 10f
+    }
+
+    private fun slots(
+        widestHints: List<String>,
+        isFontScaled: Boolean,
+        widthOf: (hintIndex: Int, text: String) -> Float = hintWidthOf,
+    ) = controlsPageSlots(
         widestHints,
         screenSize = 480f,
         edgeMargin = 25f,
@@ -42,7 +52,7 @@ class ControlsPageSlotsTest {
         val widthAt = { y: Float -> if (y < 30f) 40f else 100f }
 
         // when
-        val lines = placeHintLines(listOf("가나다 라", "사아 자차아"), top = 0f, lineAdvance = 30f, widthAt, widthOf)
+        val lines = placeHintLines(listOf("가나다 라", "사아 자차아"), top = 0f, lineAdvance = 30f, widthAt, hintWidthOf)
 
         // then -> 둘째 안내는 첫 높이 폭 40엔 안 들어가지만 제 높이 폭 100엔 들어간다
         assertEquals(
@@ -53,6 +63,41 @@ class ControlsPageSlotsTest {
             ),
             lines,
         )
+    }
+
+    @Test
+    fun `안내 줄은 안내마다 그 안내를 그리는 글자 폭으로 나눈다`() {
+        // when
+        val lines = placeHintLines(
+            listOf("가나 다라", "가나 다라"),
+            top = 0f,
+            lineAdvance = 30f,
+            widthAt = { 50f },
+            wideFirstHintWidthOf,
+        )
+
+        // then -> 같은 글이라도 넓게 그리는 첫 안내만 나뉜다
+        assertEquals(
+            listOf(
+                PlacedHintLine("가나", 0, 0f),
+                PlacedHintLine("다라", 0, 30f),
+                PlacedHintLine("가나 다라", 1, 60f),
+            ),
+            lines,
+        )
+    }
+
+    @Test
+    fun `안내 자리는 첫 안내를 그리는 글자 폭이 들어가는 높이로 내려간다`() {
+        // given
+        val hints = listOf("가".repeat(15), "나".repeat(15))
+
+        // when
+        val slots = slots(hints, isFontScaled = false, wideFirstHintWidthOf)
+
+        // then -> 첫 안내를 300으로 재서 150이면 들어갈 시작 높이보다 내려간다
+        assertTrue(slots.hintTop > 70f)
+        assertTrue(300f <= usableWidthAt(slots.hintTop, 480f, 25f))
     }
 
     @Test
