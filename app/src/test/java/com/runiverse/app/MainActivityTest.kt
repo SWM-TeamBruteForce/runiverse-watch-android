@@ -231,6 +231,23 @@ class MainActivityTest {
     }
 
     @Test
+    fun `앱을 열면 폰 답 전엔 문구 없이 그림만 보이고 답이 오면 러닝 시작 안내를 보인다`() {
+        // when
+        composeRule.waitForIdle()
+
+        // then -> 폰 앱이 꺼져 있으면 답이 오지 않아, 답 전엔 러닝 시작을 안내하지 않는다
+        composeRule.onNodeWithContentDescription(idleMark).assertExists()
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+
+        // when
+        answerSync(run = null)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+    }
+
+    @Test
     fun `폰 답이 3초 없으면 대기 화면에 폰 연결 확인 중을 보인다`() {
         // given
         composeRule.waitForIdle()
