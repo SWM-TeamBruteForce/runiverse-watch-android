@@ -76,7 +76,13 @@ private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
-internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean, smallComboMomentId: String? = null) {
+internal fun PartyPage(
+    run: RunState,
+    player: Player,
+    isPhoneReachable: Boolean,
+    smallComboMomentId: String? = null,
+    isDisplayOn: Boolean = true,
+) {
     val slots = currentRunPageSlots()
     val notice = connectionNotice(run, isPhoneReachable)
     val playerValuesAlpha = if (player.hasStaleValues(run, isPhoneReachable)) RunDimensions.STALE_CONTENT_ALPHA else 1f
@@ -106,6 +112,7 @@ internal fun PartyPage(run: RunState, player: Player, isPhoneReachable: Boolean,
                 run.shownMyPaceSecondsPerKm(),
                 slots,
                 smallComboMomentId,
+                isDisplayOn,
                 playerValuesAlpha,
                 phoneValuesAlpha,
             )
@@ -120,6 +127,7 @@ private fun PaceAndComboRows(
     myPaceSecondsPerKm: Int?,
     slots: RunPageSlots,
     smallComboMomentId: String?,
+    isDisplayOn: Boolean,
     playerValuesAlpha: Float,
     phoneValuesAlpha: Float,
 ) {
@@ -157,7 +165,7 @@ private fun PaceAndComboRows(
             lineGap = RunDimensions.LINE_GAP.toPx(),
         )
     }
-    val momentProgress = smallComboMomentProgress(smallComboMomentId)
+    val momentProgress = smallComboMomentProgress(smallComboMomentId, isDisplayOn)
     AlignedText(
         if (player.comboCount > 0) {
             stringResource(R.string.run_combo_current, player.comboCount)

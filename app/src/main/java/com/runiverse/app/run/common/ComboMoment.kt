@@ -33,16 +33,16 @@ internal fun comboMomentSizeOrNull(kind: ComboKind, isEffectOn: Boolean): ComboM
     ComboKind.BREAK -> null
 }
 
-/** [momentId]가 올 때마다 0에서 1로 간다. 순간이 없으면 0이다. */
+/** [momentId]가 올 때마다 0에서 1로 가고 다음 순간까지 1에 머문다. [isDisplayOn]이 false면 0이다. */
 @Composable
-internal fun smallComboMomentProgress(momentId: String?): State<Float> {
+internal fun smallComboMomentProgress(momentId: String?, isDisplayOn: Boolean): State<Float> {
     val progress = remember { Animatable(0f) }
-    // 그리기가 늦게 시작해도 지워질 때 끊기지 않게, 시작한 순간은 끝까지 간다
+    // 그리기가 늦게 시작해도 지워질 때 끊기지 않게, 시작한 순간은 밝은 동안 끝까지 간다
     var playingId by remember { mutableStateOf<String?>(null) }
-    if (momentId != null) playingId = momentId
+    if (!isDisplayOn) playingId = null else if (momentId != null) playingId = momentId
     LaunchedEffect(playingId) {
-        if (playingId == null) return@LaunchedEffect
         progress.snapTo(0f)
+        if (playingId == null) return@LaunchedEffect
         progress.animateTo(1f, tween(SMALL_COMBO_MOMENT_DURATION.inWholeMilliseconds.toInt(), easing = LinearEasing))
     }
     return progress.asState()

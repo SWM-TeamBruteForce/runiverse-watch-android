@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Looper
 import android.util.Base64
+import android.view.Display
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -49,6 +50,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDisplay
 import java.io.ByteArrayOutputStream
 import java.time.Duration
 
@@ -762,11 +764,52 @@ class MainActivityTest {
         composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
     }
 
+    @Test
+    fun `어두운 화면에서 온 눈금은 밝아져도 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        changeDisplayState(Display.STATE_DOZE)
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+        changeDisplayState(Display.STATE_ON)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `큰 순간 중에 화면이 어두워지면 걷고 다시 밝아져도 이어 그리지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        changeDisplayState(Display.STATE_DOZE)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+        changeDisplayState(Display.STATE_ON)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
     // 받은 콤보는 다음 차례에 상태로 들어가 그 다음 프레임에 그려진다
     private fun receiveMilestone(eventId: String, userId: String, comboCount: Int) {
         receive(WatchComboTriggered(eventId, userId, comboCount, ComboKind.MILESTONE))
         composeRule.waitForIdle()
         composeRule.mainClock.advanceTimeByFrame()
+    }
+
+    private fun changeDisplayState(state: Int) {
+        composeRule.runOnUiThread { shadowOf(ShadowDisplay.getDefaultDisplay()).setState(state) }
+        composeRule.waitForIdle()
     }
 
     private fun startExerciseSession() {

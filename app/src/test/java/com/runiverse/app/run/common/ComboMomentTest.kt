@@ -1,12 +1,24 @@
 package com.runiverse.app.run.common
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.runiverse.app.phone.ComboKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class ComboMomentTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
 
     @Test
     fun `틱은 효과 설정과 상관없이 작은 순간이다`() {
@@ -56,5 +68,43 @@ class ComboMomentTest {
 
         // then
         assertTrue(early > late)
+    }
+
+    @Test
+    fun `밝은 동안엔 순간 번호가 지워져도 끝까지 간다`() {
+        // given
+        var momentId by mutableStateOf<String?>("e1")
+        lateinit var progress: State<Float>
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent { progress = smallComboMomentProgress(momentId, isDisplayOn = true) }
+        composeRule.mainClock.advanceTimeBy(100)
+        assertTrue(progress.value > 0f)
+
+        // when
+        momentId = null
+        composeRule.mainClock.advanceTimeBy(400)
+
+        // then
+        assertEquals(1f, progress.value, 0f)
+    }
+
+    @Test
+    fun `작은 순간 중에 화면이 어두워지면 바로 끊는다`() {
+        // given
+        var momentId by mutableStateOf<String?>("e1")
+        var isDisplayOn by mutableStateOf(true)
+        lateinit var progress: State<Float>
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent { progress = smallComboMomentProgress(momentId, isDisplayOn) }
+        composeRule.mainClock.advanceTimeBy(100)
+        assertTrue(progress.value > 0f)
+
+        // when -> 어두워지면 MainActivity가 순간 번호도 함께 지운다
+        momentId = null
+        isDisplayOn = false
+        composeRule.mainClock.advanceTimeBy(50)
+
+        // then
+        assertEquals(0f, progress.value, 0f)
     }
 }

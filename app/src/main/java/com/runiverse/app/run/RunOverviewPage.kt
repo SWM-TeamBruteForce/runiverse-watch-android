@@ -105,6 +105,7 @@ internal fun RunOverviewPage(
     heartRateZone: Int?,
     smallComboMoments: Map<String, String> = emptyMap(),
     playerPhotos: Map<String, ImageBitmap> = emptyMap(),
+    isDisplayOn: Boolean = true,
 ) {
     val slots = currentRunPageSlots()
     // 키운 글자로는 가장 긴 값이 한 줄에 안 들어간다
@@ -150,6 +151,7 @@ internal fun RunOverviewPage(
                 isPhoneReachable,
                 cellWidth,
                 smallComboMoments,
+                isDisplayOn,
                 playerPhotos,
                 Modifier.contentTopAt(slots.belowRowTop),
             )
@@ -240,6 +242,7 @@ private fun AvatarRow(
     isPhoneReachable: Boolean,
     cellWidth: Dp,
     smallComboMoments: Map<String, String>,
+    isDisplayOn: Boolean,
     playerPhotos: Map<String, ImageBitmap>,
     modifier: Modifier,
 ) {
@@ -251,6 +254,7 @@ private fun AvatarRow(
                     player,
                     playerPhotos[player.userId],
                     smallComboMoments[player.userId],
+                    isDisplayOn,
                     Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f),
                 )
             }
@@ -351,12 +355,18 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
 
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
-private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId: String?, modifier: Modifier) {
+private fun PlayerAvatar(
+    player: Player,
+    photo: ImageBitmap?,
+    smallComboMomentId: String?,
+    isDisplayOn: Boolean,
+    modifier: Modifier,
+) {
     val lane = laneColor(player.colorSlot)
     val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
     val flashColor = MaterialTheme.colorScheme.onBackground
-    val momentProgress = smallComboMomentProgress(smallComboMomentId)
+    val momentProgress = smallComboMomentProgress(smallComboMomentId, isDisplayOn)
     // 사진이 덮은 레인 색을 선으로 남긴다 — 콤보 중엔 고리가 그 색을 보인다
     val photoBorder =
         if (photo != null && !isCombo) Modifier.border(PHOTO_BORDER_WIDTH, lane, CircleShape) else Modifier
