@@ -30,6 +30,7 @@ import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.heartRateZoneOrNull
 import com.runiverse.app.run.common.parseBirthday
+import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.controls.ControlsPage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -39,7 +40,6 @@ private const val OVERVIEW_PAGE_INDEX = 1
 private const val MY_RECORD_PAGE_INDEX = 2
 private const val PAGE_COUNT = 3
 private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
-private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
 private val PAGE_DOT_DIAMETER = 3.dp
 private val PAGE_DOT_SPACING = 6.dp
 private val PAGE_DOTS_END_PADDING = 12.5.dp
@@ -182,7 +182,7 @@ private fun VerticalPageDots(pagerState: PagerState) {
                 color,
                 radius,
                 Offset(radius, radius + PAGE_DOT_SPACING.toPx() * index),
-                alpha = if (index == pagerState.currentPage) 1f else INACTIVE_PAGE_DOT_ALPHA,
+                alpha = if (index == pagerState.currentPage) 1f else RunDimensions.INACTIVE_POSITION_ALPHA,
             )
         }
     }
