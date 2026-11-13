@@ -11,6 +11,9 @@ internal object RunDimensions {
     // 끊긴 동안 마지막 값에 멈춘 내용을 흐리게 그린다
     const val STALE_CONTENT_ALPHA = 0.4f
 
+    // 세로 점·스크롤 막대에서 지금 자리가 아닌 부분을 흐리게 그린다
+    const val INACTIVE_POSITION_ALPHA = 0.35f
+
     val GROUP_GAP = 13.dp
     val LINE_GAP = 7.dp
     val VALUE_TO_UNIT_GAP = 2.dp

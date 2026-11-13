@@ -59,6 +59,7 @@ import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.material3.ScrollIndicatorDefaults
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
 import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
@@ -131,7 +132,19 @@ internal fun ControlsPage(
 ) {
     val listState = rememberTransformingLazyColumnState()
     // 스크롤 중에도 시계를 남기려고 스크롤 상태를 연결하지 않는다
-    ScreenScaffold(scrollIndicator = { ScrollIndicator(listState, Modifier.align(Alignment.CenterEnd)) }) {
+    ScreenScaffold(
+        scrollIndicator = {
+            val color = MaterialTheme.colorScheme.onBackground
+            ScrollIndicator(
+                listState,
+                Modifier.align(Alignment.CenterEnd),
+                colors = ScrollIndicatorDefaults.colors(
+                    indicatorColor = color,
+                    trackColor = color.copy(alpha = RunDimensions.INACTIVE_POSITION_ALPHA),
+                ),
+            )
+        },
+    ) {
         ControlsPageContent(
             run,
             isPhoneReachable,
