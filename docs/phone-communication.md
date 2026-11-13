@@ -118,7 +118,7 @@
 - 일시정지·재개·종료 단계·결과 확정은 화면이 꺼져 있어도 바로 보낸다.
 - 러닝이 사라지면(폰에서 요약을 닫음·서버 종료·강퇴) 화면이 꺼져 있어도 바로 `run: null`을 보낸다 — 워치 결과 화면도 같이 닫힌다.
 - 워치 명령을 반영하면 1초를 기다리지 않고 바로 보낸다(`statusVersion` +1, `lastRequestId`).
-- `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 워치가 진동한다.
+- `WATCH_COMBO_TRIGGERED`는 화면이 꺼져 있어도 보낸다 — 갤럭시워치는 꺼진 화면에서도 진동한다.
 - 워치 화면이 켜져 있으면 `WATCH_COMBO_TRIGGERED`(여럿이면 전부) 바로 뒤에 `WATCH_STATE_UPDATED`를 한 번 보낸다 — 워치는 파티원 자리의 콤보 숫자·고리를 상태 값으로 그린다.
 - `WATCH_VISIBILITY_UPDATE`(`isVisible: true`)를 받으면 러닝이 끝났어도 지금 상태를 바로 한 번 보낸다 — 화면이 꺼진 사이 놓친 결과 확정을 되찾는다.
 - `WATCH_VISIBILITY_UPDATE`가 15초 없으면 화면이 꺼진 것으로 보고 첫 줄의 전송을 멈춘다.
