@@ -162,7 +162,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun `결과에서 닫기를 누르면 대기 화면 없이 닫고 결과를 기억한다`() {
+    fun `결과에서 닫기를 누르면 앱을 닫지 않고 대기 화면을 보이고 결과를 기억한다`() {
         // given
         showFinishedRun()
 
@@ -171,7 +171,16 @@ class MainActivityTest {
         composeRule.waitForIdle()
 
         // then
-        assertClosedWithoutIdleScreen()
+        assertFalse(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+
+        // when -> 끝난 뒤의 폰은 켜짐 신호마다 같은 결과를 다시 보낸다
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
     }
 
     @Test
@@ -307,20 +316,18 @@ class MainActivityTest {
     }
 
     @Test
-    fun `폰에서 결과를 닫으면 어느 프레임에도 대기 화면을 보이지 않고 앱을 닫는다`() {
+    fun `폰에서 결과를 닫으면 앱을 닫지 않고 대기 화면을 보인다`() {
         // given
         showFinishedRun()
-        composeRule.mainClock.autoAdvance = false
 
         // when
         receiveState(run = null)
-        val lefts = recordIdleMarkLefts()
+        composeRule.waitForIdle()
 
         // then
-        assertTrue(composeRule.activity.isFinishing)
-        assertTrue(lefts.all { it == null })
+        assertFalse(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
-        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
     }
 
     @Test
