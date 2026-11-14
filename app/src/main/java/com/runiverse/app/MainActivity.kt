@@ -259,7 +259,7 @@ class MainActivity : ComponentActivity() {
         awaitClose { displayManager.unregisterDisplayListener(listener) }
     }.distinctUntilChanged()
 
-    // 어떻게 닫아도 결과가 다시 뜨지 않게 한 길로 닫는다
+    // 뒤로·쓸어 닫기는 결과가 다시 뜨지 않게 기억한 뒤 앱을 닫는다
     private fun closeScreen() {
         phoneLink.dismissResult()
         finishHidden()
