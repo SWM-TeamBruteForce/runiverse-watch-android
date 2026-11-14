@@ -13,10 +13,9 @@ private val SMALL_SCREEN_BELOW = 215.dp
 internal fun isSmallScreenWidth(screenWidth: Dp): Boolean = screenWidth < SMALL_SCREEN_BELOW
 
 @Composable
-internal fun isSmallScreen(): Boolean =
-    isSmallScreenWidth(with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() })
-
-@Composable
 internal fun currentScreenWidth(): Dp = with(LocalDensity.current) {
     LocalWindowInfo.current.containerSize.width.toDp()
 }
+
+@Composable
+internal fun isSmallScreen(): Boolean = isSmallScreenWidth(currentScreenWidth())
