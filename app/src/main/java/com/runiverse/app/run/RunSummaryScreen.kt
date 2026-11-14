@@ -29,17 +29,17 @@ import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.BOTTOM_PILL_BOTTOM_PADDING
-import com.runiverse.app.run.component.ControlButton
-import com.runiverse.app.run.component.ControlIcon
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
-import com.runiverse.app.run.component.baselineAt
-import com.runiverse.app.run.component.bottomPillWidth
-import com.runiverse.app.run.component.contentBottomAt
-import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.BOTTOM_PILL_BOTTOM_PADDING
+import com.runiverse.app.ui.component.ControlButton
+import com.runiverse.app.ui.component.ControlIcon
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.baselineAt
+import com.runiverse.app.ui.component.bottomPillWidth
+import com.runiverse.app.ui.component.contentBottomAt
+import com.runiverse.app.ui.component.contentTopAt
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
 private val MIN_TIME_TO_PACE_GAP = 10.dp

@@ -19,15 +19,15 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
 import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.currentScreenWidth
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.BOTTOM_PILL_BOTTOM_PADDING
-import com.runiverse.app.run.component.ControlButton
-import com.runiverse.app.run.component.ControlIcon
 import com.runiverse.app.run.component.RunDimensions
-import com.runiverse.app.run.component.bottomPillWidth
-import com.runiverse.app.run.component.contentBottomAt
-import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.BOTTOM_PILL_BOTTOM_PADDING
+import com.runiverse.app.ui.component.ControlButton
+import com.runiverse.app.ui.component.ControlIcon
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.bottomPillWidth
+import com.runiverse.app.ui.component.contentBottomAt
+import com.runiverse.app.ui.component.contentTopAt
 
 @Composable
 internal fun UpdateRequiredScreen(openStore: () -> Boolean) {

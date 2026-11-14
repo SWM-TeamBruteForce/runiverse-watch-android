@@ -19,13 +19,13 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import androidx.wear.compose.ui.tooling.preview.WearPreviewLargeRound
 import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.run.common.currentRunPageSlots
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.RunDimensions
-import com.runiverse.app.run.component.boxContentBounds
-import com.runiverse.app.run.component.contentBottomAt
-import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.ContentBoundsColumn
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.boxContentBounds
+import com.runiverse.app.ui.component.contentBottomAt
+import com.runiverse.app.ui.component.contentTopAt
 
 // 시안의 36dp는 192dp 화면에서 위 가운데 시계와 붙어, 시안에서 고른 24dp로 줄였다
 private val MARK_HEIGHT = 24.dp
