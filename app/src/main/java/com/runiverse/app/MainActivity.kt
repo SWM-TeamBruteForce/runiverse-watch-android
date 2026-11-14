@@ -31,7 +31,6 @@ import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.WatchComboTriggered
-import com.runiverse.app.phone.finishedRunRemovals
 import com.runiverse.app.run.ComboBurstScreen
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.run.RunSummaryScreen
@@ -120,9 +119,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             runiverseApp.exerciseSession.phoneLost.collect { finishHidden() }
         }
-        lifecycleScope.launch {
-            phoneLink.state.finishedRunRemovals().collect { finishHidden() }
-        }
         setContent {
             val linkState by phoneLink.state.collectAsState()
             val heartRateBpm by runiverseApp.exerciseSession.heartRateBpm.collectAsState()
@@ -153,8 +149,14 @@ class MainActivity : ComponentActivity() {
                                 if (!isBackground && !isDismissed && !isClosing) {
                                     when {
                                         linkState.isUpdateRequired -> UpdateRequiredScreen(::openStore)
+                                        // 닫기는 폰 앱처럼 대기 화면으로 돌리고, 뒤로는 Wear OS의 화면 닫기라 앱을 닫는다
                                         finishedRun != null ->
-                                            RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
+                                            RunSummaryScreen(
+                                                finishedRun,
+                                                linkState.isPhoneReachable,
+                                                onClose = phoneLink::dismissResult,
+                                                onBack = ::closeScreen,
+                                            )
 
                                         else -> {
                                             // 러닝 화면에서 물으면 권한 창이 러닝을 가려, 대기 화면에서 먼저 묻는다
@@ -257,7 +259,7 @@ class MainActivity : ComponentActivity() {
         awaitClose { displayManager.unregisterDisplayListener(listener) }
     }.distinctUntilChanged()
 
-    // 어떻게 닫아도 결과가 다시 뜨지 않게 한 길로 닫는다
+    // 뒤로·쓸어 닫기는 결과가 다시 뜨지 않게 기억한 뒤 앱을 닫는다
     private fun closeScreen() {
         phoneLink.dismissResult()
         finishHidden()

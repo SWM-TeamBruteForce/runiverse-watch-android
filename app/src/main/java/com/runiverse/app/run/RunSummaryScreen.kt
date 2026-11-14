@@ -48,8 +48,8 @@ private val MIN_TIME_TO_PACE_GAP = 10.dp
 fun isResultStuck(result: RunResult?, isPhoneReachable: Boolean): Boolean = result == null && !isPhoneReachable
 
 @Composable
-internal fun RunSummaryScreen(run: RunState, isPhoneReachable: Boolean, onClose: () -> Unit) {
-    BackHandler(onBack = onClose)
+internal fun RunSummaryScreen(run: RunState, isPhoneReachable: Boolean, onClose: () -> Unit, onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
     ScreenScaffold {
         RunSummaryContent(run.result, isPhoneReachable, onClose)
     }

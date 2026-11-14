@@ -29,6 +29,7 @@ class RunSummaryScreenTest {
 
     private val result = RunPreviewSamples.result
     private var closeCount = 0
+    private var backCount = 0
 
     @Test
     fun `받은 결과는 폰이 끊겨도 멈춘 것으로 보지 않는다`() {
@@ -91,7 +92,7 @@ class RunSummaryScreenTest {
     }
 
     @Test
-    fun `닫기를 누르면 닫는다`() {
+    fun `닫기를 누르면 닫기만 알린다`() {
         // given
         show()
 
@@ -100,6 +101,7 @@ class RunSummaryScreenTest {
 
         // then
         assertEquals(1, closeCount)
+        assertEquals(0, backCount)
     }
 
     @Test
@@ -115,7 +117,7 @@ class RunSummaryScreenTest {
     }
 
     @Test
-    fun `뒤로가기를 누르면 닫는다`() {
+    fun `뒤로가기를 누르면 뒤로가기만 알린다`() {
         // given
         show()
 
@@ -124,7 +126,8 @@ class RunSummaryScreenTest {
         composeRule.waitForIdle()
 
         // then
-        assertEquals(1, closeCount)
+        assertEquals(1, backCount)
+        assertEquals(0, closeCount)
     }
 
     private fun text(id: Int) = composeRule.activity.getString(id)
@@ -132,7 +135,9 @@ class RunSummaryScreenTest {
     private fun show(shownResult: RunResult? = result, isPhoneReachable: Boolean = true) {
         val run = RunPreviewSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
         composeRule.setContent {
-            PreviewFrame { RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }) }
+            PreviewFrame {
+                RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }, onBack = { backCount++ })
+            }
         }
     }
 }
