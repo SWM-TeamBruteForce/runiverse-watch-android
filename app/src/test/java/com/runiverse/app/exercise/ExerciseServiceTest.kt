@@ -9,7 +9,7 @@ import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -27,7 +27,7 @@ import org.robolectric.annotation.Config
 class ExerciseServiceTest {
 
     private val app get() = ApplicationProvider.getApplicationContext<FakeRuniverseApp>()
-    private val soloRun = RunPreviewSamples.solo.copy(runningRoomId = null)
+    private val soloRun = RunSamples.solo.copy(runningRoomId = null)
 
     @After
     fun cancelTestScope() {

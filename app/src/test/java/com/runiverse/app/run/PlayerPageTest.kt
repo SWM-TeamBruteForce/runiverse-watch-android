@@ -5,7 +5,7 @@ import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.ui.component.PreviewFrame
@@ -21,7 +21,7 @@ class PlayerPageTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val run = RunPreviewSamples.party
+    private val run = RunSamples.party
     private val player = run.players.first()
 
     @Test

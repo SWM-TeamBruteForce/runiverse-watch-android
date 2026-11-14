@@ -134,7 +134,7 @@ class RunFormatTest {
     @Test
     fun `폰이나 서버가 끊기거나 그 사람 소식이 늦으면 그 사람 값은 오래된 값이다`() {
         // given
-        val run = RunPreviewSamples.party.copy(isServerConnected = true)
+        val run = RunSamples.party.copy(isServerConnected = true)
         val player = run.players[0].copy(isStale = false)
 
         // when & then
@@ -147,7 +147,7 @@ class RunFormatTest {
     @Test
     fun `멈췄거나 끊긴 사람은 폰이 마지막 값을 보내도 페이스를 비우고, 달리거나 끝난 사람은 받은 값을 쓴다`() {
         // given
-        val player = RunPreviewSamples.party.players[0].copy(currentPaceSecondsPerKm = 318)
+        val player = RunSamples.party.players[0].copy(currentPaceSecondsPerKm = 318)
 
         // when & then
         assertNull(player.copy(status = RunStatus.PAUSED).shownPaceSecondsPerKm())
@@ -159,7 +159,7 @@ class RunFormatTest {
     @Test
     fun `내가 멈추면 폰이 마지막 값을 보내도 내 페이스를 비우고, 달리는 중엔 받은 값을 쓴다`() {
         // given
-        val run = RunPreviewSamples.party.copy(me = RunPreviewSamples.party.me.copy(currentPaceSecondsPerKm = 332))
+        val run = RunSamples.party.copy(me = RunSamples.party.me.copy(currentPaceSecondsPerKm = 332))
 
         // when & then
         assertNull(run.copy(status = RunStatus.PAUSED).shownMyPaceSecondsPerKm())

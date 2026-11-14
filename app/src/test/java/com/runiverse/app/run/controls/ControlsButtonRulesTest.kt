@@ -4,7 +4,7 @@ import com.runiverse.app.phone.FinishProgress
 import com.runiverse.app.phone.FinishStage
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.RunCommandState
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +12,7 @@ import org.junit.Test
 
 class ControlsButtonRulesTest {
 
-    private val running = RunPreviewSamples.party.copy(status = RunStatus.RUNNING, finish = null)
+    private val running = RunSamples.party.copy(status = RunStatus.RUNNING, finish = null)
     private val finishing = running.copy(finish = FinishProgress(FinishStage.FINISHING))
 
     @Test
@@ -118,6 +118,6 @@ class ControlsButtonRulesTest {
         // when & then
         assertTrue(isFinishForced(atDistance(4999).copy(targetDistanceMeters = 5000)))
         assertFalse(isFinishForced(atDistance(5000).copy(targetDistanceMeters = 5000)))
-        assertFalse(isFinishForced(RunPreviewSamples.solo))
+        assertFalse(isFinishForced(RunSamples.solo))
     }
 }

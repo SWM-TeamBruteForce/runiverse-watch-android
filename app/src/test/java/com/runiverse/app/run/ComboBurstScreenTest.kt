@@ -3,7 +3,7 @@ package com.runiverse.app.run
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -21,7 +21,7 @@ class ComboBurstScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    private val player = RunPreviewSamples.party.players[1]
+    private val player = RunSamples.party.players[1]
 
     @Test
     fun `콤보 수와 그 사람 이름을 읽어 준다`() {

@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
@@ -26,8 +26,8 @@ class RunOverviewPageTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val solo = RunPreviewSamples.solo
-    private val party = RunPreviewSamples.party
+    private val solo = RunSamples.solo
+    private val party = RunSamples.party
 
     @Test
     fun `내 거리·시간·페이스와 심박을 보인다`() {
@@ -101,7 +101,7 @@ class RunOverviewPageTest {
     @Test
     fun `사진이 있는 파티원은 첫 글자 대신 사진을 보인다`() {
         // given
-        val photos = mapOf("u1" to RunPreviewSamples.brightPhotos.getValue("u1"))
+        val photos = mapOf("u1" to RunSamples.brightPhotos.getValue("u1"))
 
         // when
         show(party, playerPhotos = photos)
@@ -115,7 +115,7 @@ class RunOverviewPageTest {
     @Test
     fun `멈춘 파티원도 사진을 보이고 격차 대신 멈춤을 보인다`() {
         // given
-        val photos = mapOf("u3" to RunPreviewSamples.brightPhotos.getValue("u3"))
+        val photos = mapOf("u3" to RunSamples.brightPhotos.getValue("u3"))
 
         // when
         show(party, playerPhotos = photos)
@@ -138,7 +138,7 @@ class RunOverviewPageTest {
     @Test
     fun `통지가 아직 없는 파티원은 격차 자리를 비운다`() {
         // given
-        val notNotified = party.copy(players = listOf(RunPreviewSamples.notNotifiedPlayer))
+        val notNotified = party.copy(players = listOf(RunSamples.notNotifiedPlayer))
 
         // when
         show(notNotified)

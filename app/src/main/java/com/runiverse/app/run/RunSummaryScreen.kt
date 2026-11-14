@@ -23,7 +23,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewSmallRound
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
@@ -120,7 +120,7 @@ private fun TimePaceRow(time: String, pace: String, modifier: Modifier) {
 @WearPreviewFontScales
 @Composable
 private fun RunSummaryScreenConfirmedPreview() = PreviewFrame {
-    RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = true, onClose = {})
+    RunSummaryContent(RunSamples.result, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
@@ -128,13 +128,13 @@ private fun RunSummaryScreenConfirmedPreview() = PreviewFrame {
 @WearPreviewFontScales
 @Composable
 private fun RunSummaryScreenLongValuesPreview() = PreviewFrame {
-    RunSummaryContent(RunPreviewSamples.longResult, isPhoneReachable = true, onClose = {})
+    RunSummaryContent(RunSamples.longResult, isPhoneReachable = true, onClose = {})
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunSummaryScreenConfirmedPhoneLostPreview() = PreviewFrame {
-    RunSummaryContent(RunPreviewSamples.result, isPhoneReachable = false, onClose = {})
+    RunSummaryContent(RunSamples.result, isPhoneReachable = false, onClose = {})
 }
 
 @WearPreviewLargeRound

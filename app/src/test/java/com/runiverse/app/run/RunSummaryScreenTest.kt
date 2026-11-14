@@ -8,7 +8,7 @@ import androidx.compose.ui.test.performClick
 import com.runiverse.app.R
 import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
@@ -27,14 +27,14 @@ class RunSummaryScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    private val result = RunPreviewSamples.result
+    private val result = RunSamples.result
     private var closeCount = 0
     private var backCount = 0
 
     @Test
     fun `받은 결과는 폰이 끊겨도 멈춘 것으로 보지 않는다`() {
         // when & then
-        assertFalse(isResultStuck(RunPreviewSamples.result, isPhoneReachable = false))
+        assertFalse(isResultStuck(RunSamples.result, isPhoneReachable = false))
     }
 
     @Test
@@ -133,7 +133,7 @@ class RunSummaryScreenTest {
     private fun text(id: Int) = composeRule.activity.getString(id)
 
     private fun show(shownResult: RunResult? = result, isPhoneReachable: Boolean = true) {
-        val run = RunPreviewSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
+        val run = RunSamples.solo.copy(status = RunStatus.FINISHED, result = shownResult)
         composeRule.setContent {
             PreviewFrame {
                 RunSummaryScreen(run, isPhoneReachable, onClose = { closeCount++ }, onBack = { backCount++ })
