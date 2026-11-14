@@ -44,7 +44,7 @@ import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
 import com.runiverse.app.run.common.gapDirection
 import com.runiverse.app.run.common.hasStaleValues
-import com.runiverse.app.run.common.partyComboRowTop
+import com.runiverse.app.run.common.playerComboRowTop
 import com.runiverse.app.run.common.playerStatusWord
 import com.runiverse.app.run.common.shownMyPaceSecondsPerKm
 import com.runiverse.app.run.common.shownPaceSecondsPerKm
@@ -76,7 +76,7 @@ private val PACE_GAP = 8.dp
 private val MIN_DISTANCE_TO_NAME_GAP = 8.dp
 
 @Composable
-internal fun PartyPage(
+internal fun PlayerPage(
     run: RunState,
     player: Player,
     isPhoneReachable: Boolean,
@@ -157,7 +157,7 @@ private fun PaceAndComboRows(
         }
     }
     val comboRowTop = with(LocalDensity.current) {
-        partyComboRowTop(
+        playerComboRowTop(
             slots,
             paceInkHeight = paceStyle.fontSize.toPx() * SUIT_NUMERAL_INK.aboveBaselineEm,
             labelDescent = MaterialTheme.typography.labelSmall.fontSize.toPx() * SUIT_HANGUL_INK.belowBaselineEm,
@@ -337,65 +337,65 @@ private fun paceFitsOneLine(rowsTop: Float, paceStyle: TextStyle, widestRowWidth
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageAheadPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = true)
+private fun PlayerPageAheadPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageBehindComboPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[1], isPhoneReachable = true)
+private fun PlayerPageBehindComboPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.party.players[1], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPagePausedPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
+private fun PlayerPagePausedPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.party.players[2], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageMePausedPreview() = PreviewFrame {
+private fun PlayerPageMePausedPreview() = PreviewFrame {
     val run = RunPreviewSamples.party.copy(status = RunStatus.PAUSED)
-    PartyPage(run, run.players[0], isPhoneReachable = true)
+    PlayerPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageFinishedPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.finishedPlayer, isPhoneReachable = true)
+private fun PlayerPageFinishedPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.finishedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageNotNotifiedPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.notNotifiedPlayer, isPhoneReachable = true)
+private fun PlayerPageNotNotifiedPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.notNotifiedPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageLongestPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.longValues, RunPreviewSamples.longestPlayer, isPhoneReachable = true)
+private fun PlayerPageLongestPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.longValues, RunPreviewSamples.longestPlayer, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPageStalePreview() = PreviewFrame {
+private fun PlayerPageStalePreview() = PreviewFrame {
     val player = RunPreviewSamples.party.players[0].copy(isStale = true)
-    PartyPage(RunPreviewSamples.party, player, isPhoneReachable = true)
+    PlayerPage(RunPreviewSamples.party, player, isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
-private fun PartyPageServerLostPreview() = PreviewFrame {
+private fun PlayerPageServerLostPreview() = PreviewFrame {
     val run = RunPreviewSamples.party.copy(isServerConnected = false)
-    PartyPage(run, run.players[0], isPhoneReachable = true)
+    PlayerPage(run, run.players[0], isPhoneReachable = true)
 }
 
 @WearPreviewLargeRound
 @Composable
-private fun PartyPagePhoneLostPreview() = PreviewFrame {
-    PartyPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = false)
+private fun PlayerPagePhoneLostPreview() = PreviewFrame {
+    PlayerPage(RunPreviewSamples.party, RunPreviewSamples.party.players[0], isPhoneReachable = false)
 }

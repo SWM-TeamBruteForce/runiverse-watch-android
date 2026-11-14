@@ -16,7 +16,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(RobolectricTestRunner::class)
-class PartyPageTest {
+class PlayerPageTest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -168,7 +168,7 @@ class PartyPageTest {
     private fun show(shownPlayer: Player = player, isPhoneReachable: Boolean = true, isServerConnected: Boolean = true) {
         composeRule.setContent {
             PreviewFrame {
-                PartyPage(run.copy(isServerConnected = isServerConnected), shownPlayer, isPhoneReachable)
+                PlayerPage(run.copy(isServerConnected = isServerConnected), shownPlayer, isPhoneReachable)
             }
         }
     }
