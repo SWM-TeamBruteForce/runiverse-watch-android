@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -68,15 +67,6 @@ fun Flow<PhoneLinkState>.goalPendingStarts(): Flow<Unit> =
         .distinctUntilChanged()
         .filter { it }
         .map { }
-
-/** 폰에서 요약을 닫아 띄운 결과가 사라질 때 낸다. 새 러닝으로 넘어갈 때나 업데이트로 막힐 땐 내지 않는다. */
-fun Flow<PhoneLinkState>.finishedRunRemovals(): Flow<Unit> = flow {
-    var wasShown = false
-    collect {
-        if (wasShown && it.phoneState?.run == null && !it.isUpdateRequired) emit(Unit)
-        wasShown = it.finishedRun != null
-    }
-}
 
 /**
  * 폰에서 받은 메시지로 연결 상태를 판정하고, 명령·SYNC·화면 켜짐 신호를 보낸다.
