@@ -25,7 +25,6 @@ import com.runiverse.app.phone.RunResult
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.run.common.RunPreviewSamples
 import com.runiverse.app.run.common.currentRunPageSlots
-import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.run.common.formatPace
 import com.runiverse.app.run.common.formatRunDistanceKm
@@ -40,6 +39,7 @@ import com.runiverse.app.ui.component.baselineAt
 import com.runiverse.app.ui.component.bottomPillWidth
 import com.runiverse.app.ui.component.contentBottomAt
 import com.runiverse.app.ui.component.contentTopAt
+import com.runiverse.app.ui.theme.currentScreenWidth
 
 private const val TIME_PACE_ROW_WIDTH_FRACTION = 270f / 480f
 private val MIN_TIME_TO_PACE_GAP = 10.dp

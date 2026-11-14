@@ -3,7 +3,6 @@ package com.runiverse.app.run.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.Dp
 import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
@@ -70,9 +69,4 @@ internal fun currentRunPageSlots(): RunPageSlots {
                 RunDimensions.AVATAR_TO_BOTTOM_ROW_GAP).toPx(),
         )
     }
-}
-
-@Composable
-internal fun currentScreenWidth(): Dp = with(LocalDensity.current) {
-    LocalWindowInfo.current.containerSize.width.toDp()
 }

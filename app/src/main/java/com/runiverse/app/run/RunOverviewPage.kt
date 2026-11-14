@@ -53,7 +53,6 @@ import com.runiverse.app.run.common.RunPreviewSamples
 import com.runiverse.app.run.common.comboFlashAlpha
 import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
-import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.distanceProgress
 import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.formatElapsedTime
@@ -79,6 +78,7 @@ import com.runiverse.app.ui.component.contentCenterAt
 import com.runiverse.app.ui.component.contentTopAt
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
+import com.runiverse.app.ui.theme.currentScreenWidth
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
 import com.runiverse.app.ui.theme.tabularNumerals
