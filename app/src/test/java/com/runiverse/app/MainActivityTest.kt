@@ -37,7 +37,7 @@ import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
 import com.runiverse.app.phone.WatchVisibilityUpdate
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatElapsedTime
 import kotlinx.coroutines.cancel
 import org.junit.After
@@ -79,8 +79,8 @@ class MainActivityTest {
     private var nextStateSequence = 1L
 
     // 오프라인 솔로는 방 번호가 없어 SYNC 없이 바로 받는다
-    private val soloRun = RunPreviewSamples.solo.copy(runningRoomId = null)
-    private val partyRun = RunPreviewSamples.party
+    private val soloRun = RunSamples.solo.copy(runningRoomId = null)
+    private val partyRun = RunSamples.party
     // 대기 화면 아이콘은 폰 연결 여부와 상관없이 있어, 폰이 끊긴 대기 화면도 이것으로 찾는다
     private val idleMark get() = composeRule.activity.getString(R.string.app_name)
 
@@ -175,7 +175,7 @@ class MainActivityTest {
         composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
 
         // when -> 끝난 뒤의 폰은 켜짐 신호마다 같은 결과를 다시 보낸다
-        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
         composeRule.waitForIdle()
 
         // then
@@ -491,7 +491,7 @@ class MainActivityTest {
         startExerciseSession()
 
         // when
-        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
         composeRule.waitForIdle()
 
         // then
@@ -872,7 +872,7 @@ class MainActivityTest {
     }
 
     private fun showFinishedRun() {
-        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertExists()
     }
 

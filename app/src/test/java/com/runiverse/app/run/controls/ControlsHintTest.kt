@@ -6,13 +6,13 @@ import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.DistanceUnitLabel
 import com.runiverse.app.run.common.FormattedDistance
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ControlsHintTest {
 
-    private val party = RunPreviewSamples.party.copy(targetDistanceMeters = 5000, isPenaltyApplicable = true)
+    private val party = RunSamples.party.copy(targetDistanceMeters = 5000, isPenaltyApplicable = true)
 
     private fun RunState.at(distanceMeters: Int, status: RunStatus = RunStatus.RUNNING) =
         copy(status = status, me = me.copy(distanceMeters = distanceMeters))
@@ -103,7 +103,7 @@ class ControlsHintTest {
     @Test
     fun `혼자 달리면 서버가 끊겨도 서버 안내를 띄우지 않고, 목표 없는 솔로는 안내가 없다`() {
         // given
-        val solo = RunPreviewSamples.solo.copy(isServerConnected = false)
+        val solo = RunSamples.solo.copy(isServerConnected = false)
         val soloMatch = party.copy(players = emptyList(), isServerConnected = false)
 
         // when & then

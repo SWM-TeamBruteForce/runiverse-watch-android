@@ -68,18 +68,18 @@ import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.usableWidthAt
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.ButtonContent
-import com.runiverse.app.run.component.ControlButton
-import com.runiverse.app.run.component.ControlIcon
-import com.runiverse.app.run.component.PILL_HEIGHT
 import com.runiverse.app.run.component.RunDimensions
-import com.runiverse.app.run.component.contentCenterAt
-import com.runiverse.app.run.component.contentTopAt
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.ButtonContent
+import com.runiverse.app.ui.component.ControlButton
+import com.runiverse.app.ui.component.ControlIcon
+import com.runiverse.app.ui.component.PILL_HEIGHT
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.contentCenterAt
+import com.runiverse.app.ui.component.contentTopAt
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_HANGUL_INK
 import com.runiverse.app.ui.theme.laneColor
@@ -572,7 +572,7 @@ private val PREVIEW_COMMANDS = RunCommands(pause = {}, resume = {}, finish = {})
 @Composable
 private fun ControlsPageRunningPreview() = PreviewFrame {
     ControlsPageContent(
-        RunPreviewSamples.party,
+        RunSamples.party,
         isPhoneReachable = true,
         RunCommandState(),
         PREVIEW_COMMANDS,
@@ -586,7 +586,7 @@ private fun ControlsPageRunningPreview() = PreviewFrame {
 @Composable
 private fun ControlsPagePausedPreview() = PreviewFrame {
     ControlsPageContent(
-        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        RunSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
         RunCommandState(),
         PREVIEW_COMMANDS,
@@ -600,7 +600,7 @@ private fun ControlsPagePausedPreview() = PreviewFrame {
 @Composable
 private fun ControlsPagePhoneLostPreview() = PreviewFrame {
     ControlsPageContent(
-        RunPreviewSamples.party,
+        RunSamples.party,
         isPhoneReachable = false,
         RunCommandState(),
         PREVIEW_COMMANDS,
@@ -614,7 +614,7 @@ private fun ControlsPagePhoneLostPreview() = PreviewFrame {
 @Composable
 private fun ControlsPageFinishingPreview() = PreviewFrame {
     ControlsPageContent(
-        RunPreviewSamples.party,
+        RunSamples.party,
         isPhoneReachable = true,
         RunCommandState(isLocked = true, isFinishPending = true),
         PREVIEW_COMMANDS,

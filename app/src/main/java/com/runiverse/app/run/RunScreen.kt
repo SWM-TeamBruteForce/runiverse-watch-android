@@ -85,7 +85,7 @@ internal fun RunScreen(
     HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
         HorizontalPager(
             horizontalPagerState,
-            gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
+            gestureInclusion = playerPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
                 CONTROLS_PAGE_INDEX -> ControlsPage(
@@ -146,7 +146,7 @@ private fun OverviewVerticalPager(
                         isDisplayOn,
                     )
                 } else {
-                    PartyPage(run, player, isPhoneReachable, smallComboMoments[player.userId], isDisplayOn)
+                    PlayerPage(run, player, isPhoneReachable, smallComboMoments[player.userId], isDisplayOn)
                 }
             }
         }
@@ -156,7 +156,7 @@ private fun OverviewVerticalPager(
 // 파티원 장은 세로로만 오간다 — userScrollEnabled로 막으면 돌아온 직후 첫 좌우 쓸기가 무시된다
 // 쓸어 닫기가 꺼져 있어 첫 장 가장자리를 안 비운다 — 비우면 조작 장에서 왼쪽 끝 쓸기가 막힌다
 @Composable
-private fun partyPageBlockingGestures(
+private fun playerPageBlockingGestures(
     horizontalPagerState: PagerState,
     verticalPagerState: PagerState,
 ): GestureInclusion = remember(horizontalPagerState, verticalPagerState) {

@@ -7,7 +7,7 @@ import org.junit.Test
 
 class RunVibrationTest {
 
-    private val players = RunPreviewSamples.party.players
+    private val players = RunSamples.party.players
 
     @Test
     fun `틱과 끊김과 보류는 한 번 울리고 틱, 끊김, 보류 순으로 길다`() {

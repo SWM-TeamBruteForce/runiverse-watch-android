@@ -16,7 +16,7 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatElapsedTime
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertFalse
@@ -32,8 +32,8 @@ class RunScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    private val solo = RunPreviewSamples.solo
-    private val party = RunPreviewSamples.party
+    private val solo = RunSamples.solo
+    private val party = RunSamples.party
     private val elapsedTime = formatElapsedTime(party.me.elapsedSeconds)
     private val firstPlayerName = party.players.first().nickname
     private val backDispatcher get() = composeRule.activity.onBackPressedDispatcher

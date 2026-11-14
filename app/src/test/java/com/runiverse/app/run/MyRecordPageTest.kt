@@ -7,7 +7,7 @@ import com.runiverse.app.R
 import com.runiverse.app.phone.MyRecord
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -22,7 +22,7 @@ class MyRecordPageTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val run = RunPreviewSamples.solo
+    private val run = RunSamples.solo
 
     @Test
     fun `심박·케이던스·칼로리를 보인다`() {

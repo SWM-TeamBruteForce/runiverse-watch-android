@@ -49,11 +49,10 @@ import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.GapDirection
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.comboFlashAlpha
 import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
-import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.distanceProgress
 import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.formatElapsedTime
@@ -64,21 +63,22 @@ import com.runiverse.app.run.common.gapDirection
 import com.runiverse.app.run.common.hasStaleValues
 import com.runiverse.app.run.common.playerStatusWord
 import com.runiverse.app.run.common.smallComboMomentProgress
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.HeartRateZoneBar
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
-import com.runiverse.app.run.component.baselineAt
-import com.runiverse.app.run.component.boxContentBounds
-import com.runiverse.app.run.component.contentBottomAt
-import com.runiverse.app.run.component.contentCenterAt
-import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.run.component.widestHeartRateBlockWidth
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.ContentBoundsColumn
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.baselineAt
+import com.runiverse.app.ui.component.boxContentBounds
+import com.runiverse.app.ui.component.contentBottomAt
+import com.runiverse.app.ui.component.contentCenterAt
+import com.runiverse.app.ui.component.contentTopAt
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
+import com.runiverse.app.ui.theme.currentScreenWidth
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
 import com.runiverse.app.ui.theme.tabularNumerals
@@ -475,7 +475,7 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
 @WearPreviewSmallRound
 @Composable
 private fun RunOverviewPagePartyPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
@@ -483,11 +483,11 @@ private fun RunOverviewPagePartyPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePhotosPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party,
+        RunSamples.party,
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
-        playerPhotos = RunPreviewSamples.brightPhotos,
+        playerPhotos = RunSamples.brightPhotos,
     )
 }
 
@@ -495,31 +495,31 @@ private fun RunOverviewPagePhotosPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePhotoStatusesPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.statusesOnPhotos,
+        RunSamples.statusesOnPhotos,
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
-        playerPhotos = RunPreviewSamples.brightPhotos,
+        playerPhotos = RunSamples.brightPhotos,
     )
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPageLongValuesPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPagePhoneLostPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPageServerLostPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party.copy(isServerConnected = false),
+        RunSamples.party.copy(isServerConnected = false),
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
@@ -530,7 +530,7 @@ private fun RunOverviewPageServerLostPreview() = PreviewFrame {
 @WearPreviewFontScales
 @Composable
 private fun RunOverviewPageSoloPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
@@ -538,7 +538,7 @@ private fun RunOverviewPageSoloPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePausedPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        RunSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
         heartRateBpm = 92,
         heartRateZone = 1,
@@ -549,7 +549,7 @@ private fun RunOverviewPagePausedPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPageSoloPausedPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
+        RunSamples.solo.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
         heartRateBpm = 92,
         heartRateZone = 1,

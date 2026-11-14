@@ -3,7 +3,6 @@ package com.runiverse.app.run.common
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.Dp
 import androidx.wear.compose.material3.MaterialTheme
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
@@ -38,7 +37,7 @@ internal fun runPageSlots(
 }
 
 /** 페이스가 두 줄이면 맨 아래 줄 자리까지 내려오므로 콤보 줄은 페이스 바로 아래로 간다. */
-internal fun partyComboRowTop(
+internal fun playerComboRowTop(
     slots: RunPageSlots,
     paceInkHeight: Float,
     labelDescent: Float,
@@ -70,9 +69,4 @@ internal fun currentRunPageSlots(): RunPageSlots {
                 RunDimensions.AVATAR_TO_BOTTOM_ROW_GAP).toPx(),
         )
     }
-}
-
-@Composable
-internal fun currentScreenWidth(): Dp = with(LocalDensity.current) {
-    LocalWindowInfo.current.containerSize.width.toDp()
 }

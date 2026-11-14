@@ -31,7 +31,7 @@ class RunPageSlotsTest {
         // when & then
         assertEquals(
             160f,
-            partyComboRowTop(slots, paceInkHeight = 30f, labelDescent = 2f, paceRowCount = 1, lineGap = 10f),
+            playerComboRowTop(slots, paceInkHeight = 30f, labelDescent = 2f, paceRowCount = 1, lineGap = 10f),
             0.001f,
         )
     }
@@ -44,7 +44,7 @@ class RunPageSlotsTest {
         // when & then -> 100 + (30 + 2) × 2 + 10(줄 사이) + 10(콤보 위) = 184다
         assertEquals(
             184f,
-            partyComboRowTop(slots, paceInkHeight = 30f, labelDescent = 2f, paceRowCount = 2, lineGap = 10f),
+            playerComboRowTop(slots, paceInkHeight = 30f, labelDescent = 2f, paceRowCount = 2, lineGap = 10f),
             0.001f,
         )
     }

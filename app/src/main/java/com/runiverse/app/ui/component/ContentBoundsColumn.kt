@@ -1,4 +1,4 @@
-package com.runiverse.app.run.component
+package com.runiverse.app.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
