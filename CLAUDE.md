@@ -30,7 +30,7 @@ Runiverse 갤럭시워치(Wear OS) 앱. 폰 앱(runiverse-frontend)과 Data Laye
   run/           러닝 화면·장·결과 요약
   run/controls/  조작 장과 그 장만 쓰는 것
   run/common/    장 밖에 두는 규칙·값(표기·자리 계산·폰 명령 등)
-  run/component/ 화면·장이 같이 쓰는 UI 부품·정렬 Modifier·치수
+  run/component/ 화면·장이 같이 쓰는 UI 부품·치수
   ui/theme/      여러 기능이 같이 쓰는 색·글자
   ui/component/  두 기능 이상이 쓰는 부품
   ```
