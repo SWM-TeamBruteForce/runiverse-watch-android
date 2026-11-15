@@ -50,7 +50,7 @@ import com.runiverse.app.phone.Player
 import com.runiverse.app.run.common.BIG_COMBO_MOMENT_DURATION
 import com.runiverse.app.run.common.ComboBurstFrame
 import com.runiverse.app.run.common.RING_END_SCALE
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.comboBurstFrame
 import com.runiverse.app.run.common.currentRunPageSlots
 import com.runiverse.app.run.component.RunDimensions
@@ -230,19 +230,19 @@ private fun DrawScope.drawTextInkCenteredAt(
 @WearPreviewSmallRound
 @Composable
 private fun ComboBurstSettledPreview() = PreviewFrame {
-    ComboBurstCanvas(10, RunPreviewSamples.party.players[1], photo = null, comboBurstFrame(0.5f))
+    ComboBurstCanvas(10, RunSamples.party.players[1], photo = null, comboBurstFrame(0.5f))
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun ComboBurstPhotoPreview() = PreviewFrame {
-    val player = RunPreviewSamples.party.players[1]
-    ComboBurstCanvas(10, player, RunPreviewSamples.brightPhotos[player.userId], comboBurstFrame(0.5f))
+    val player = RunSamples.party.players[1]
+    ComboBurstCanvas(10, player, RunSamples.brightPhotos[player.userId], comboBurstFrame(0.5f))
 }
 
 @WearPreviewLargeRound
 @WearPreviewSmallRound
 @Composable
 private fun ComboBurstLongestPeakPreview() = PreviewFrame {
-    ComboBurstCanvas(888, RunPreviewSamples.longestPlayer, photo = null, comboBurstFrame(0.28f))
+    ComboBurstCanvas(888, RunSamples.longestPlayer, photo = null, comboBurstFrame(0.28f))
 }

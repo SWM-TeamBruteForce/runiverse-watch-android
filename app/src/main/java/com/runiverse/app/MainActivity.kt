@@ -2,7 +2,9 @@ package com.runiverse.app
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.hardware.display.DisplayManager
 import android.os.Bundle
+import android.view.Display
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
@@ -29,7 +31,6 @@ import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.SwipeToDismissBox
 import com.runiverse.app.exercise.ExerciseService
 import com.runiverse.app.phone.WatchComboTriggered
-import com.runiverse.app.phone.finishedRunRemovals
 import com.runiverse.app.run.ComboBurstScreen
 import com.runiverse.app.run.RunScreen
 import com.runiverse.app.run.RunSummaryScreen
@@ -41,7 +42,11 @@ import com.runiverse.app.run.common.comboMomentSizeOrNull
 import com.runiverse.app.run.common.decodePlayerPhotos
 import com.runiverse.app.ui.theme.RuniverseTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -60,6 +65,8 @@ class MainActivity : ComponentActivity() {
 
     // 다 그릴 때까지 다음 큰 순간은 받지 않는다 — 폰도 임팩트 중엔 새로 터뜨리지 않는다
     private var bigComboMoment by mutableStateOf<WatchComboTriggered?>(null)
+
+    private var isDisplayOn by mutableStateOf(true)
 
     // 조작 장에선 덮개가 버튼을 가려 큰 순간을 띄우지 않는다 — 진동만 한다
     private var isControlsShown = false
@@ -95,21 +102,22 @@ class MainActivity : ComponentActivity() {
             }
         }
         lifecycleScope.launch {
-            // 화면이 꺼진 사이 온 콤보는 진동만 한다 — 켜졌을 때 효과를 뒤늦게 틀지 않는다
+            // 화면이 꺼지거나 어두운 사이 온 콤보는 진동만 한다 — 밝아졌을 때 효과를 뒤늦게 틀지 않는다
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                try {
-                    phoneLink.combos.collect { showComboMoment(it) }
-                } finally {
-                    smallComboMoments = emptyMap()
-                    bigComboMoment = null
+                displayOnChanges().collectLatest { isOn ->
+                    isDisplayOn = isOn
+                    if (!isOn) return@collectLatest
+                    try {
+                        phoneLink.combos.collect { showComboMoment(it) }
+                    } finally {
+                        smallComboMoments = emptyMap()
+                        bigComboMoment = null
+                    }
                 }
             }
         }
         lifecycleScope.launch {
             runiverseApp.exerciseSession.phoneLost.collect { finishHidden() }
-        }
-        lifecycleScope.launch {
-            phoneLink.state.finishedRunRemovals().collect { finishHidden() }
         }
         setContent {
             val linkState by phoneLink.state.collectAsState()
@@ -141,13 +149,28 @@ class MainActivity : ComponentActivity() {
                                 if (!isBackground && !isDismissed && !isClosing) {
                                     when {
                                         linkState.isUpdateRequired -> UpdateRequiredScreen(::openStore)
+                                        // 닫기는 폰 앱처럼 대기 화면으로 돌리고, 뒤로는 Wear OS의 화면 닫기라 앱을 닫는다
                                         finishedRun != null ->
-                                            RunSummaryScreen(finishedRun, linkState.isPhoneReachable, ::closeScreen)
+                                            RunSummaryScreen(
+                                                finishedRun,
+                                                linkState.isPhoneReachable,
+                                                onClose = phoneLink::dismissResult,
+                                                onBack = ::closeScreen,
+                                            )
 
                                         else -> {
                                             // 러닝 화면에서 물으면 권한 창이 러닝을 가려, 대기 화면에서 먼저 묻는다
                                             LaunchedEffect(Unit) { requestPermissionsOnce() }
-                                            IdleScreen(linkState.isPhoneReachable)
+                                            // 폰이 답하기 전엔 폰 앱이 떠 있는지 몰라, 끊김 판정 전까지 문구 없이 그린다
+                                            IdleScreen(
+                                                if ((linkState.isSyncing || linkState.isAwaitingVisibleReply) &&
+                                                    linkState.isPhoneReachable
+                                                ) {
+                                                    null
+                                                } else {
+                                                    linkState.isPhoneReachable
+                                                },
+                                            )
                                         }
                                     }
                                 }
@@ -168,7 +191,12 @@ class MainActivity : ComponentActivity() {
                                 runiverseApp.comboEffectSetting::set,
                                 smallComboMoments,
                                 playerPhotos,
-                                onControlsShownChange = { isControlsShown = it },
+                                isDisplayOn,
+                                // 넘기는 중에 뜬 덮개도 접는다 — 남으면 일시정지·종료를 가린다
+                                onControlsShownChange = {
+                                    isControlsShown = it
+                                    if (it) bigComboMoment = null
+                                },
                             )
                         }
                     }
@@ -213,7 +241,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // 어떻게 닫아도 결과가 다시 뜨지 않게 한 길로 닫는다
+    // 워치8(Wear OS 6)은 어두운 화면(항상 켬)에서도 앱을 resumed로 두고 계속 그려, 화면 상태로 가린다
+    private fun displayOnChanges(): Flow<Boolean> = callbackFlow {
+        val displayManager = getSystemService(DisplayManager::class.java)
+        val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+        val listener = object : DisplayManager.DisplayListener {
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId == Display.DEFAULT_DISPLAY) trySend(display.state == Display.STATE_ON)
+            }
+
+            override fun onDisplayAdded(displayId: Int) = Unit
+
+            override fun onDisplayRemoved(displayId: Int) = Unit
+        }
+        displayManager.registerDisplayListener(listener, null)
+        trySend(display.state == Display.STATE_ON)
+        awaitClose { displayManager.unregisterDisplayListener(listener) }
+    }.distinctUntilChanged()
+
+    // 뒤로·쓸어 닫기는 결과가 다시 뜨지 않게 기억한 뒤 앱을 닫는다
     private fun closeScreen() {
         phoneLink.dismissResult()
         finishHidden()

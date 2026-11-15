@@ -20,14 +20,14 @@ internal const val METERS_PER_TENTH_KM = 100
 private const val EXTRA_DECIMAL_BELOW_METERS = 10_000
 private const val SECONDS_PER_HOUR = 3600
 
-/** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓴다. */
-fun formatRunDistanceKm(meters: Int): String {
+/** 완주 전에 목표 숫자가 먼저 뜨지 않게 버린다. 10km부터는 위 줄에 들어가게 한 자리만 쓰고, [dropKmDecimal]이면 정수만 쓴다. */
+fun formatRunDistanceKm(meters: Int, dropKmDecimal: Boolean = false): String {
     val km = meters / METERS_PER_KM
     val remainderMeters = meters % METERS_PER_KM
-    return if (meters < EXTRA_DECIMAL_BELOW_METERS) {
-        "$km.${(remainderMeters / 10).padTwoDigits()}"
-    } else {
-        "$km.${remainderMeters / METERS_PER_TENTH_KM}"
+    return when {
+        dropKmDecimal -> "$km"
+        meters < EXTRA_DECIMAL_BELOW_METERS -> "$km.${(remainderMeters / 10).padTwoDigits()}"
+        else -> "$km.${remainderMeters / METERS_PER_TENTH_KM}"
     }
 }
 

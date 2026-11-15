@@ -30,6 +30,7 @@ import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
 import com.runiverse.app.run.common.heartRateZoneOrNull
 import com.runiverse.app.run.common.parseBirthday
+import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.controls.ControlsPage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -39,7 +40,6 @@ private const val OVERVIEW_PAGE_INDEX = 1
 private const val MY_RECORD_PAGE_INDEX = 2
 private const val PAGE_COUNT = 3
 private const val OVERVIEW_VERTICAL_PAGE_INDEX = 0
-private const val INACTIVE_PAGE_DOT_ALPHA = 0.35f
 private val PAGE_DOT_DIAMETER = 3.dp
 private val PAGE_DOT_SPACING = 6.dp
 private val PAGE_DOTS_END_PADDING = 12.5.dp
@@ -57,6 +57,8 @@ internal fun RunScreen(
     /** 사람 번호마다 지금 띄우는 작은 순간 번호다. */
     smallComboMoments: Map<String, String> = emptyMap(),
     playerPhotos: Map<String, ImageBitmap> = emptyMap(),
+    /** 어두운 화면(항상 켬)이면 false다. 하던 작은 순간도 끊는다. */
+    isDisplayOn: Boolean = true,
     onControlsShownChange: (Boolean) -> Unit = {},
 ) {
     val horizontalPagerState = rememberPagerState(initialPage = OVERVIEW_PAGE_INDEX) { PAGE_COUNT }
@@ -83,7 +85,7 @@ internal fun RunScreen(
     HorizontalPagerScaffold(horizontalPagerState, pageIndicator = null) {
         HorizontalPager(
             horizontalPagerState,
-            gestureInclusion = partyPageBlockingGestures(horizontalPagerState, verticalPagerState),
+            gestureInclusion = playerPageBlockingGestures(horizontalPagerState, verticalPagerState),
         ) { page ->
             when (page) {
                 CONTROLS_PAGE_INDEX -> ControlsPage(
@@ -103,6 +105,7 @@ internal fun RunScreen(
                     heartRateZone,
                     smallComboMoments,
                     playerPhotos,
+                    isDisplayOn,
                 )
 
                 MY_RECORD_PAGE_INDEX -> ScreenScaffold {
@@ -122,6 +125,7 @@ private fun OverviewVerticalPager(
     heartRateZone: Int?,
     smallComboMoments: Map<String, String>,
     playerPhotos: Map<String, ImageBitmap>,
+    isDisplayOn: Boolean,
 ) {
     VerticalPagerScaffold(
         pagerState,
@@ -132,9 +136,17 @@ private fun OverviewVerticalPager(
             ScreenScaffold {
                 val player = run.players.getOrNull(page - 1)
                 if (player == null) {
-                    RunOverviewPage(run, isPhoneReachable, heartRateBpm, heartRateZone, smallComboMoments, playerPhotos)
+                    RunOverviewPage(
+                        run,
+                        isPhoneReachable,
+                        heartRateBpm,
+                        heartRateZone,
+                        smallComboMoments,
+                        playerPhotos,
+                        isDisplayOn,
+                    )
                 } else {
-                    PartyPage(run, player, isPhoneReachable, smallComboMoments[player.userId])
+                    PlayerPage(run, player, isPhoneReachable, smallComboMoments[player.userId], isDisplayOn)
                 }
             }
         }
@@ -144,7 +156,7 @@ private fun OverviewVerticalPager(
 // 파티원 장은 세로로만 오간다 — userScrollEnabled로 막으면 돌아온 직후 첫 좌우 쓸기가 무시된다
 // 쓸어 닫기가 꺼져 있어 첫 장 가장자리를 안 비운다 — 비우면 조작 장에서 왼쪽 끝 쓸기가 막힌다
 @Composable
-private fun partyPageBlockingGestures(
+private fun playerPageBlockingGestures(
     horizontalPagerState: PagerState,
     verticalPagerState: PagerState,
 ): GestureInclusion = remember(horizontalPagerState, verticalPagerState) {
@@ -170,7 +182,7 @@ private fun VerticalPageDots(pagerState: PagerState) {
                 color,
                 radius,
                 Offset(radius, radius + PAGE_DOT_SPACING.toPx() * index),
-                alpha = if (index == pagerState.currentPage) 1f else INACTIVE_PAGE_DOT_ALPHA,
+                alpha = if (index == pagerState.currentPage) 1f else RunDimensions.INACTIVE_POSITION_ALPHA,
             )
         }
     }

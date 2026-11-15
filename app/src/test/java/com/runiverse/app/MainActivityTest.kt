@@ -7,7 +7,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Looper
 import android.util.Base64
+import android.view.Display
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -34,7 +37,7 @@ import com.runiverse.app.phone.WatchStateUpdated
 import com.runiverse.app.phone.WatchSync
 import com.runiverse.app.phone.WatchSynced
 import com.runiverse.app.phone.WatchVisibilityUpdate
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.formatElapsedTime
 import kotlinx.coroutines.cancel
 import org.junit.After
@@ -49,6 +52,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDisplay
 import java.io.ByteArrayOutputStream
 import java.time.Duration
 
@@ -61,6 +65,9 @@ private const val PHONE_LOST_NOT_YET_MS = 9 * 60_000L
 private const val PHONE_LOST_REMAINING_MS = 4 * 60_000L
 private const val BURST_PASSED_MS = 1_300L
 
+// 큰 순간 1.2초가 끝나기 전에 조작 장에 자리 잡게 한다
+private const val CONTROLS_SETTLE_MS = 600L
+
 @RunWith(RobolectricTestRunner::class)
 @Config(application = FakeRuniverseApp::class)
 class MainActivityTest {
@@ -72,8 +79,8 @@ class MainActivityTest {
     private var nextStateSequence = 1L
 
     // 오프라인 솔로는 방 번호가 없어 SYNC 없이 바로 받는다
-    private val soloRun = RunPreviewSamples.solo.copy(runningRoomId = null)
-    private val partyRun = RunPreviewSamples.party
+    private val soloRun = RunSamples.solo.copy(runningRoomId = null)
+    private val partyRun = RunSamples.party
     // 대기 화면 아이콘은 폰 연결 여부와 상관없이 있어, 폰이 끊긴 대기 화면도 이것으로 찾는다
     private val idleMark get() = composeRule.activity.getString(R.string.app_name)
 
@@ -155,7 +162,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun `결과에서 닫기를 누르면 대기 화면 없이 닫고 결과를 기억한다`() {
+    fun `결과에서 닫기를 누르면 앱을 닫지 않고 대기 화면을 보이고 결과를 기억한다`() {
         // given
         showFinishedRun()
 
@@ -164,7 +171,16 @@ class MainActivityTest {
         composeRule.waitForIdle()
 
         // then
-        assertClosedWithoutIdleScreen()
+        assertFalse(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+
+        // when -> 끝난 뒤의 폰은 켜짐 신호마다 같은 결과를 다시 보낸다
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
     }
 
     @Test
@@ -231,6 +247,45 @@ class MainActivityTest {
     }
 
     @Test
+    fun `앱을 열면 폰 답 전엔 문구 없이 그림만 보이고 답이 오면 러닝 시작 안내를 보인다`() {
+        // when
+        composeRule.waitForIdle()
+
+        // then -> 폰 앱이 꺼져 있으면 답이 오지 않아, 답 전엔 러닝 시작을 안내하지 않는다
+        composeRule.onNodeWithContentDescription(idleMark).assertExists()
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
+
+        // when
+        answerSync(run = null)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+    }
+
+    @Test
+    fun `화면이 멈췄다 다시 보이면 폰 답 전엔 문구 없이 그림만 보인다`() {
+        // given
+        answerSync(run = null)
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+
+        // when -> 나가 있는 사이 폰 앱이 꺼졌을 수 있다
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.waitForIdle()
+
+        // then
+        composeRule.onNodeWithContentDescription(idleMark).assertExists()
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertDoesNotExist()
+
+        // when
+        receiveState(run = null)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
+    }
+
+    @Test
     fun `폰 답이 3초 없으면 대기 화면에 폰 연결 확인 중을 보인다`() {
         // given
         composeRule.waitForIdle()
@@ -261,20 +316,18 @@ class MainActivityTest {
     }
 
     @Test
-    fun `폰에서 결과를 닫으면 어느 프레임에도 대기 화면을 보이지 않고 앱을 닫는다`() {
+    fun `폰에서 결과를 닫으면 앱을 닫지 않고 대기 화면을 보인다`() {
         // given
         showFinishedRun()
-        composeRule.mainClock.autoAdvance = false
 
         // when
         receiveState(run = null)
-        val lefts = recordIdleMarkLefts()
+        composeRule.waitForIdle()
 
         // then
-        assertTrue(composeRule.activity.isFinishing)
-        assertTrue(lefts.all { it == null })
+        assertFalse(composeRule.activity.isFinishing)
+        composeRule.onNodeWithText(text(R.string.idle_start_on_phone)).assertExists()
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertDoesNotExist()
-        composeRule.onNodeWithText(text(R.string.run_phone_checking)).assertDoesNotExist()
     }
 
     @Test
@@ -438,7 +491,7 @@ class MainActivityTest {
         startExerciseSession()
 
         // when
-        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        receiveState(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
         composeRule.waitForIdle()
 
         // then
@@ -693,6 +746,30 @@ class MainActivityTest {
     }
 
     @Test
+    fun `조작 장으로 넘어가는 중에 뜬 큰 순간은 조작 장에 닿으면 걷는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onRoot().performTouchInput {
+            down(center)
+            moveBy(Offset(width * 0.2f, 0f))
+        }
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        composeRule.onRoot().performTouchInput {
+            moveBy(Offset(width * 0.4f, 0f))
+            up()
+        }
+        composeRule.mainClock.advanceTimeBy(CONTROLS_SETTLE_MS)
+
+        // then
+        composeRule.onNodeWithText(text(R.string.controls_pause)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
     fun `명단에 없는 사람의 눈금 뒤에 온 눈금은 띄운다`() {
         // given
         answerSync(partyRun)
@@ -723,11 +800,52 @@ class MainActivityTest {
         composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
     }
 
+    @Test
+    fun `어두운 화면에서 온 눈금은 밝아져도 띄우지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        changeDisplayState(Display.STATE_DOZE)
+
+        // when
+        receiveMilestone("e1", "u2", 10)
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+        changeDisplayState(Display.STATE_ON)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
+    @Test
+    fun `큰 순간 중에 화면이 어두워지면 걷고 다시 밝아져도 이어 그리지 않는다`() {
+        // given
+        answerSync(partyRun)
+        composeRule.mainClock.autoAdvance = false
+        receiveMilestone("e1", "u2", 10)
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertExists()
+
+        // when
+        changeDisplayState(Display.STATE_DOZE)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // then
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+        changeDisplayState(Display.STATE_ON)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithContentDescription("10 COMBO 콩나물").assertDoesNotExist()
+    }
+
     // 받은 콤보는 다음 차례에 상태로 들어가 그 다음 프레임에 그려진다
     private fun receiveMilestone(eventId: String, userId: String, comboCount: Int) {
         receive(WatchComboTriggered(eventId, userId, comboCount, ComboKind.MILESTONE))
         composeRule.waitForIdle()
         composeRule.mainClock.advanceTimeByFrame()
+    }
+
+    private fun changeDisplayState(state: Int) {
+        composeRule.runOnUiThread { shadowOf(ShadowDisplay.getDefaultDisplay()).setState(state) }
+        composeRule.waitForIdle()
     }
 
     private fun startExerciseSession() {
@@ -754,7 +872,7 @@ class MainActivityTest {
     }
 
     private fun showFinishedRun() {
-        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunPreviewSamples.result))
+        answerSync(soloRun.copy(status = RunStatus.FINISHED, result = RunSamples.result))
         composeRule.onNodeWithText(text(R.string.run_summary_completed)).assertExists()
     }
 

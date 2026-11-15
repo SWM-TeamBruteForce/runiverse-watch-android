@@ -24,11 +24,11 @@ internal fun placeHintLines(
     top: Float,
     lineAdvance: Float,
     widthAt: (Float) -> Float,
-    widthOf: (String) -> Float,
+    widthOf: (hintIndex: Int, text: String) -> Float,
 ): List<PlacedHintLine> {
     var y = top
     return hints.flatMapIndexed { hintIndex, hint ->
-        splitHintLine(hint, widthAt(y), widthOf).map { line ->
+        splitHintLine(hint, widthAt(y)) { widthOf(hintIndex, it) }.map { line ->
             PlacedHintLine(line, hintIndex, y).also { y += lineAdvance }
         }
     }
@@ -45,11 +45,11 @@ internal fun controlsPageSlots(
     firstButtonTopAtDefaultFont: Float,
     hintToButtonGap: Float,
     isFontScaled: Boolean,
-    widthOf: (String) -> Float,
+    widthOf: (hintIndex: Int, text: String) -> Float,
 ): ControlsPageSlots {
     val widthAt = { y: Float -> usableWidthAt(y, screenSize, edgeMargin) }
     val hintTop = firstTopWhereHintsFit(widestHints, hintStartTop, maxHintShift, lineAdvance, widthAt, widthOf)
-        ?: topWhereFirstLineFits(widthOf(widestHints.first()), screenSize, edgeMargin, hintStartTop)
+        ?: topWhereFirstLineFits(widthOf(0, widestHints.first()), screenSize, edgeMargin, hintStartTop)
     val lines = placeHintLines(widestHints, hintTop, lineAdvance, widthAt, widthOf)
     val hintsEnd = lines.last().top + lineAdvance
     val firstButtonTop = if (isFontScaled) {
@@ -66,12 +66,12 @@ private fun firstTopWhereHintsFit(
     maxShift: Float,
     lineAdvance: Float,
     widthAt: (Float) -> Float,
-    widthOf: (String) -> Float,
+    widthOf: (hintIndex: Int, text: String) -> Float,
 ): Float? {
     var top = startTop
     while (top <= startTop + maxShift) {
         val everyHintFits = hints.withIndex().all { (index, hint) ->
-            widthOf(hint) <= widthAt(top + index * lineAdvance)
+            widthOf(index, hint) <= widthAt(top + index * lineAdvance)
         }
         if (everyHintFits) return top
         top += 1f

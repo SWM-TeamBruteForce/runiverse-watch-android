@@ -9,7 +9,7 @@ import com.runiverse.app.phone.PlayerPhoto
 
 private const val TAG = "PlayerPhotos"
 
-// 폰은 128로 줄여 보낸다 — 원본이 잘못 와도 풀다가 앱이 죽지 않게 넉넉히 막는다
+// 폰은 64로 줄여 보낸다 — 원본이 잘못 와도 풀다가 앱이 죽지 않게 넉넉히 막는다
 private const val MAX_PHOTO_SIDE = 256
 
 /** 사람 번호마다 그릴 사진이다. 못 푼 사진은 빼서 그 사람은 첫 글자로 그린다. */

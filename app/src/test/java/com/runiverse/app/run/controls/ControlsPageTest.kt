@@ -15,7 +15,7 @@ import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.RunCommandState
 import com.runiverse.app.run.common.RunCommands
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.ui.component.PreviewFrame
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -43,8 +43,8 @@ class ControlsPageTest {
         resume = { calls += "resume" },
         finish = { forced -> calls += "finish forced=$forced" },
     )
-    private val solo = RunPreviewSamples.solo
-    private val party = RunPreviewSamples.party
+    private val solo = RunSamples.solo
+    private val party = RunSamples.party
 
     @Test
     fun `일시정지를 누르면 일시정지 명령을 부른다`() {

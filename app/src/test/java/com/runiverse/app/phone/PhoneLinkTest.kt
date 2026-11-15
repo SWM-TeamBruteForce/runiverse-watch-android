@@ -204,6 +204,54 @@ class PhoneLinkTest {
     }
 
     @Test
+    fun `화면으로 돌아오면 폰 상태를 받을 때까지 켜짐 신호의 답을 기다리는 중이다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+
+        // when
+        fixture.phoneLink.onScreenStarted()
+
+        // then
+        assertTrue(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+
+        // when
+        fixture.phoneLink.onReceived(WatchStateUpdated(state(stateSequence = 2).copy(run = null)))
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+    }
+
+    @Test
+    fun `켜짐 신호의 답을 3초 동안 못 받으면 기다리는 중이 풀리고 폰 연결 확인 중이 된다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+        fixture.phoneLink.onScreenStarted()
+
+        // when
+        advanceTimeBy(3_001)
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+        assertFalse(fixture.phoneLink.state.value.isPhoneReachable)
+    }
+
+    @Test
+    fun `켜짐 신호의 답을 기다리다 화면이 꺼지면 기다리는 중이 풀린다`() = runTest {
+        // given
+        val fixture = Fixture(this)
+        fixture.connect(state(stateSequence = 1).copy(run = null))
+        fixture.phoneLink.onScreenStarted()
+
+        // when
+        fixture.phoneLink.onScreenStopped()
+
+        // then
+        assertFalse(fixture.phoneLink.state.value.isAwaitingVisibleReply)
+    }
+
+    @Test
     fun `화면이 꺼져 있으면 SYNC를 한 번만 보낸다`() = runTest {
         // given
         val fixture = Fixture(this)
@@ -1064,74 +1112,6 @@ class PhoneLinkTest {
 
         // then
         assertEquals(confirmedResult, fixture.phoneLink.state.value.finishedRun?.result)
-    }
-
-    @Test
-    fun `폰이 띄운 결과를 없애면 한 번 알린다`() = runTest {
-        // given
-        val finished = finishedState(stateSequence = 1)
-        val linkStates = listOf(
-            PhoneLinkState(phoneState = finished),
-            PhoneLinkState(phoneState = finished.copy(stateSequence = 2)),
-            linkStateWith(finished.copy(stateSequence = 3), run = null),
-            linkStateWith(finished.copy(stateSequence = 4), run = null),
-        )
-
-        // when
-        val removals = linkStates.asFlow().finishedRunRemovals().toList()
-
-        // then
-        assertEquals(1, removals.size)
-    }
-
-    @Test
-    fun `결과에서 새 러닝으로 넘어가면 알리지 않는다`() = runTest {
-        // given
-        val linkStates = listOf(
-            PhoneLinkState(phoneState = finishedState(stateSequence = 1)),
-            PhoneLinkState(phoneState = state(stateSequence = 2)),
-        )
-
-        // when
-        val removals = linkStates.asFlow().finishedRunRemovals().toList()
-
-        // then
-        assertTrue(removals.isEmpty())
-    }
-
-    @Test
-    fun `워치에서 닫은 결과나 러닝이 사라질 때는 알리지 않는다`() = runTest {
-        // given
-        val finished = finishedState(stateSequence = 1, statusVersion = 2)
-        val dismissed = ResultKey(finished.phoneInstanceId, finished.statusVersion)
-        val running = state(stateSequence = 1)
-        val linkStates = listOf(
-            PhoneLinkState(phoneState = finished, dismissedResult = dismissed),
-            linkStateWith(finished.copy(stateSequence = 2), run = null).copy(dismissedResult = dismissed),
-            PhoneLinkState(phoneState = running),
-            linkStateWith(running.copy(stateSequence = 2), run = null),
-        )
-
-        // when
-        val removals = linkStates.asFlow().finishedRunRemovals().toList()
-
-        // then
-        assertTrue(removals.isEmpty())
-    }
-
-    @Test
-    fun `업데이트로 막혀 결과가 사라질 땐 알리지 않는다`() = runTest {
-        // given
-        val linkStates = listOf(
-            PhoneLinkState(phoneState = finishedState(stateSequence = 1)),
-            PhoneLinkState(isUpdateRequired = true),
-        )
-
-        // when
-        val removals = linkStates.asFlow().finishedRunRemovals().toList()
-
-        // then
-        assertTrue(removals.isEmpty())
     }
 
     @Test

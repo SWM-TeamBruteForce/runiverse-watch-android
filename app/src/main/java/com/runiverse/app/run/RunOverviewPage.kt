@@ -49,11 +49,10 @@ import com.runiverse.app.phone.Player
 import com.runiverse.app.phone.RunState
 import com.runiverse.app.phone.RunStatus
 import com.runiverse.app.run.common.GapDirection
-import com.runiverse.app.run.common.RunPreviewSamples
+import com.runiverse.app.run.common.RunSamples
 import com.runiverse.app.run.common.comboFlashAlpha
 import com.runiverse.app.run.common.connectionNotice
 import com.runiverse.app.run.common.currentRunPageSlots
-import com.runiverse.app.run.common.currentScreenWidth
 import com.runiverse.app.run.common.distanceProgress
 import com.runiverse.app.run.common.distanceUnitText
 import com.runiverse.app.run.common.formatElapsedTime
@@ -64,21 +63,22 @@ import com.runiverse.app.run.common.gapDirection
 import com.runiverse.app.run.common.hasStaleValues
 import com.runiverse.app.run.common.playerStatusWord
 import com.runiverse.app.run.common.smallComboMomentProgress
-import com.runiverse.app.run.component.AlignedText
-import com.runiverse.app.run.component.ContentBoundsColumn
 import com.runiverse.app.run.component.HeartRateZoneBar
 import com.runiverse.app.run.component.ProgressRing
 import com.runiverse.app.run.component.RunDimensions
 import com.runiverse.app.run.component.ValueWithUnit
-import com.runiverse.app.run.component.baselineAt
-import com.runiverse.app.run.component.boxContentBounds
-import com.runiverse.app.run.component.contentBottomAt
-import com.runiverse.app.run.component.contentCenterAt
-import com.runiverse.app.run.component.contentTopAt
 import com.runiverse.app.run.component.widestHeartRateBlockWidth
+import com.runiverse.app.ui.component.AlignedText
+import com.runiverse.app.ui.component.ContentBoundsColumn
 import com.runiverse.app.ui.component.PreviewFrame
+import com.runiverse.app.ui.component.baselineAt
+import com.runiverse.app.ui.component.boxContentBounds
+import com.runiverse.app.ui.component.contentBottomAt
+import com.runiverse.app.ui.component.contentCenterAt
+import com.runiverse.app.ui.component.contentTopAt
 import com.runiverse.app.ui.theme.MY_LANE_COLOR_SLOT
 import com.runiverse.app.ui.theme.SUIT_NUMERAL_INK
+import com.runiverse.app.ui.theme.currentScreenWidth
 import com.runiverse.app.ui.theme.laneColor
 import com.runiverse.app.ui.theme.statusWordRaise
 import com.runiverse.app.ui.theme.tabularNumerals
@@ -94,6 +94,10 @@ private val DIRECTION_INDICATOR_TO_VALUE_GAP = 2.dp
 private val MIN_LABEL_TO_CELL_GAP = 4.dp
 private val NARROW_SCREEN_BELOW = 200.dp
 
+// 10시간·100km부터 시간·거리가 한 자리씩 넓어져, 192dp에선 글자를 안 키워도 윗줄이 넘친다
+private const val KM_DECIMAL_BELOW_SECONDS = 36_000
+private const val KM_DECIMAL_BELOW_METERS = 100_000
+
 // 값이 바뀌어도 사진이 안 움직이게 칸 폭은 지금 값이 아니라 정해 둔 넓은 격차로 잰다
 private val WIDEST_GAPS_METERS = listOf(400, 4_000)
 
@@ -105,6 +109,7 @@ internal fun RunOverviewPage(
     heartRateZone: Int?,
     smallComboMoments: Map<String, String> = emptyMap(),
     playerPhotos: Map<String, ImageBitmap> = emptyMap(),
+    isDisplayOn: Boolean = true,
 ) {
     val slots = currentRunPageSlots()
     // 키운 글자로는 가장 긴 값이 한 줄에 안 들어간다
@@ -150,6 +155,7 @@ internal fun RunOverviewPage(
                 isPhoneReachable,
                 cellWidth,
                 smallComboMoments,
+                isDisplayOn,
                 playerPhotos,
                 Modifier.contentTopAt(slots.belowRowTop),
             )
@@ -182,12 +188,13 @@ internal fun RunOverviewPage(
 @Composable
 private fun DistanceTimeRow(me: MyRecord, abbreviateUnits: Boolean, modifier: Modifier) {
     val style = MaterialTheme.typography.numeralSmall.tabularNumerals()
+    val dropKmDecimal = me.elapsedSeconds >= KM_DECIMAL_BELOW_SECONDS || me.distanceMeters >= KM_DECIMAL_BELOW_METERS
     Row(
         modifier.fillMaxWidth(1f - RunDimensions.TOP_ROW_SIDE_FRACTION * 2),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         ValueWithUnit(
-            formatRunDistanceKm(me.distanceMeters),
+            formatRunDistanceKm(me.distanceMeters, dropKmDecimal),
             if (abbreviateUnits) null else stringResource(R.string.unit_km),
             style,
         )
@@ -240,6 +247,7 @@ private fun AvatarRow(
     isPhoneReachable: Boolean,
     cellWidth: Dp,
     smallComboMoments: Map<String, String>,
+    isDisplayOn: Boolean,
     playerPhotos: Map<String, ImageBitmap>,
     modifier: Modifier,
 ) {
@@ -251,6 +259,7 @@ private fun AvatarRow(
                     player,
                     playerPhotos[player.userId],
                     smallComboMoments[player.userId],
+                    isDisplayOn,
                     Modifier.alpha(if (hasStaleValues) RunDimensions.STALE_CONTENT_ALPHA else 1f),
                 )
             }
@@ -351,12 +360,18 @@ private fun Modifier.bottomAsBaseline(): Modifier = layout { measurable, constra
 
 // 칸을 고리까지 잡는다 — alpha가 칸 밖을 잘라 소식이 늦은 사람의 고리가 잘린다
 @Composable
-private fun PlayerAvatar(player: Player, photo: ImageBitmap?, smallComboMomentId: String?, modifier: Modifier) {
+private fun PlayerAvatar(
+    player: Player,
+    photo: ImageBitmap?,
+    smallComboMomentId: String?,
+    isDisplayOn: Boolean,
+    modifier: Modifier,
+) {
     val lane = laneColor(player.colorSlot)
     val myLane = laneColor(MY_LANE_COLOR_SLOT)
     val isCombo = player.comboCount > 0
     val flashColor = MaterialTheme.colorScheme.onBackground
-    val momentProgress = smallComboMomentProgress(smallComboMomentId)
+    val momentProgress = smallComboMomentProgress(smallComboMomentId, isDisplayOn)
     // 사진이 덮은 레인 색을 선으로 남긴다 — 콤보 중엔 고리가 그 색을 보인다
     val photoBorder =
         if (photo != null && !isCombo) Modifier.border(PHOTO_BORDER_WIDTH, lane, CircleShape) else Modifier
@@ -460,7 +475,7 @@ private fun DrawScope.drawDisconnectedIcon(color: Color) {
 @WearPreviewSmallRound
 @Composable
 private fun RunOverviewPagePartyPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.party, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
@@ -468,11 +483,11 @@ private fun RunOverviewPagePartyPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePhotosPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party,
+        RunSamples.party,
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
-        playerPhotos = RunPreviewSamples.brightPhotos,
+        playerPhotos = RunSamples.brightPhotos,
     )
 }
 
@@ -480,31 +495,31 @@ private fun RunOverviewPagePhotosPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePhotoStatusesPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.statusesOnPhotos,
+        RunSamples.statusesOnPhotos,
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
-        playerPhotos = RunPreviewSamples.brightPhotos,
+        playerPhotos = RunSamples.brightPhotos,
     )
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPageLongValuesPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.longValues, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPagePhoneLostPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.party, isPhoneReachable = false, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
 @Composable
 private fun RunOverviewPageServerLostPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party.copy(isServerConnected = false),
+        RunSamples.party.copy(isServerConnected = false),
         isPhoneReachable = true,
         heartRateBpm = 148,
         heartRateZone = 3,
@@ -515,7 +530,7 @@ private fun RunOverviewPageServerLostPreview() = PreviewFrame {
 @WearPreviewFontScales
 @Composable
 private fun RunOverviewPageSoloPreview() = PreviewFrame {
-    RunOverviewPage(RunPreviewSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
+    RunOverviewPage(RunSamples.solo, isPhoneReachable = true, heartRateBpm = 148, heartRateZone = 3)
 }
 
 @WearPreviewLargeRound
@@ -523,7 +538,7 @@ private fun RunOverviewPageSoloPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPagePausedPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.party.copy(status = RunStatus.PAUSED),
+        RunSamples.party.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
         heartRateBpm = 92,
         heartRateZone = 1,
@@ -534,7 +549,7 @@ private fun RunOverviewPagePausedPreview() = PreviewFrame {
 @Composable
 private fun RunOverviewPageSoloPausedPreview() = PreviewFrame {
     RunOverviewPage(
-        RunPreviewSamples.solo.copy(status = RunStatus.PAUSED),
+        RunSamples.solo.copy(status = RunStatus.PAUSED),
         isPhoneReachable = true,
         heartRateBpm = 92,
         heartRateZone = 1,
